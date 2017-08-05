@@ -190,6 +190,7 @@
   :ensure nil)
 
 ;; https://lakshminp.com/publishing-book-using-org-mode
+(use-package ox-gfm)
 (defun leanpub-export ()
   "Export buffer to a Leanpub book."
   (interactive)

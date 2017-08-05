@@ -16,6 +16,7 @@
 
 (eval-when-compile (require 'cl))
 (require 'ox-md)
+(require 'ox-gfm) ;; TODO maybe better than md generally?
 (require 's)
 
 ;;; Define Back-End
@@ -40,24 +41,13 @@
                      (headline . org-leanpub-headline)
                      (link . org-leanpub-link)
                      (latex-fragment . org-leanpub-latex-fragment)
-                     (table . org-leanpub-table)
+                     (table-cell . org-gfm-table-cell)
+                     (table-row . org-gfm-table-row)
+                     ;; NOTE attr_leanpub is not supported
+                     ;; https://leanpub.com/help/manual#leanpub-auto-tables
+                     (table . org-gfm-table)
                      ;; Will not work with leanpub:
                      (export-block . org-leanpub-ignore))) ; #+html
-
-(defun org-leanpub-table (table contents info)
-  "Transcode a table object from Org to Markdown.
-CONTENTS is nil.  INFO is a plist holding contextual information.
-Add an #+attr_leanpub: line right before the table with the formatting info that you want to pass to markdown, like
-
-#+attr_leanpub: {title=\"Figure 32\",width=\"60%\"}
-| a table | second col |
-|---------+------------|
-| second  | line       |
-| Third   | line       |
-"
-  (replace-regexp-in-string "^\\#\\+attr_leanpub:\s*" ""
-                            (buffer-substring (org-element-property :begin table)
-                                              (org-element-property :end table))))
 
 (defun org-leanpub-latex-fragment (latex-fragment contents info)
   "Transcode a LATEX-FRAGMENT object from Org to Markdown.
