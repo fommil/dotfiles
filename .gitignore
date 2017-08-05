@@ -3,6 +3,7 @@ target/
 .ensime_cache/
 .ensime
 ensime.sbt
+.ensime-server.conf
 
 .history
 .projectile

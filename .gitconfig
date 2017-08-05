@@ -35,7 +35,7 @@
     spin = checkout -b
     sith = push --force
     tidy = clean -fdx -e ensime.sbt -e .ensime -e .ensime_cache -e .ensime-server.conf -e .dir-locals.el -e class-monkey-1.7.0-assembly.jar
-    nuke = clean -fdx -e ensime.sbt -e .dir-locals.el
+    nuke = clean -fdx -e ensime.sbt -e .ensime-server.conf -e .dir-locals.el
     cleantags = !git tag -l | xargs git tag -d
 [color]
     branch = auto
