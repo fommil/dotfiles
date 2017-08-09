@@ -280,7 +280,7 @@ Inspired by `org-combine-plists'."
   (setq
    clean-buffer-list-kill-regexps '("^[*].*")
    clean-buffer-list-kill-never-regexps
-   '("^[*]\\(scratch\\|sbt\\|Messages\\|ENSIME\\|eshell\\|compilation\\|magit\\(:\\|-revision\\|-staging\\)\\).*")))
+   '("^\\([#]\\|[*]\\(scratch\\|sbt\\|Messages\\|ENSIME\\|eshell\\|compilation\\|magit\\(:\\|-revision\\|-staging\\)\\)\\).*")))
 
 (use-package persistent-scratch
   :config (persistent-scratch-setup-default))
@@ -790,7 +790,10 @@ assuming it is in a maven-style project."
 (use-package org
   ;;:ensure org-plus-contrib
   :defer t
-  :init (setq org-src-fontify-natively t)
+  :init
+  (setq
+   org-src-fontify-natively t
+   org-export-headline-levels 5)
   :bind ("C-c c" . pandoc))
 
 (add-hook 'writeroom-mode-hook
