@@ -26,4 +26,4 @@ export EMACS_SOURCE=$HOME/Projects/emacs
 
 # use RAM compiles when building sbt-sensible projects
 # (not faster, but nicer on my lovely SSD...)
-export SBT_VOLATILE_TARGET=/dev/shm
+export SBT_VOLATILE_TARGET=/tmp/fommil-sbt
