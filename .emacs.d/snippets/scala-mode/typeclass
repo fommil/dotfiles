@@ -1,20 +1,19 @@
 # -*- mode: snippet -*-
 #name: typeclass
 # --
+import export._
 import simulacrum._
 
 @typeclass
 trait ${1:}[A] { self =>
   def ${2:}(a: A): ${3:}
 
-  @noop final def contraMap[B](f: B => A): $1[B] = new $1[B] {
+  @noop final def contramap[B](f: B => A): $1[B] = new $1[B] {
     final override def $2(a: B): $3 = self.$2(f(a))
   }
 }
 
-object $1 extends DefaultInstances
-
-trait DefaultInstances {
+object $1 extends $1LowPriority {
   def instance[A](f: A => $3): $1[A] = new $1[A] {
     override def $2(a: A): $3 = f(a)
   }
@@ -23,3 +22,13 @@ trait DefaultInstances {
     b => ???
   )
 }
+
+// https://github.com/milessabin/export-hook/issues/28
+@java.lang.SuppressWarnings(
+  scala.Array(
+    "org.wartremover.warts.Null",
+    "org.wartremover.warts.ExplicitImplicitTypes"
+  )
+)
+@imports[$1]
+trait $1LowPriority
