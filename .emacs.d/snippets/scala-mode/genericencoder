@@ -1,13 +1,15 @@
 # -*- mode: snippet -*-
-#name: generic
+#description: Boilerplate for a contravariant typeclass (e.g. encoder)
+#name: genericencoder
 # --
 import export._
 import shapeless.{ :: => :*:, _ }
 import shapeless.labelled._
 
-trait Derived${1:}[T] extends $1[T]
+trait Derived${1:}[A] extends $1[A]
 
 // https://github.com/milessabin/export-hook/issues/28
+// https://github.com/wartremover/wartremover/issues/215
 @java.lang.SuppressWarnings(
   scala.Array(
     "org.wartremover.warts.Null",
@@ -20,11 +22,11 @@ trait Derived${1:}[T] extends $1[T]
       override def ${2:}(a: A): $3 = f(a)
     }
 
-  implicit def gen[T, Repr](
+  implicit def gen[A, Repr](
       implicit
-      G: LabelledGeneric.Aux[T, Repr],
+      G: LabelledGeneric.Aux[A, Repr],
       CR: Cached[Strict[Derived$1[Repr]]]
-    ): Derived$1[T] = instance { t =>
+    ): Derived$1[A] = instance { t =>
     CR.value.value.$2(G.to(t))
   }
 
