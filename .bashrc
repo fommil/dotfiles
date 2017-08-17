@@ -83,8 +83,12 @@ fi
 
 # complicated aliases
 function docker-nuke {
-    docker rm $(docker ps -aq)
-    docker rmi $(docker images | grep '^<none>' | awk '{print $3}')
+    # https://www.digitalocean.com/community/tutorials/how-to-remove-docker-images-containers-and-volumes
+    docker rm $(docker ps -a -f status=exited -q)
+    docker rmi $(docker images -f dangling=true -q)
+    docker volume rm $(docker volume ls -f dangling=true -q)
+    # sudo sh -c 'btrfs subvolume delete /var/lib/docker/btrfs/subvolumes/*'
+    echo "consider using `docker system prune --all`"
 }
 
 # Local settings and overrides
