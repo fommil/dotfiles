@@ -7,7 +7,7 @@
 import export._
 import simulacrum._
 
-@typeclass
+@typeclass(generateAllOps = false)
 trait ${1:Decoder}[A] { self =>
   def ${2:fromThing}(t: ${3:Thing}): $1.Decoded[A]
 
@@ -22,6 +22,12 @@ trait ${1:Decoder}[A] { self =>
 
 object $1 extends $1LowPriority {
   type Decoded[A] = Either[NonEmptyList[${4:String}], A]
+  // https://github.com/mpilquist/simulacrum/issues/88
+  object ops extends To$1Ops {
+    implicit class $1Ops(t: $3) {
+      def $2[A](implicit d: $1[A]): Decoded[A] = d.$2(t)
+    }
+  }
 
   def instance[A](f: PartialFunction[$3, Decoded[A]]): $1[A] =
     new $1[A] {
