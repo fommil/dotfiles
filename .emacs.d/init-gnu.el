@@ -14,7 +14,7 @@
 (require 'use-package)
 
 ;; while testing 25.1
-(setq debug-on-error t)
+;;(setq debug-on-error t)
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; This section is for loading and tweaking generic modes that are
@@ -163,6 +163,8 @@
 ;;(add-hook 'text-mode-hook #'writing-mode-hooks)
 (add-hook 'org-mode-hook #'writing-mode-hooks)
 (add-hook 'markdown-mode-hook #'writing-mode-hooks)
+
+(use-package graphviz-dot-mode)
 
 (defun markdown-flyspell-predicate ()
   "Refine the default text predicate to ignore markdown specific things."

@@ -1,28 +1,27 @@
 ;;; ox-leanpub.el --- Leanpub Markdown Back-End for Org Export Engine
 
 ;; Author: Juan Reyero <juan _at! juanreyero.com>
+;; Author: Sam Halliday
 ;; Keywords: org, wp, markdown, leanpub
 
 ;;; Commentary:
 
 ;;; Small adaptation of ox-md.el to make the exported markdown work
-;;; better for Leanpub (http://leanpub.com) publication.  It handles
-;;; footnotes, and makes source code separated from its output, and
-;;; the output does not display line numbers.  Html blocks are
-;;; ignored.  Links with IDs work.  Tables are exported as they are in
-;;; orgmode, which is pretty much what Leanpub's markdown accepts.
+;;; better for Leanpub (http://leanpub.com) publication.
 
 ;;; Code:
 
 (eval-when-compile (require 'cl))
 (require 'ox-md)
-(require 'ox-gfm) ;; TODO maybe better than md generally?
+(require 'ox-gfm)
 (require 's)
 
-;;; Define Back-End
-
+;; FIXME: inherit from gfm or copy the functions we need check that we
+;;        don't copy pasta anything from ox-md
 (org-export-define-derived-backend 'leanpub 'md
   :menu-entry
+  ;; FIXME: functions should call the leanpub-export
+  ;;        (and remove these useless buffer / file exporters)
   '(?L "Export to Leanpub Markdown"
        ((?L "To temporary buffer"
 	    (lambda (a s v b) (org-leanpub-export-as-markdown a s v)))
@@ -45,9 +44,7 @@
                      (table-row . org-gfm-table-row)
                      ;; NOTE attr_leanpub is not supported
                      ;; https://leanpub.com/help/manual#leanpub-auto-tables
-                     (table . org-gfm-table)
-                     ;; Will not work with leanpub:
-                     (export-block . org-leanpub-ignore))) ; #+html
+                     (table . org-gfm-table)))
 
 (defun org-leanpub-latex-fragment (latex-fragment contents info)
   "Transcode a LATEX-FRAGMENT object from Org to Markdown.
@@ -75,7 +72,7 @@ definitions at the end."
    contents
    "\n\n"
    (let ((definitions (org-export-collect-footnote-definitions
-                       (plist-get info :parse-tree) info)))
+                       info (plist-get info :parse-tree))))
      ;; Looks like leanpub do not like : in labels.
      (mapconcat (lambda (ref)
                   (let ((id (format "[^%s]: " (replace-regexp-in-string
@@ -97,9 +94,6 @@ definitions at the end."
              (if label
                  label
                (org-export-get-footnote-number footnote info))))))
-
-(defun org-leanpub-ignore (src-block contents info)
-  "")
 
 (defun org-leanpub-plain-text (text info)
   text)
@@ -184,12 +178,16 @@ a communication channel."
            (let ((path (let ((raw-path (org-element-property :path link)))
                          (if (not (file-name-absolute-p raw-path)) raw-path
                            (expand-file-name raw-path)))))
-             (format "{width=60%%}\n![%s](%s)"
+             ;; HACK: using caption for width
+             (message "%s" (org-element-property
+                            :foo
+                            (org-export-get-parent-element link)))
+             (format "{width=%s%%}\n![](%s)"
                      (let ((caption (org-export-get-caption
                                      (org-export-get-parent-element link))))
                        (if caption
                            (org-export-data caption info)
-                         ""))
+                         "60"))
                      path)))
           (t (let* ((raw-path (org-element-property :path link))
                     (path (if (member type '("http" "https" "ftp"))
