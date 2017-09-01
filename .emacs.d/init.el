@@ -25,9 +25,6 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; User Site Local
 (load (expand-file-name "local-preinit.el" user-emacs-directory) 'no-error)
-(cl-delete-if
- (lambda (el) (string-match-p ".*org" el))
- load-path)
 (unless (boundp 'package--initialized)
   ;; don't set gnu/org/melpa if the site-local or local-preinit have
   ;; done so (e.g. firewalled corporate environments)

@@ -88,7 +88,7 @@ function docker-nuke {
     docker rmi $(docker images -f dangling=true -q)
     docker volume rm $(docker volume ls -f dangling=true -q)
     # sudo sh -c 'btrfs subvolume delete /var/lib/docker/btrfs/subvolumes/*'
-    echo "consider using `docker system prune --all`"
+    echo "consider using 'docker system prune --all'"
 }
 
 # Local settings and overrides
