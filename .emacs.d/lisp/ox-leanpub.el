@@ -179,9 +179,9 @@ a communication channel."
                          (if (not (file-name-absolute-p raw-path)) raw-path
                            (expand-file-name raw-path)))))
              ;; HACK: using caption for width
-             (message "%s" (org-element-property
-                            :foo
-                            (org-export-get-parent-element link)))
+;;             (message "%s" (org-element-property
+;;                            :width
+;;                            (org-export-get-parent-element link)))
              (format "{width=%s%%}\n![](%s)"
                      (let ((caption (org-export-get-caption
                                      (org-export-get-parent-element link))))

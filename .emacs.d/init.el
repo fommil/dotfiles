@@ -115,6 +115,7 @@
 (global-auto-composition-mode 0)
 (auto-encryption-mode 0)
 (tooltip-mode 0)
+(save-place-mode 1)
 
 (make-variable-buffer-local 'tags-file-name)
 (make-variable-buffer-local 'show-paren-mode)
@@ -280,7 +281,7 @@ Inspired by `org-combine-plists'."
   (setq
    clean-buffer-list-kill-regexps '("^[*].*")
    clean-buffer-list-kill-never-regexps
-   '("^\\([#]\\|[*]\\(scratch\\|sbt\\|Messages\\|ENSIME\\|eshell\\|compilation\\|magit\\(:\\|-revision\\|-staging\\)\\)\\).*")))
+   '("^\\([#]\\|[*]\\(scratch\\|sbt\\|Messages\\|ENSIME\\|eshell\\|compilation\\|magit\\([:]\\|-log\\|-diff\\)\\)\\).*")))
 
 (use-package persistent-scratch
   :config (persistent-scratch-setup-default))
