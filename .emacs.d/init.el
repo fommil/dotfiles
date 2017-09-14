@@ -21,6 +21,11 @@
 ;; modes together.  Sections are delimited by a row of semi-colons
 ;; (stage/functional sections) or a row of dots (primary modes).
 
+;; https://lists.gnu.org/archive/html/emacs-devel/2017-09/msg00211.html
+(eval-after-load "enriched"
+  '(defun enriched-decode-display-prop (start end &optional param)
+     (list start end)))
+
 ;;; Code:
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; User Site Local

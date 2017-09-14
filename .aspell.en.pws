@@ -1,4 +1,4 @@
-personal_ws-1.1 en 37 
+personal_ws-1.1 en 41 
 demangling
 monoidal
 referentially
@@ -9,6 +9,7 @@ monadic
 Akka
 parallelised
 compiletime
+Lightsaber
 scalaz
 Halliday
 hoc
@@ -30,6 +31,9 @@ dimensionalities
 memoisation
 typeclasses
 typeclass
+Homomorphism
+associativity
+Associativity
 FP
 stacktraces
 Github
