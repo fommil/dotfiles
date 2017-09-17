@@ -45,6 +45,9 @@
     ui = auto
 [apply]
     whitespace = warn
+[magit]
+    # I am a happy supporter of magit! :-)
+ 	hideCampaign = true
 
 # for repos that use HTTPS, this stores passwords in a cache (1 hour)
 #git config credential.helper cache
