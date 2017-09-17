@@ -150,6 +150,8 @@
   :config
   (setq dired-dwim-target t)
   ;; a workflow optimisation too far?
+  (bind-key "<f12>" 'sbt-start dired-mode-map)
+  (bind-key "S-<f12>" 'ensime dired-mode-map)
   (bind-key "C-c c" 'sbt-command dired-mode-map)
   (bind-key "C-c e" 'next-error dired-mode-map))
 
@@ -684,6 +686,8 @@ assuming it is in a maven-style project."
   ;; i.e. bypass company-mode
   (bind-key "C-<tab>" 'dabbrev-expand scala-mode-map)
 
+  (bind-key "<f12>" 'sbt-start scala-mode-map)
+  (bind-key "S-<f12>" 'ensime scala-mode-map)
   (bind-key "C-c c" 'sbt-command scala-mode-map)
   (bind-key "C-c e" 'next-error scala-mode-map))
 
@@ -730,6 +734,7 @@ assuming it is in a maven-style project."
    'self-insert-command
    minibuffer-local-completion-map)
 
+  (bind-key "S-<f12>" 'ensime sbt:mode-map)
   (bind-key "C-c c" 'sbt-command sbt:mode-map)
   (bind-key "C-c e" 'next-error sbt:mode-map))
 
