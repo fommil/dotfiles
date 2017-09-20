@@ -491,6 +491,7 @@ Inspired by `org-combine-plists'."
   :commands rainbow-delimiters-mode)
 
 (use-package smartparens
+  :pin melpa
   :diminish smartparens-mode
   :commands
   smartparens-strict-mode
