@@ -1,11 +1,6 @@
-# This is the implicit global project's config file, which is only used when
-# 'stack' is run outside of a real project.  Settings here do _not_ act as
-# defaults for all projects.  To change stack's default settings, edit
-# '/home/fommil/.stack/config.yaml' instead.
+# used when stack is invoked with --system-ghc
 #
-# For more information about stack's configuration, see
-# http://docs.haskellstack.org/en/stable/yaml_configuration/
-#
+# stack install --system-ghc cabal-install xmobar pandoc xmonad xmonad-contrib
 flags:
   xmonad-contrib:
     use_xft: true
@@ -14,8 +9,7 @@ flags:
 extra-package-dbs: []
 packages: []
 extra-deps:
-  - xmonad-contrib-0.13
   - xmonad-0.13
+  - xmonad-contrib-0.13
   - xmobar-0.24
-  - pandoc-1.19
-resolver: lts-8.22
+resolver: lts-9.5
