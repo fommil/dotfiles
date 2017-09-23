@@ -3,4 +3,4 @@
 # https://github.com/commercialhaskell/stack/issues/710#issuecomment-289150630
 
 cd ~/.xmonad
-stack ghc -- --make xmonad.hs -i -ilib -fforce-recomp  -main-is main -v0 -o $1
+stack ghc --system-ghc -- --make xmonad.hs -i -ilib -fforce-recomp  -main-is main -v0 -o $1
