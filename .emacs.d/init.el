@@ -663,7 +663,6 @@ assuming it is in a maven-style project."
 
 (use-package scala-mode
   :defer t
-  :pin melpa
   :init
   (setq-default yatemplate-scala-header-skip nil)
   (put 'yatemplate-scala-header-skip 'safe-local-variable #'booleanp)
@@ -701,12 +700,10 @@ assuming it is in a maven-style project."
 
 (use-package ensime
   :defer t
-  :pin melpa
   :init
   (put 'ensime-auto-generate-config 'safe-local-variable #'booleanp)
   (setq
-   ensime-startup-notification nil
-   ensime-startup-snapshot-notification nil)
+   ensime-startup-notification nil)
   :config
   (require 'ensime-expand-region)
   (add-hook 'git-timemachine-mode-hook (lambda () (ensime-mode 0)))
@@ -718,7 +715,6 @@ assuming it is in a maven-style project."
 
 (use-package sbt-mode
   :commands sbt-start sbt-command
-  :pin melpa
   :init
   (setq
    sbt:sbt-history-file ".history"
