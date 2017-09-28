@@ -96,6 +96,30 @@
   )
 
 ;;..............................................................................
+;; Haskell
+
+(use-package haskell-mode
+  :init
+  (put 'haskell-compile-command 'safe-local-variable #'stringp)
+  :config
+  (add-hook 'haskell-mode-hook #'smartparens-mode)
+  (bind-key "C-c c" 'haskell-compile haskell-mode-map))
+
+;; Haskell workflow wants:
+;;
+;; 1. import symbol at point
+;; 2. import cleanups (including expanding wildcards)
+;; 3. local hoogle
+;; 4. type at point
+;; 5. docs of symbol / type at point
+;; 6. learn to use the repl
+;; 7. format on save / compile
+;; 8. flycheck compile on save
+;; 9. jump to imports and back (would be nice in scala too)
+;; 10. convert () and $ notation
+;; 11. (for irc) erc should hide short usernames
+
+;;..............................................................................
 ;; Clojure
 
 (use-package flycheck-clojure)

@@ -280,6 +280,12 @@ Inspired by `org-combine-plists'."
   (message "Stop procrastinating and do some work!")
   (find-file "~/.emacs.d/init.el"))
 
+(defun display-ansi-colors ()
+  "When opening a log file with ANSI escapes."
+  (interactive)
+  (let ((inhibit-read-only t))
+    (ansi-color-apply-on-region (point-min) (point-max))))
+
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; This section is for global modes that should be loaded in order to
 ;; make them immediately available.
