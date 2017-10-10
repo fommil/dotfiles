@@ -743,14 +743,17 @@ assuming it is in a maven-style project."
 
 (defcustom
   scala-mode-prettify-symbols
-  '(("->" . ?→)
-    ("<-" . ?←)
-    ("=>" . ?⇒)
+  '(;;("->" . ?→)
+    ;;("<-" . ?←)
+    ;;("=>" . ?⇒)
     ;; ("<=" . ?≤)
     ;; (">=" . ?≥)
     ;; ("!=" . ?≠)
     ;; implicit https://github.com/chrissimpkins/Hack/issues/214
-    ("+-" . ?±))
+    ;;("+-" . ?±)
+    ;; https://contributors.scala-lang.org/t/proposed-syntax-for--root-/1035/78?u=fommil
+    ("_root_." . ?/)
+    )
   "Prettify symbols for scala-mode.")
 
 (add-hook 'scala-mode-hook

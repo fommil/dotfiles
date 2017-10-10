@@ -1,5 +1,6 @@
-personal_ws-1.1 en 41 
+personal_ws-1.1 en 42 
 demangling
+disjunctions
 monoidal
 referentially
 libre
@@ -25,6 +26,7 @@ bytecode
 codebase
 disjunction
 parallelising
+bizarro
 propagating
 dimensionality
 dimensionalities
@@ -33,7 +35,6 @@ typeclasses
 typeclass
 Homomorphism
 associativity
-Associativity
 FP
 stacktraces
 Github
