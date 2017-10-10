@@ -18,7 +18,7 @@ trait ${1:Encoder}[A] { self =>
 
 object $1 extends $1LowPriority {
   // https://github.com/mpilquist/simulacrum/issues/5
-  def instance[A](f: A => $3): $1[A] = new $1[A] {
+  @inline def instance[A](f: A => $3): $1[A] = new $1[A] {
     override def $2(a: A): $3 = f(a)
   }
 

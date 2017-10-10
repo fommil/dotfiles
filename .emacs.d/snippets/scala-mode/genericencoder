@@ -17,7 +17,7 @@ trait Derived${1:}[A] extends $1[A]
   )
 )
 @exports object Derived$1 {
-  private def instance[A](f: A => ${3:}): Derived$1[A] =
+  @inline private def instance[A](f: A => ${3:}): Derived$1[A] =
     new Derived$1[A] {
       override def ${2:}(a: A): $3 = f(a)
     }

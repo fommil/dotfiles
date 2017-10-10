@@ -29,7 +29,7 @@ object $1 extends $1LowPriority {
     }
   }
 
-  def instance[A](f: PartialFunction[$3, Decoded[A]]): $1[A] =
+  @inline def instance[A](f: PartialFunction[$3, Decoded[A]]): $1[A] =
     new $1[A] {
       override def $2(t: $3): Decoded[A] = {
         f.applyOrElse(t, { _: $3 =>

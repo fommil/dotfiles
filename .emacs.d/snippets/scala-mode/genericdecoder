@@ -19,7 +19,7 @@ trait Derived${1:Decoder}[A] extends $1[A] {
   )
 )
 @exports object Derived$1 {
-  private def instance[A](
+  @inline private def instance[A](
       f: Map[String, $3] => $1.Decoded[A]
     ): Derived$1[A] =
     new Derived$1[A] {
