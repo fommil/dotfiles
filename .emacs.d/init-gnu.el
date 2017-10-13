@@ -101,7 +101,10 @@
 (use-package haskell-mode
   :init
   (put 'haskell-compile-command 'safe-local-variable #'stringp)
+  (setq haskell-compile-cabal-build-command "cd %s && stack build")
   :config
+  ;; build google with `stack hoogle generate'
+  ;; run `stack hoogle server'
   (add-hook 'haskell-mode-hook #'smartparens-mode)
   (bind-key "C-c c" 'haskell-compile haskell-mode-map))
 
@@ -109,11 +112,11 @@
 ;;
 ;; 1. import symbol at point
 ;; 2. import cleanups (including expanding wildcards)
-;; 3. local hoogle
+;; 3. local hoogle search without leaving emacs
 ;; 4. type at point
 ;; 5. docs of symbol / type at point
 ;; 6. learn to use the repl
-;; 7. format on save / compile
+;; 7. format on save / compile (hindent)
 ;; 8. flycheck compile on save
 ;; 9. jump to imports and back (would be nice in scala too)
 ;; 10. convert () and $ notation
