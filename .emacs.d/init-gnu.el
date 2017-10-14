@@ -185,6 +185,7 @@
   "Common hooks for writing modes."
   ;;(setq company-backends '(company-yasnippet))
   (flyspell-mode)
+  (whitespace-mode-with-local-variables)
   (writegood-mode))
 ;; performance problems in emacs 24.5 (e.g. email)
 ;;(add-hook 'text-mode-hook #'writing-mode-hooks)

@@ -458,6 +458,7 @@ Inspired by `org-combine-plists'."
   :diminish whitespace-mode
   :init
   ;; BUG: https://emacs.stackexchange.com/questions/7743
+  (put 'whitespace-style 'safe-local-variable #'listp)
   (put 'whitespace-line-column 'safe-local-variable #'integerp)
   (setq whitespace-style '(face trailing tabs)
         ;; add `lines-tail' to report long lines
@@ -812,7 +813,7 @@ assuming it is in a maven-style project."
   (setq
    org-src-fontify-natively t
    org-export-headline-levels 5)
-  :bind ("C-c c" . pandoc))
+  :bind ("C-c c" . leanpub-export))
 
 (add-hook 'writeroom-mode-hook
           (lambda ()
