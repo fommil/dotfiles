@@ -1,4 +1,4 @@
-personal_ws-1.1 en 43 
+personal_ws-1.1 en 44 
 demangling
 disjunctions
 monoidal
@@ -11,6 +11,7 @@ Akka
 parallelised
 compiletime
 Lightsaber
+contravariant
 scalaz
 Halliday
 hoc
