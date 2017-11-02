@@ -41,8 +41,8 @@ alias markdown="hsmarkdown"
 alias open="xdg-open"
 alias volume="pavucontrol"
 
-alias ensime="touch .history && ctags -Re . & sbt clean ';ensimeConfig ;ensimeConfigProject' ensimeServerIndex"
-alias ensime-compile="touch .history && ctags -Re . & sbt clean ';ensimeConfig ;ensimeConfigProject ;test:compile' ensimeServerIndex"
+alias ensime="git tidy && touch .history && ctags -Re . & sbt clean ';ensimeRestore ;ensimeConfig ;ensimeConfigProject' ensimeServerIndex"
+alias ensime-compile="git tidy && touch .history && ctags -Re . & sbt clean ';ensimeRestore ;ensimeConfig ;ensimeConfigProject ;test:compile' ensimeServerIndex"
 
 # workflow specifically for ensime-server dev
-alias ensime-server="touch .history && ctags -Re . & sbt clean ';ensimeConfig ;ensimeConfigProject ;test:compile ;it:compile ;ensime/assembly' && sbt ensimeServerIndex && cd testing/cache && sbt ++2.12.3 ensimeConfig ensimeServerIndex && cd ../.."
+alias ensime-server="git tidy && touch .history && ctags -Re . & sbt clean ';ensimeRestore ;ensimeConfig ;ensimeConfigProject ;test:compile ;it:compile ;ensime/assembly' && sbt ensimeServerIndex && cd testing/cache && sbt ++2.12.4 ensimeConfig ensimeServerIndex && cd ../.."

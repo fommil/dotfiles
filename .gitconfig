@@ -34,7 +34,7 @@
     ignored = !git ls-files -v | grep "^[[:lower:]]"
     spin = checkout -b
     sith = push --force
-    tidy = clean -fdx -e ensime.sbt -e .ensime-server.conf -e .dir-locals.el -e .sbtopts -e .ensime -e .ensime_cache
+    tidy = clean -fdx -e ensime.sbt -e .ensime-server.conf -e .dir-locals.el -e .sbtopts -e .ensime -e .ensime_cache -e .ensime_snapshot
     nuke = clean -fdx -e ensime.sbt -e .ensime-server.conf -e .dir-locals.el -e .sbtopts
     cleantags = !git tag -l | xargs git tag -d
 [color]

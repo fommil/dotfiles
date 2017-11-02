@@ -1,6 +1,7 @@
 target/
 
 .ensime_cache/
+.ensime_snapshot/
 .ensime
 ensime.sbt
 local.sbt
