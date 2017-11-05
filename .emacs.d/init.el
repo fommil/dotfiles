@@ -66,6 +66,7 @@
 
 ;; buffer local variables
 (setq-default
+ fill-column 80
  indent-tabs-mode nil
  tab-width 4)
 
@@ -845,7 +846,8 @@ assuming it is in a maven-style project."
   (`gnu/linux
    (load (expand-file-name "init-gnu.el" user-emacs-directory))))
 
-(use-package darcula-theme)
+(use-package darcula-theme
+  :init (setq darcula-background "#1b1b1b"))
 (use-package intellij-theme)
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
