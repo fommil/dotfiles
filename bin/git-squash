@@ -1,0 +1,36 @@
+#!/bin/bash
+
+set -e
+
+# When on your working branch, constructs a squashed rebase to the provided
+# branch. Use when working on a shared branch with a colleague who doesn't
+# understand how rebasing works, or if somebody helpfully uses github to
+# "Update" your branch to master and resolves your conflicts.
+#
+# https://stackoverflow.com/questions/47327103/
+
+if [ -n "$(git status -s)" ] ; then
+   echo "ERROR: uncommitted changes"
+   exit 1
+fi
+
+if [ -z "$1" ] ; then
+   echo "ERROR: you must provide a base branch"
+   exit 1
+fi
+
+NAME=`git rev-parse --abbrev-ref HEAD`
+CUR=`git rev-parse HEAD`
+TO=`git rev-parse $1`
+
+echo "backing up your branch in bak/$CUR"
+
+git checkout -b bak/$CUR
+git checkout -b tmp/$CUR
+git reset --hard $TO
+git merge --squash $CUR
+git commit --no-edit
+git checkout $NAME
+git reset --hard tmp/$CUR
+git branch -D tmp/$CUR
+echo "created a squash commit against $1 and rewrote your history"
