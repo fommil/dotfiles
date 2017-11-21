@@ -321,9 +321,13 @@ Inspired by `org-combine-plists'."
   (flx-ido-mode t))
 
 (use-package projectile
+  :pin melpa ;; for changes to ag-ignore
   :demand
   ;; nice to have it on the modeline
   :init
+  ;; WORKAROUND https://github.com/Wilfred/ag.el/issues/141
+  (make-variable-buffer-local 'ag-ignore-list)
+  (put 'ag-ignore-list 'safe-local-variable #'listp)
   (setq projectile-use-git-grep t
         projectile-globally-ignored-files '("TAGS" "*.min.js"))
   :config
