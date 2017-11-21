@@ -328,8 +328,10 @@ Inspired by `org-combine-plists'."
   ;; WORKAROUND https://github.com/Wilfred/ag.el/issues/141
   (make-variable-buffer-local 'ag-ignore-list)
   (put 'ag-ignore-list 'safe-local-variable #'listp)
-  (setq projectile-use-git-grep t
-        projectile-globally-ignored-files '("TAGS" "*.min.js"))
+  (setq
+   projectile-tags-backend 'etags-select
+   projectile-use-git-grep t
+   projectile-globally-ignored-files '("TAGS" "*.min.js"))
   :config
   (projectile-global-mode)
   (add-hook 'projectile-grep-finished-hook
