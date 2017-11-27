@@ -1,6 +1,6 @@
 `(let ((header (unless yatemplate-scala-header-skip
                 (format
-                 "// Copyright: %s %s\n// License: %s\n"
+                 "// Copyright: %s %s\n// License: %s\n\n"
                  (format-time-string "%Y")
                  yatemplate-owner
                  yatemplate-license)))

@@ -442,9 +442,11 @@ Inspired by `org-combine-plists'."
 (use-package yatemplate
   :pin melpa ;; WORKAROUND https://github.com/mineo/yatemplate/issues/13
   :defer 2 ;; WORKAROUND https://github.com/mineo/yatemplate/issues/3
+  :init
+  (setq auto-insert-alist nil)
+  (setq-default yatemplate-license "http://www.gnu.org/licenses/lgpl-3.0.en.html")
   :config
   (auto-insert-mode t)
-  (setq auto-insert-alist nil)
   (yatemplate-fill-alist))
 
 (use-package color-moccur
@@ -520,7 +522,7 @@ Inspired by `org-combine-plists'."
   (sp-pair "(" ")" :wrap "C-(") ;; how do people live without this?
   (sp-pair "[" "]" :wrap "s-[") ;; C-[ sends ESC
   (sp-pair "{" "}" :wrap "C-{")
-  (sp-pair "<" ">" :wrap "C-<")
+  ;;(sp-pair "<" ">" :wrap "C-<") ;; https://github.com/Fuco1/smartparens/issues/816
 
   ;; nice whitespace / indentation when creating statements
   (sp-local-pair '(c-mode java-mode) "(" nil :post-handlers '(("||\n[i]" "RET")))
