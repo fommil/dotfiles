@@ -11,3 +11,6 @@ feh --bg-center --no-fehbg ~/.bg.jpg
 redshift -l 51.507351:-0.127758 -b 1.0:0.6 &
 
 xmobar &
+
+# top right corner stops screen lock
+xautolock -locker "i3lock -c000000" -time 15 -corners +--- &

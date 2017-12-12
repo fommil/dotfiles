@@ -29,10 +29,6 @@ if [ -f ~/.Xmodmap.local ] ; then
     xmodmap ~/.Xmodmap.local
 fi
 
-# top right corner stops screen lock
-xautolock -locker "i3lock -c000000" -time 15 -corners +--- &
-
-
 # clipboard
 autocutsel -fork
 autocutsel -selection PRIMARY -fork
