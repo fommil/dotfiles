@@ -12,4 +12,4 @@ extra-deps:
   - xmonad-0.13
   - xmonad-contrib-0.13
   - xmobar-0.24
-resolver: lts-9.5
+resolver: lts-10.0
