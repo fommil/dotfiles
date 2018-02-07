@@ -19,12 +19,11 @@
 (dark-theme)
 ;;(light-theme)
 
+;; I'll usually want access to these..
 (find-file (expand-file-name "scratch.el" user-emacs-directory))
+(find-file "~/Projects/scalaz")
+(find-file "~/Projects/fpmortals/manuscript/book.org")
 
 (setq org-ditaa-jar-path (expand-file-name "~/.ditaa.jar"))
-
-;; I'll usually want access to these..
-(find-file "~/Projects/")
-
 
 ;;; local.el ends here

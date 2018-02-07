@@ -751,6 +751,13 @@ assuming it is in a maven-style project."
   (bind-key "C-c c" 'sbt-command sbt:mode-map)
   (bind-key "C-c e" 'next-error sbt:mode-map))
 
+(add-hook 'sbt-mode-hook
+          (lambda ()
+            (setq prettify-symbols-alist
+                  `((,(expand-file-name (directory-file-name default-directory)) . ?⌂)
+                    (,(expand-file-name "~") . ?~)))
+            (prettify-symbols-mode t)))
+
 (defcustom
   scala-mode-prettify-symbols
   '(;;("->" . ?→)
