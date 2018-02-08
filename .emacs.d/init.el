@@ -671,10 +671,16 @@ assuming it is in a maven-style project."
   (c-indent-new-comment-line)
   (indent-according-to-mode))
 
-(defun ensime-sbt-do-fmt ()
-  "WORKAROUND https://github.com/ensime/ensime-emacs/issues/635"
+(defun ensime-sbt-do-fmt-only ()
+  "Format the current file using scalafix."
   (interactive)
-  ;; addCommandAlias("fmt", ";scalafmt ;test:scalafmt ;it:scalafmt")
+  (save-buffer)
+  (ensime-sbt-run-command-in-subproject "scalafmtOnly" (buffer-file-name-with-indirect)))
+
+(defun ensime-sbt-do-fmt ()
+  "Format everything using scalafix."
+  (interactive)
+  (save-buffer)
   (sbt:command "fmt"))
 
 (use-package scala-mode
@@ -724,7 +730,7 @@ assuming it is in a maven-style project."
   (require 'ensime-expand-region)
   (add-hook 'git-timemachine-mode-hook (lambda () (ensime-mode 0)))
 
-  (bind-key "C-c C-v F" 'ensime-sbt-do-fmt scala-mode-map)
+  ;;(bind-key "C-c C-v F" 'ensime-sbt-do-fmt-only scala-mode-map)
 
   (bind-key "s-n" 'ensime-search ensime-mode-map)
   (bind-key "s-t" 'ensime-print-type-at-point ensime-mode-map))
@@ -747,6 +753,7 @@ assuming it is in a maven-style project."
    'self-insert-command
    minibuffer-local-completion-map)
 
+  (bind-key "C-c C-v F" 'ensime-sbt-do-fmt scala-mode-map)
   (bind-key "S-<f12>" 'ensime sbt:mode-map)
   (bind-key "C-c c" 'sbt-command sbt:mode-map)
   (bind-key "C-c e" 'next-error sbt:mode-map))
@@ -754,7 +761,8 @@ assuming it is in a maven-style project."
 (add-hook 'sbt-mode-hook
           (lambda ()
             (setq prettify-symbols-alist
-                  `((,(expand-file-name (directory-file-name default-directory)) . ?⌂)
+                  `((,(expand-file-name (getenv "SBT_VOLATILE_TARGET")) . ?☣)
+                    (,(expand-file-name (directory-file-name (projectile-project-root))) . ?§)
                     (,(expand-file-name "~") . ?~)))
             (prettify-symbols-mode t)))
 
