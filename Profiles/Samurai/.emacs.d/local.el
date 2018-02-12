@@ -7,15 +7,15 @@
 
 (add-to-list 'default-frame-alist
              '(font . "Hack-20"))
-(dark-theme)
 
-;;(light-theme)
+;;(dark-theme)
+(light-theme)
 
 ;; I'll usually want access to these..
 (find-file (expand-file-name "scratch.el" user-emacs-directory))
 ;;(find-file "~/Projects/scalaz/core/src/main/scala/scalaz")
 ;;(find-file "~/Projects/fpmortals/manuscript/book.org")
-;;(find-file "~/Work")
+(find-file "~/Work")
 ;;(switch-to-buffer "*scratch*")
 
 ;;(setq org-ditaa-jar-path (expand-file-name "~/.ditaa.jar"))

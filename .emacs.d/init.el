@@ -70,6 +70,8 @@
  indent-tabs-mode nil
  tab-width 4)
 
+(put 'compilation-skip-threshold 'safe-local-variable #'integerp)
+
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; This section is for global settings for built-in packages that autoload
 (setq
@@ -527,7 +529,6 @@ Inspired by `org-combine-plists'."
   ;; nice whitespace / indentation when creating statements
   (sp-local-pair '(c-mode java-mode) "(" nil :post-handlers '(("||\n[i]" "RET")))
   (sp-local-pair '(c-mode java-mode) "{" nil :post-handlers '(("||\n[i]" "RET")))
-  (sp-local-pair '(java-mode) "<" nil :post-handlers '(("||\n[i]" "RET")))
 
   ;; WORKAROUND https://github.com/Fuco1/smartparens/issues/543
   (bind-key "C-<left>" nil smartparens-mode-map)
@@ -697,6 +698,7 @@ assuming it is in a maven-style project."
   (remove-hook 'post-self-insert-hook
                'scala-indent:indent-on-parentheses)
 
+  (bind-key "C-c F" 'ensime-sbt-do-fmt scala-mode-map)
   (bind-key "RET" 'scala-mode-newline-comments scala-mode-map)
   (bind-key "s-<delete>" (sp-restrict-c 'sp-kill-sexp) scala-mode-map)
   (bind-key "s-<backspace>" (sp-restrict-c 'sp-backward-kill-sexp) scala-mode-map)
@@ -730,8 +732,6 @@ assuming it is in a maven-style project."
   (require 'ensime-expand-region)
   (add-hook 'git-timemachine-mode-hook (lambda () (ensime-mode 0)))
 
-  ;;(bind-key "C-c C-v F" 'ensime-sbt-do-fmt-only scala-mode-map)
-
   (bind-key "s-n" 'ensime-search ensime-mode-map)
   (bind-key "s-t" 'ensime-print-type-at-point ensime-mode-map))
 
@@ -753,7 +753,7 @@ assuming it is in a maven-style project."
    'self-insert-command
    minibuffer-local-completion-map)
 
-  (bind-key "C-c C-v F" 'ensime-sbt-do-fmt scala-mode-map)
+  (bind-key "C-c F" 'ensime-sbt-do-fmt sbt:mode-map)
   (bind-key "S-<f12>" 'ensime sbt:mode-map)
   (bind-key "C-c c" 'sbt-command sbt:mode-map)
   (bind-key "C-c e" 'next-error sbt:mode-map))
@@ -763,6 +763,7 @@ assuming it is in a maven-style project."
             (setq prettify-symbols-alist
                   `((,(expand-file-name (getenv "SBT_VOLATILE_TARGET")) . ?☣)
                     (,(expand-file-name (directory-file-name (projectile-project-root))) . ?§)
+                    ("target/scala-2.12" . ?☢)
                     (,(expand-file-name "~") . ?~)))
             (prettify-symbols-mode t)))
 
