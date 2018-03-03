@@ -44,3 +44,4 @@ alias volume="pavucontrol"
 alias ensime="git tidy && touch .history && ctags -Re . & sbt clean ';ensimeRestore ;ensimeConfig ;ensimeConfigProject' ensimeServerIndex"
 alias ensime-compile="git tidy && touch .history && ctags -Re . & sbt clean ';ensimeRestore ;ensimeConfig ;ensimeConfigProject ;test:compile' ensimeServerIndex"
 
+alias gitup='for A in ~/Projects/* ; do cd $A ; echo $A ; git up ; done'
