@@ -233,7 +233,7 @@
 
 
 (defvar ido-buffer-whitelist
-  '("^[*]\\(notmuch\\-hello\\|unsent\\|ag search\\|grep\\|eshell\\).*")
+  '("^[*]\\(notmuch\\-hello\\|unsent\\|ag search\\|grep\\|eshell\\|magit\\([:]\\|-log\\|-diff\\)\\).*")
   "Whitelist regexp of `clean-buffer-list' buffers to show when switching buffer.")
 (defun midnight-clean-or-ido-whitelisted (name)
   "T if midnight is likely to kill the buffer named NAME, unless whitelisted.
@@ -297,7 +297,7 @@ Inspired by `org-combine-plists'."
   (setq
    clean-buffer-list-kill-regexps '("^[*].*")
    clean-buffer-list-kill-never-regexps
-   '("^\\([#]\\|[*]\\(scratch\\|sbt\\|Messages\\|ENSIME\\|eshell\\|compilation\\|magit\\([:]\\|-log\\|-diff\\)\\)\\).*")))
+   '("^\\([#]\\|[*]\\(scratch\\|sbt\\|Messages\\|ENSIME\\)\\).*")))
 
 (use-package persistent-scratch
   :config (persistent-scratch-setup-default))
@@ -743,6 +743,7 @@ assuming it is in a maven-style project."
    sbt:ansi-support t
    sbt:prefer-nested-projects t
    sbt:scroll-to-bottom-on-output nil
+   sbt:program-options '("-Djline.terminal=auto")
    sbt:default-command "test:compile")
   (put 'sbt:default-command 'safe-local-variable #'stringp)
   :config
