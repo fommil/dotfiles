@@ -1,5 +1,6 @@
 target/
 
+.bloop-config/
 .ensime_cache/
 .ensime_snapshot/
 .ensime
