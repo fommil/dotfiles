@@ -11,3 +11,8 @@ ensimeJavaFlags ++= Seq("-Xmx4g", "-XX:+PerfDisableSharedMem")
 
 // causes weird problems with clean
 //historyPath := Some((baseDirectory in ThisBuild).value / ".history")
+
+ensimeJavaFlags ++= {
+  if (name.value == "ensime") Nil
+  else Seq("-Densime.index.no.reverse.lookups=true")
+}
