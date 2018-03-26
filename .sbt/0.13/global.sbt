@@ -5,9 +5,9 @@ addCommandAlias("dependencyUpdatesProject", ";reload plugins ;dependencyUpdates 
 
 cancelable in Global := true
 
-// for 2.0-graph
 ensimeIgnoreMissingDirectories in ThisBuild := true
 ensimeJavaFlags ++= Seq("-Xmx4g", "-XX:+PerfDisableSharedMem")
+//ensimeServerVersion in ThisBuild := "2.0.1"
 
 // causes weird problems with clean
 //historyPath := Some((baseDirectory in ThisBuild).value / ".history")
