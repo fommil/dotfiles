@@ -1,0 +1,3 @@
+# see /etc/yaourtrc for documentation on the settings
+BUILD_NOCONFIRM=1
+EDITFILES=0

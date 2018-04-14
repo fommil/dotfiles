@@ -8,6 +8,11 @@
 (add-to-list 'default-frame-alist
              '(font . "Hack-16"))
 
+;; (use-package lsp-mode)
+;; (add-to-load-path (expand-file-name "~/Projects/lsp-scala/"))
+;; (require 'lsp-scala)
+;; (setq lsp-scala-server-command '("metals" "0.1.0-M1+75-905bf282"))
+
 ;;(dark-theme)
 (light-theme)
 
