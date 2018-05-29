@@ -6,7 +6,7 @@
 ;;; Code:
 
 (add-to-list 'default-frame-alist
-             '(font . "Hack-16"))
+             '(font . "Hack-14"))
 
 ;; (use-package lsp-mode)
 ;; (add-to-load-path (expand-file-name "~/Projects/lsp-scala/"))

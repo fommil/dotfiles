@@ -1,4 +1,4 @@
-addSbtPlugin("org.ensime" % "sbt-ensime" % "2.5.2")
+addSbtPlugin("org.ensime" % "sbt-ensime" % "2.6.0")
 
 // 0.3.0 uses Java 7 https://github.com/rtimush/sbt-updates/issues/71
 if (sys.props("java.version").startsWith("1.6"))

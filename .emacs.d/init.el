@@ -68,7 +68,7 @@
 (setq-default
  fill-column 80
  indent-tabs-mode nil
- tab-width 4)
+ default-tab-width 4)
 
 (put 'compilation-skip-threshold 'safe-local-variable #'integerp)
 
@@ -743,7 +743,6 @@ assuming it is in a maven-style project."
    sbt:ansi-support t
    sbt:prefer-nested-projects t
    sbt:scroll-to-bottom-on-output nil
-   sbt:program-options '("-Djline.terminal=auto")
    sbt:default-command "test:compile")
   (put 'sbt:default-command 'safe-local-variable #'stringp)
   :config

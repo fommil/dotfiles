@@ -8,3 +8,5 @@ alias cleanup='sudo pacman -Rsn $(pacman -Qdtq | tr "\n" " ")'
 alias metap="coursier launch org.scalameta:metap_2.12:3.7.2 -r sonatype:snapshots --"
 alias metac='coursier launch org.scalameta:metac_2.12:3.7.2 -r sonatype:snapshots -- -classpath $(coursier fetch org.scala-lang:scala-library:2.12.4 -p)'
 alias metacp='coursier launch org.scalameta:metacp_2.12:3.7.2 -r sonatype:snapshots --'
+
+alias fpmortals='mount /mnt/sony ; /bin/mv Downloads/fpmortals.pdf /mnt/sony/Books/Halliday\,\ Sam/Functional\ Programming\ for\ Mortals\ with\ Scalaz\ -\ Sam\ Halliday.pdf  ; umount /mnt/sony'

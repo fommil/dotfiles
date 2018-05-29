@@ -37,8 +37,9 @@ startup initial = do
                   setWMName "LG3D"
                   when initial $ do
                     spawnOn "1" "urxvt"
-                    spawnOn "2" "emacs"
+--                    spawnOn "2" "emacs"
                     spawnOn "3" "chromium"
+--                    spawnOn "4" "spotify"
 
 manageHook' :: ManageHook
 manageHook' = composeAll

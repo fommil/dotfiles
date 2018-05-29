@@ -1,4 +1,4 @@
-personal_ws-1.1 en 52 
+personal_ws-1.1 en 53 
 demangling
 disjunctions
 monoidal
@@ -46,6 +46,7 @@ FP
 stacktraces
 Github
 subtrees
+parallelisation
 pipelining
 schemas
 prepended
