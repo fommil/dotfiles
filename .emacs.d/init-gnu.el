@@ -31,20 +31,20 @@
    x-select-enable-clipboard t
    interprogram-paste-function 'x-cut-buffer-or-selection-value))
 
-(use-package ess-site
-  :ensure ess
-  :mode ("\\.R\\'" . R-mode))
+;; (use-package ess-site
+;;   :ensure ess
+;;   :mode ("\\.R\\'" . R-mode))
 
 (use-package package-utils)
 
-(use-package flycheck-cask
-  :commands flycheck-cask-setup
-  :init
-  (eval-after-load 'flycheck
-    '(add-hook 'flycheck-mode-hook #'flycheck-cask-setup)))
+;; (use-package flycheck-cask
+;;   :commands flycheck-cask-setup
+;;   :init
+;;   (eval-after-load 'flycheck
+;;     '(add-hook 'flycheck-mode-hook #'flycheck-cask-setup)))
 
-(use-package elnode
-  :commands elnode-make-webserver)
+;; (use-package elnode
+;;   :commands elnode-make-webserver)
 
 (use-package erc
   :commands erc erc-tls
@@ -125,32 +125,32 @@
 ;;..............................................................................
 ;; Clojure
 
-(use-package flycheck-clojure)
-(use-package flycheck-pos-tip)
-(use-package cider
-  :commands cider-jack-in
-  :config
-  (bind-key "C-c c" 'compile clojure-mode-map)
-  (bind-key "C-c e" 'next-error clojure-mode-map))
-(defalias 'cider 'cider-jack-in)
-(add-hook 'clojure-mode-hook
-          (lambda ()
-            (show-paren-mode t)
-            ;;(focus-mode t)
-            (rainbow-mode t)
-            (eldoc-mode t)
+;; (use-package flycheck-clojure)
+;; (use-package flycheck-pos-tip)
+;; (use-package cider
+;;   :commands cider-jack-in
+;;   :config
+;;   (bind-key "C-c c" 'compile clojure-mode-map)
+;;   (bind-key "C-c e" 'next-error clojure-mode-map))
+;; (defalias 'cider 'cider-jack-in)
+;; (add-hook 'clojure-mode-hook
+;;           (lambda ()
+;;             (show-paren-mode t)
+;;             ;;(focus-mode t)
+;;             (rainbow-mode t)
+;;             (eldoc-mode t)
 
-            ;; BUG https://github.com/clojure-emacs/squiggly-clojure/issues/39
-            (flycheck-clojure-setup)
-            (flycheck-mode t)
-            (flycheck-pos-tip-mode t)
+;;             ;; BUG https://github.com/clojure-emacs/squiggly-clojure/issues/39
+;;             (flycheck-clojure-setup)
+;;             (flycheck-mode t)
+;;             (flycheck-pos-tip-mode t)
 
-            (yas-minor-mode t)
-            (company-mode t)
-            (smartparens-strict-mode t)
-            (rainbow-delimiters-mode t)))
+;;             (yas-minor-mode t)
+;;             (company-mode t)
+;;             (smartparens-strict-mode t)
+;;             (rainbow-delimiters-mode t)))
 
-(add-hook 'cider-repl-mode-hook #'eldoc-mode)
+;; (add-hook 'cider-repl-mode-hook #'eldoc-mode)
 
 ;;..............................................................................
 ;; Python
@@ -172,11 +172,11 @@
 (add-hook 'sh-mode-hook #'electric-indent-local-mode)
 
 ;;..............................................................................
-(use-package synosaurus
-  :commands synosaurus-choose-and-replace
-  :init (setq synosaurus-choose-method 'popup)
-  :config
-  (bind-key "C-c s r" 'synosaurus-choose-and-replace text-mode-map))
+;; (use-package synosaurus
+;;   :commands synosaurus-choose-and-replace
+;;   :init (setq synosaurus-choose-method 'popup)
+;;   :config
+;;   (bind-key "C-c s r" 'synosaurus-choose-and-replace text-mode-map))
 
 (use-package writegood-mode
   :commands writegood-mode)

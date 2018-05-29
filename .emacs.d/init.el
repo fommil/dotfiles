@@ -36,7 +36,7 @@
   (require 'package)
   (setq
    package-archives '(("gnu" . "http://elpa.gnu.org/packages/")
-                      ("org" . "http://orgmode.org/elpa/")
+                      ;;("org" . "http://orgmode.org/elpa/")
                       ("melpa-stable" . "http://stable.melpa.org/packages/")
                       ("melpa" . "http://melpa.org/packages/"))
    package-archive-priorities '(("melpa-stable" . 1))))
@@ -323,7 +323,7 @@ Inspired by `org-combine-plists'."
   (flx-ido-mode t))
 
 (use-package projectile
-  :pin melpa ;; for changes to ag-ignore
+  ;;:pin melpa ;; for changes to ag-ignore
   :demand
   ;; nice to have it on the modeline
   :init
@@ -391,6 +391,9 @@ Inspired by `org-combine-plists'."
          git-timemachine-abbreviation-length 4))
 
 (use-package etags-select
+  ;; https://github.com/melpa/melpa/pull/5008
+  ;; https://www.emacswiki.org/emacs/download/etags-select.el
+  :ensure nil
   :commands etags-select-find-tag)
 
 (use-package ag
@@ -402,6 +405,8 @@ Inspired by `org-combine-plists'."
             (lambda () (pop-to-buffer next-error-last-buffer))))
 
 (use-package tidy
+  ;; https://www.emacswiki.org/emacs/download/tidy.el
+  :ensure nil
   :commands tidy-buffer)
 
 (use-package company
@@ -442,7 +447,6 @@ Inspired by `org-combine-plists'."
   (yas-reload-all))
 
 (use-package yatemplate
-  :pin melpa ;; WORKAROUND https://github.com/mineo/yatemplate/issues/13
   :defer 2 ;; WORKAROUND https://github.com/mineo/yatemplate/issues/3
   :init
   (setq auto-insert-alist nil)
@@ -509,7 +513,6 @@ Inspired by `org-combine-plists'."
   :commands rainbow-delimiters-mode)
 
 (use-package smartparens
-  :pin melpa
   :diminish smartparens-mode
   :commands
   smartparens-strict-mode
@@ -831,8 +834,9 @@ assuming it is in a maven-style project."
 ;;..............................................................................
 ;; org-mode
 (use-package org
-  :pin org
-  :ensure org-plus-contrib
+  ;;:pin org
+  ;;:ensure org-plus-contrib
+  :ensure nil
   :defer t
   :init
   (setq
