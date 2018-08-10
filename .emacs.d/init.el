@@ -154,7 +154,6 @@
   (setq dired-dwim-target t)
   ;; a workflow optimisation too far?
   (bind-key "<f12>" 'sbt-start dired-mode-map)
-  (bind-key "S-<f12>" 'ensime dired-mode-map)
   (bind-key "C-c c" 'sbt-command dired-mode-map)
   (bind-key "C-c e" 'next-error dired-mode-map))
 
@@ -297,7 +296,7 @@ Inspired by `org-combine-plists'."
   (setq
    clean-buffer-list-kill-regexps '("^[*].*")
    clean-buffer-list-kill-never-regexps
-   '("^\\([#]\\|[*]\\(scratch\\|sbt\\|Messages\\|ENSIME\\)\\).*")))
+   '("^\\([#]\\|[*]\\(scratch\\|sbt\\|Messages\\)\\).*")))
 
 (use-package persistent-scratch
   :config (persistent-scratch-setup-default))
@@ -323,7 +322,6 @@ Inspired by `org-combine-plists'."
   (flx-ido-mode t))
 
 (use-package projectile
-  ;;:pin melpa ;; for changes to ag-ignore
   :demand
   ;; nice to have it on the modeline
   :init
@@ -335,7 +333,7 @@ Inspired by `org-combine-plists'."
    projectile-use-git-grep t
    projectile-globally-ignored-files '("TAGS" "*.min.js"))
   :config
-  (projectile-global-mode)
+  (projectile-mode)
   (add-hook 'projectile-grep-finished-hook
             ;; not going to the first hit?
             (lambda () (pop-to-buffer next-error-last-buffer)))
@@ -675,17 +673,9 @@ assuming it is in a maven-style project."
   (c-indent-new-comment-line)
   (indent-according-to-mode))
 
-(defun ensime-sbt-do-fmt-only ()
-  "Format the current file using scalafix."
+(defun sbt-ctags ()
   (interactive)
-  (save-buffer)
-  (ensime-sbt-run-command-in-subproject "scalafmtOnly" (buffer-file-name-with-indirect)))
-
-(defun ensime-sbt-do-fmt ()
-  "Format everything using scalafix."
-  (interactive)
-  (save-buffer)
-  (sbt:command "fmt"))
+  (sbt:command "genCtags"))
 
 (use-package scala-mode
   :defer t
@@ -701,7 +691,6 @@ assuming it is in a maven-style project."
   (remove-hook 'post-self-insert-hook
                'scala-indent:indent-on-parentheses)
 
-  (bind-key "C-c F" 'ensime-sbt-do-fmt scala-mode-map)
   (bind-key "RET" 'scala-mode-newline-comments scala-mode-map)
   (bind-key "s-<delete>" (sp-restrict-c 'sp-kill-sexp) scala-mode-map)
   (bind-key "s-<backspace>" (sp-restrict-c 'sp-backward-kill-sexp) scala-mode-map)
@@ -714,29 +703,11 @@ assuming it is in a maven-style project."
   (bind-key "C-<tab>" 'dabbrev-expand scala-mode-map)
 
   (bind-key "<f12>" 'sbt-start scala-mode-map)
-  (bind-key "S-<f12>" 'ensime scala-mode-map)
   (bind-key "C-c c" 'sbt-command scala-mode-map)
-  (bind-key "C-c e" 'next-error scala-mode-map))
+  (bind-key "C-c e" 'next-error scala-mode-map)
 
-(defun ensime-edit-definition-with-fallback (arg)
-  "Variant of `ensime-edit-definition' with ctags if ENSIME is not available."
-  (interactive "P")
-  (unless (and (ensime-connection-or-nil)
-               (ensime-edit-definition arg))
-    (projectile-find-tag)))
-
-(use-package ensime
-  :defer t
-  :init
-  (put 'ensime-auto-generate-config 'safe-local-variable #'booleanp)
-  (setq
-   ensime-startup-notification nil)
-  :config
-  (require 'ensime-expand-region)
-  (add-hook 'git-timemachine-mode-hook (lambda () (ensime-mode 0)))
-
-  (bind-key "s-n" 'ensime-search ensime-mode-map)
-  (bind-key "s-t" 'ensime-print-type-at-point ensime-mode-map))
+  ;; overrides projectile
+  (bind-key "C-c p R" 'sbt-ctags scala-mode-map))
 
 (use-package sbt-mode
   :commands sbt-start sbt-command
@@ -756,8 +727,8 @@ assuming it is in a maven-style project."
    'self-insert-command
    minibuffer-local-completion-map)
 
-  (bind-key "C-c F" 'ensime-sbt-do-fmt sbt:mode-map)
-  (bind-key "S-<f12>" 'ensime sbt:mode-map)
+  ;; overrides projectile
+  (bind-key "C-c p R" 'sbt-ctags sbt:mode-map)
   (bind-key "C-c c" 'sbt-command sbt:mode-map)
   (bind-key "C-c e" 'next-error sbt:mode-map))
 
@@ -768,6 +739,9 @@ assuming it is in a maven-style project."
                     (,(expand-file-name (directory-file-name (projectile-project-root))) . ?§)
                     ("target/scala-2.12" . ?☢)
                     (,(expand-file-name "~") . ?~)))
+            ;; for some reason, local variables are ignored without this
+            ;;(hack-dir-local-variables-non-file-buffer)
+            (hack-local-variables)
             (prettify-symbols-mode t)))
 
 (defcustom
@@ -797,13 +771,6 @@ assuming it is in a maven-style project."
             (prettify-symbols-mode t)
             (scala-mode:goto-start-of-code)))
 
-(add-hook 'ensime-mode-hook
-          (lambda ()
-            ;; needs to be here to override the default
-            (bind-key "M-." 'ensime-edit-definition-with-fallback ensime-mode-map)
-            (let ((backends (company-backends-for-buffer)))
-              (setq company-backends (cons 'ensime-company backends)))))
-
 ;;..............................................................................
 ;; Java
 (use-package cc-mode
@@ -820,8 +787,7 @@ assuming it is in a maven-style project."
             (smartparens-mode t)
             (yas-minor-mode t)
             (git-gutter-mode t)
-            (company-mode t)
-            (ensime-mode t)))
+            (company-mode t)))
 
 
 ;;..............................................................................
@@ -842,7 +808,8 @@ assuming it is in a maven-style project."
   (setq
    org-src-fontify-natively t
    org-export-headline-levels 5)
-  :bind ("C-c c" . leanpub-export))
+  :config
+  (bind-key "C-c c" 'leanpub-export org-mode-map))
 
 (add-hook 'writeroom-mode-hook
           (lambda ()

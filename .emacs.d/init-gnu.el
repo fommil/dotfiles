@@ -53,8 +53,7 @@
    erc-prompt-for-password nil ;; prefer ~/.authinfo for passwords
    erc-hide-list '("JOIN" "PART" "QUIT")
    erc-autojoin-channels-alist
-   '(("irc.freenode.net" "#emacs")
-     ("irc.gitter.im" "#ensime/ensime-server" "#ensime/ensime-emacs"))))
+   '(("irc.freenode.net" "#emacs"))))
 
 (use-package yaml-mode
   :mode ("\\.yml\\'" . yaml-mode))

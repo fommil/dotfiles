@@ -1,0 +1,4 @@
+# -*- mode: snippet -*-
+#name: z
+# --
+import scalaz._, Scalaz._

@@ -5,4 +5,4 @@ if [ -z "$YOURKIT_INSTALL" ] ; then
     exit 1
 fi
 
-exec "$YOURKIT_INSTALL/bin/yjp.sh"
+exec "$YOURKIT_INSTALL/bin/profiler.sh"

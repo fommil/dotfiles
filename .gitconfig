@@ -17,6 +17,8 @@
     default = simple
 [mergetool]
     keepBackup = true
+[rebase]
+    autoStash = true
 [remote]
 # Setting pushdefault to origin, and not upstream, means that even if
 # pulls come from upstream, pushes still go to origin. This is a very
@@ -34,8 +36,9 @@
     ignored = !git ls-files -v | grep "^[[:lower:]]"
     spin = checkout -b
     sith = push --force
-    tidy = clean -fdx -e ensime.sbt -e .ensime-server.conf -e .dir-locals.el -e .sbtopts -e .ensime -e .ensime_cache -e .ensime_snapshot
-    nuke = clean -fdx -e ensime.sbt -e .ensime-server.conf -e .dir-locals.el -e .sbtopts
+    keep = stash save --keep-index
+    tidy = clean -fdx -e ensime.sbt -e local.sbt -e .ensime-server.conf -e .dir-locals.el -e .sbtopts -e .ensime -e .ensime_cache -e .ensime_snapshot
+    nuke = clean -fdx -e ensime.sbt -e local.sbt -e .ensime-server.conf -e .dir-locals.el -e .sbtopts
     cleantags = !git tag -l | xargs git tag -d
 [color]
     branch = auto

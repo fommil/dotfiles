@@ -1,4 +1,5 @@
 *.min.js
+*.js.map
 
 # https://github.com/ggreer/the_silver_searcher/issues/1181
 # use ag-ignore-list in emacs for per-project settings

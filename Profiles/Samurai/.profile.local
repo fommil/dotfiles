@@ -2,15 +2,20 @@
 
 # ~/.cache should be a symbolic link to here
 mkdir -m 0770 /tmp/$USER-cache 2>/dev/null
+ln -s $HOME/.spotify/cache /tmp/$USER-cache/spotify 2>/dev/null
 
 # git clone https://github.com/gcuisinier/jenv.git ~/.jenv
 export PATH=$HOME/.jenv/bin:$PATH
 eval "$(jenv init -)"
-
 export YOURKIT_INSTALL=/opt/yourkit
 export YOURKIT_AGENT=$YOURKIT_INSTALL/bin/linux-x86-64/libyjpagent.so
-
+export SBT_VOLATILE_TARGET=/tmp/$USER-cache/sbt
 export IDEA_JDK=/usr/lib/jvm/java-8-openjdk/
+export YJP_JAVA_HOME=$IDEA_JDK
+
+# git clone git@gitlab.com:fommil/ghc-env.git ~/.ghcenv
+export PATH=$HOME/.cabal/bin:$PATH
+export PATH=$HOME/.ghc-env/bin:$PATH
 
 export GOPATH=$HOME/.go
 # alternative to grive
@@ -26,8 +31,6 @@ export MAKEFLAGS="-j$(nproc)"
 # gcc -march=native -v -Q --help=target
 export CFLAGS="-march=native -O3"
 export CXXFLAGS="$CFLAGS"
-
-export SBT_VOLATILE_TARGET=/tmp/$USER-sbt
 
 export EMACS_SOURCE=$HOME/Projects/emacs
 # when building emacs25-git use this to use my local repo
