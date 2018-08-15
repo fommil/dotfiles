@@ -2,6 +2,6 @@ cancelable in Global := true
 shellPrompt := { state => "> " }
 SettingKey[Boolean]("autoStartServer") := false
 
-ensimeIgnoreMissingDirectories in ThisBuild := true
-ensimeJavaFlags ++= Seq("-Xmx4g", "-XX:+PerfDisableSharedMem")
+//ensimeIgnoreMissingDirectories in ThisBuild := true
+//ensimeJavaFlags ++= Seq("-Xmx4g", "-XX:+PerfDisableSharedMem")
 

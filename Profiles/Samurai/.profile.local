@@ -7,11 +7,9 @@ ln -s $HOME/.spotify/cache /tmp/$USER-cache/spotify 2>/dev/null
 # git clone https://github.com/gcuisinier/jenv.git ~/.jenv
 export PATH=$HOME/.jenv/bin:$PATH
 eval "$(jenv init -)"
-export YOURKIT_INSTALL=/opt/yourkit
-export YOURKIT_AGENT=$YOURKIT_INSTALL/bin/linux-x86-64/libyjpagent.so
 export SBT_VOLATILE_TARGET=/tmp/$USER-cache/sbt
-export IDEA_JDK=/usr/lib/jvm/java-8-openjdk/
-export YJP_JAVA_HOME=$IDEA_JDK
+export ASYNC_PROFILER_DIR=$HOME/Projects/async-profiler
+export FLAME_GRAPH_DIR=$HOME/Projects/FlameGraph
 
 # git clone git@gitlab.com:fommil/ghc-env.git ~/.ghcenv
 export PATH=$HOME/.cabal/bin:$PATH
