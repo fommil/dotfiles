@@ -3,4 +3,4 @@
 cd ~/.xmonad
 cabal new-build
 # cabal 2.4 allows customising the output directory to something easier with --symlink-bindir=
-/bin/cp -f dist-newstyle/build/x86_64-linux/ghc-8.4.3/my-xmonad-0.1.0.0/x/my-xmonad/build/my-xmonad/my-xmonad $1
+/bin/cp -f dist-newstyle/build/x86_64-linux/ghc-8.4.3/dotxmonad-0.1.0.0/x/xmonad-x86_64-linux/build/xmonad-x86_64-linux/xmonad-x86_64-linux ${1:-.}
