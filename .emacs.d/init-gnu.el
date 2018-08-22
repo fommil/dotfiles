@@ -247,8 +247,7 @@
              (org-entry-put (point) "EXPORT_FILE_NAME" filename))
          (org-leanpub-export-to-markdown nil 1 nil))))
    "-noexport")
-  (org-save-all-org-buffers)
-  nil nil)
+  (org-save-all-org-buffers))
 
 ;;..............................................................................
 ;; Chat rooms

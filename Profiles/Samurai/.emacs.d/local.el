@@ -18,7 +18,7 @@
 ;;    (find-file "~/Projects")))
 
 (find-file "~/Projects/scalaz72")
-(find-file "~/Projects/drone-dynamic-agents")
+(find-file "~/Projects/fpmortals/example/")
 (find-file "~/Projects/fpmortals/manuscript/book.org")
 
 (let ((hour (string-to-number (format-time-string "%H"))))

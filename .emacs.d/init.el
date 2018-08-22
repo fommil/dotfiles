@@ -299,7 +299,9 @@ Inspired by `org-combine-plists'."
    '("^\\([#]\\|[*]\\(scratch\\|sbt\\|Messages\\)\\).*")))
 
 (use-package persistent-scratch
-  :config (persistent-scratch-setup-default))
+  :config
+  (persistent-scratch-setup-default)
+  (setq persistent-scratch-what-to-save nil))
 
 (use-package undo-tree
   :diminish undo-tree-mode
