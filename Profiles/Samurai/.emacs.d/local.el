@@ -21,9 +21,10 @@
 (find-file "~/Projects/fpmortals/example/")
 (find-file "~/Projects/fpmortals/manuscript/book.org")
 
-(let ((hour (string-to-number (format-time-string "%H"))))
-  (if (< hour 20)
-      (light-theme)
-    (dark-theme)))
+(when window-system
+  (let ((hour (string-to-number (format-time-string "%H"))))
+    (if (< hour 20)
+        (light-theme)
+      (dark-theme))))
 
 ;;; local.el ends here

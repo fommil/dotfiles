@@ -3,14 +3,6 @@
 # ~/.cache should be a symbolic link to here
 mkdir -m 0770 /tmp/$USER-cache 2>/dev/null
 ln -s $HOME/.spotify/cache /tmp/$USER-cache/spotify 2>/dev/null
-ln -s $HOME/.coursier /tmp/$USER-cache/coursier 2>/dev/null
-
-# git clone https://github.com/gcuisinier/jenv.git ~/.jenv
-export PATH=$HOME/.jenv/bin:$PATH
-eval "$(jenv init -)"
-export SBT_VOLATILE_TARGET=/tmp/$USER-cache/sbt
-export ASYNC_PROFILER_DIR=$HOME/Projects/async-profiler
-export FLAME_GRAPH_DIR=$HOME/Projects/FlameGraph
 
 # git clone git@gitlab.com:fommil/ghc-env.git ~/.ghcenv
 export PATH=$HOME/.cabal/bin:$PATH
