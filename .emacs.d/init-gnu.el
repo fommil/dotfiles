@@ -100,7 +100,8 @@
 (use-package haskell-mode
   :init
   (put 'haskell-compile-command 'safe-local-variable #'stringp)
-  (setq haskell-compile-cabal-build-command "cd %s && stack build")
+  ;;(setq haskell-compile-cabal-build-command "cd %s && stack build")
+  ;;(setq haskell-compile-cabal-build-command "cd %s && cabal build --ghc-option=-ferror-spans")
   :config
   ;; build google with `stack hoogle generate'
   ;; run `stack hoogle server'
@@ -109,14 +110,18 @@
 
 ;; Haskell workflow wants:
 ;;
-;; 1. import symbol at point
-;; 2. import cleanups (including expanding wildcards)
-;; 3. local hoogle search without leaving emacs
-;; 4. type at point
-;; 5. docs of symbol / type at point
-;; 6. learn to use the repl
-;; 7. format on save / compile (hindent)
-;; 8. flycheck compile on save
+;; - haskell-compile for running tests, with regex hits
+;; - see / expand all members in an import
+;; - type at point (in minibuffer)
+;; - jump to source of symbol at point
+;; - import from current point by (existing) symbol name
+;; - import from current point by (popup) symbol search
+;; - import from current point by (popup) hoogle search
+;; - popup (transitive) view hoogle results
+;; - manage language extensions from point
+;; - cleanup imports
+;; - format on save / compile (hindent)
+;; - flycheck inline errors
 ;; 9. jump to imports and back (would be nice in scala too)
 ;; 10. convert () and $ notation
 ;; 11. (for irc) erc should hide short usernames
