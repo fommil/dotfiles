@@ -100,19 +100,47 @@
 (use-package haskell-mode
   :init
   (put 'haskell-compile-command 'safe-local-variable #'stringp)
-  ;;(setq haskell-compile-cabal-build-command "cd %s && stack build")
-  ;;(setq haskell-compile-cabal-build-command "cd %s && cabal build --ghc-option=-ferror-spans")
   :config
-  ;; build google with `stack hoogle generate'
-  ;; run `stack hoogle server'
-  (add-hook 'haskell-mode-hook #'smartparens-mode)
-  (bind-key "C-c c" 'haskell-compile haskell-mode-map))
+  ;;(bind-key "C-c c" 'haskell-compile haskell-mode-map)
+  (bind-key "C-c c" 'haskell-cabal-tasty haskell-mode-map))
+
+(add-hook 'haskell-mode-hook
+          (lambda ()
+            (whitespace-mode-with-local-variables)
+            (show-paren-mode t)
+            (smartparens-mode t)
+            (yas-minor-mode t)
+            (git-gutter-mode t)
+            (company-mode t)
+            (setq prettify-symbols-alist scala-mode-prettify-symbols)
+            (prettify-symbols-mode t)
+            (setq company-backends (company-backends-for-buffer))))
+
+;; what's the right scope for this?
+(setq haskell-cabal-tasty-last nil)
+(defun haskell-cabal-tasty (&optional edit)
+  "Invokes `cabal tasty', with an optional pattern restriction."
+  (interactive "P")
+  (save-some-buffers (not compilation-ask-about-save)
+                     compilation-save-buffers-predicate)
+  (let* ((cabdir (haskell-cabal-find-dir))
+         (base (format "cd %s && cabal test tasty --test-option=--timeout=10s --show-detail=direct --test-option=--color=always" cabdir))
+         (restriction (if edit
+                        (let ((custom (compilation-read-command "")))
+                          (unless (string-empty-p custom)
+                            (format " --test-option=--pattern=%s" custom)))
+                        haskell-cabal-tasty-last))
+         (command (concat base restriction)))
+    (setq haskell-cabal-tasty-last restriction)
+    (compilation-start command 'haskell-compilation-mode)))
 
 ;; Haskell workflow wants:
 ;;
 ;; - haskell-compile for running tests, with regex hits
-;; - see / expand all members in an import
+;;   (replace `haskell-compile' with a hydra that remembers the last command)
+;; - see / expand all members in an import (:browse at point)
 ;; - type at point (in minibuffer)
+;;   haskell-doc-mode is too hacky and limited for my tastes
 ;; - jump to source of symbol at point
 ;; - import from current point by (existing) symbol name
 ;; - import from current point by (popup) symbol search
@@ -120,11 +148,14 @@
 ;; - popup (transitive) view hoogle results
 ;; - manage language extensions from point
 ;; - cleanup imports
-;; - format on save / compile (hindent)
+;; - format on save / compile (hindent / brittany)
 ;; - flycheck inline errors
-;; 9. jump to imports and back (would be nice in scala too)
-;; 10. convert () and $ notation
-;; 11. (for irc) erc should hide short usernames
+;; - jump to imports and back
+;; - convert () and $ notation
+;; - (for irc) erc should hide short usernames (god damn you `so')
+;; - specifying / calculating the repl target on startup per file
+;; - expand name of currently scoped function, with patterns
+;; - colour output when running tasty tests
 
 ;;..............................................................................
 ;; Clojure
