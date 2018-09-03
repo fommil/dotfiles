@@ -645,10 +645,15 @@ Inspired by `org-combine-plists'."
   :init
   (setq
    erc-prompt-for-password nil ;; prefer ~/.authinfo for passwords
-   erc-hide-list '("JOIN" "PART" "QUIT")
+   erc-hide-list '("JOIN" "PART" "QUIT" "MODE")
    erc-autojoin-channels-alist
-   '(("irc.freenode.net" "#emacs"))))
+   '(("freenode.net" "#qfpl" "#haskell" "#haskell-emacs"))))
 (add-hook 'erc-mode 'erc-spelling-mode)
+
+;; WORKAROUND: https://github.com/leathekd/erc-hl-nicks/issues/11
+(use-package erc-hl-nicks
+  :init
+  (setq erc-hl-nicks-skip-nicks '("so")))
 
 ;;..............................................................................
 ;; Miscellaneous editing modes

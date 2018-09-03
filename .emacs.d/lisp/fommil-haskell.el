@@ -13,7 +13,9 @@
 ;;   (replace `haskell-compile' with a hydra that remembers the last command)
 ;; - see / expand all members in an import (:browse at point)
 ;; - type at point (in minibuffer)
-;;   haskell-doc-mode is too hacky and limited for my tastes
+;;   haskell-doc-mode is too hacky and limited for my tastes,
+;;   https://downloads.haskell.org/~ghc/latest/docs/html/users_guide/ghci.html#ghci-cmd-:type-at
+;;   https://ghc.haskell.org/trac/ghc/ticket/15461
 ;; - jump to source of symbol at point
 ;;   maybe ctags are enough, https://github.com/MarcWeber/hasktags
 ;; - import from current point by (existing) symbol name
@@ -26,8 +28,6 @@
 ;; - flycheck inline errors
 ;; - jump to imports and back
 ;; - convert () and $ notation
-;; - (for irc) erc should hide short usernames (god damn you `so')
-;;   https://emacs.stackexchange.com/questions/3749
 ;; - specifying / calculating the repl target on startup per file
 ;; - expand name of currently scoped function, with patterns
 ;; - colour output when running tasty tests
@@ -41,7 +41,8 @@
   :config
   (bind-key "C-c i" 'haskell-doc-show-type haskell-mode-map)
   (bind-key "C-c t" 'haskell-cabal-tasty haskell-mode-map)
-  (bind-key "C-c c" 'haskell-compile haskell-mode-map))
+  (bind-key "C-c c" 'haskell-compile haskell-mode-map)
+  (bind-key "C-c e" 'next-error haskell-mode-map))
 
 (require 'haskell-compile)
 (add-hook 'haskell-mode-hook
