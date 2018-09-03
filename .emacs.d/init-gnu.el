@@ -31,9 +31,9 @@
    x-select-enable-clipboard t
    interprogram-paste-function 'x-cut-buffer-or-selection-value))
 
-(use-package ess-site
-  :ensure ess
-  :mode ("\\.R\\'" . R-mode))
+;; (use-package ess-site
+;;   :ensure ess
+;;   :mode ("\\.R\\'" . R-mode))
 
 (use-package package-utils)
 
@@ -46,162 +46,6 @@
 ;; (use-package elnode
 ;;   :commands elnode-make-webserver)
 
-(use-package erc
-  :commands erc erc-tls
-  :init
-  (setq
-   erc-prompt-for-password nil ;; prefer ~/.authinfo for passwords
-   erc-hide-list '("JOIN" "PART" "QUIT")
-   erc-autojoin-channels-alist
-   '(("irc.freenode.net" "#emacs"))))
-
-(use-package yaml-mode
-  :mode ("\\.yml\\'" . yaml-mode))
-
-(use-package dockerfile-mode
-  :mode ("Dockerfile\\'" . dockerfile-mode))
-
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;; This section is for loading and configuring more involved
-;; task/function-specific modes, organised by task or function.
-;;..............................................................................
-;; Email
-(setq
- smtpmail-smtp-server "smtp.gmail.com"
- smtpmail-stream-type 'starttls
- smtpmail-smtp-service 587
- mail-user-agent 'message-user-agent
- user-mail-address "Sam.Halliday@gmail.com"
- send-mail-function 'smtpmail-send-it
- message-auto-save-directory (concat user-emacs-directory "drafts")
- message-kill-buffer-on-exit t
- message-signature "Best regards,\nSam\n"
- notmuch-search-line-faces '(("unread" :weight bold)
-                             ("flagged" :inherit 'font-lock-string-face))
- notmuch-fcc-dirs nil
- notmuch-search-oldest-first nil
- notmuch-address-command "notmuch-addrlookup"
- notmuch-saved-searches '((:name "inbox" :key "i" :query "tag:inbox")
-                          (:name "unread" :key "u" :query "tag:unread")
-                          (:name "flagged" :key "f" :query "tag:flagged")
-                          (:name "drafts" :key "d" :query "tag:draft")
-                          (:name "all" :key "a" :query "*")))
-(use-package notmuch
-  :commands notmuch
-  :config
-  (add-hook 'message-setup-hook #'company-mode)
-  ;; BUG https://debbugs.gnu.org/cgi/bugreport.cgi?bug=23747
-  (add-hook 'message-setup-hook #'mml-secure-sign-pgpmime)
-  )
-
-;;..............................................................................
-;; Haskell
-
-(use-package haskell-mode
-  :init
-  (put 'haskell-compile-command 'safe-local-variable #'stringp)
-  :config
-  ;;(bind-key "C-c c" 'haskell-compile haskell-mode-map)
-  (bind-key "C-c c" 'haskell-cabal-tasty haskell-mode-map))
-
-(add-hook 'haskell-mode-hook
-          (lambda ()
-            (whitespace-mode-with-local-variables)
-            (show-paren-mode t)
-            (smartparens-mode t)
-            (yas-minor-mode t)
-            (git-gutter-mode t)
-            (company-mode t)
-            (setq prettify-symbols-alist scala-mode-prettify-symbols)
-            (prettify-symbols-mode t)
-            (setq company-backends (company-backends-for-buffer))))
-
-;; what's the right scope for this?
-(setq haskell-cabal-tasty-last nil)
-(defun haskell-cabal-tasty (&optional edit)
-  "Invokes `cabal tasty', with an optional pattern restriction."
-  (interactive "P")
-  (save-some-buffers (not compilation-ask-about-save)
-                     compilation-save-buffers-predicate)
-  (let* ((cabdir (haskell-cabal-find-dir))
-         (base (format "cd %s && cabal test tasty --test-option=--timeout=10s --show-detail=direct --test-option=--color=always" cabdir))
-         (restriction (if edit
-                        (let ((custom (compilation-read-command "")))
-                          (unless (string-empty-p custom)
-                            (format " --test-option=--pattern=%s" custom)))
-                        haskell-cabal-tasty-last))
-         (command (concat base restriction)))
-    (setq haskell-cabal-tasty-last restriction)
-    (compilation-start command 'haskell-compilation-mode)))
-
-;; Haskell workflow wants:
-;;
-;; - haskell-compile for running tests, with regex hits
-;;   (replace `haskell-compile' with a hydra that remembers the last command)
-;; - see / expand all members in an import (:browse at point)
-;; - type at point (in minibuffer)
-;;   haskell-doc-mode is too hacky and limited for my tastes
-;; - jump to source of symbol at point
-;; - import from current point by (existing) symbol name
-;; - import from current point by (popup) symbol search
-;; - import from current point by (popup) hoogle search
-;; - popup (transitive) view hoogle results
-;; - manage language extensions from point
-;; - cleanup imports
-;; - format on save / compile (hindent / brittany)
-;; - flycheck inline errors
-;; - jump to imports and back
-;; - convert () and $ notation
-;; - (for irc) erc should hide short usernames (god damn you `so')
-;; - specifying / calculating the repl target on startup per file
-;; - expand name of currently scoped function, with patterns
-;; - colour output when running tasty tests
-
-;;..............................................................................
-;; Clojure
-
-;; (use-package flycheck-clojure)
-;; (use-package flycheck-pos-tip)
-;; (use-package cider
-;;   :commands cider-jack-in
-;;   :config
-;;   (bind-key "C-c c" 'compile clojure-mode-map)
-;;   (bind-key "C-c e" 'next-error clojure-mode-map))
-;; (defalias 'cider 'cider-jack-in)
-;; (add-hook 'clojure-mode-hook
-;;           (lambda ()
-;;             (show-paren-mode t)
-;;             ;;(focus-mode t)
-;;             (rainbow-mode t)
-;;             (eldoc-mode t)
-
-;;             ;; BUG https://github.com/clojure-emacs/squiggly-clojure/issues/39
-;;             (flycheck-clojure-setup)
-;;             (flycheck-mode t)
-;;             (flycheck-pos-tip-mode t)
-
-;;             (yas-minor-mode t)
-;;             (company-mode t)
-;;             (smartparens-strict-mode t)
-;;             (rainbow-delimiters-mode t)))
-
-;; (add-hook 'cider-repl-mode-hook #'eldoc-mode)
-
-;;..............................................................................
-;; Python
-(use-package elpy)
-(use-package python-mode
-  :ensure nil
-  :bind ("C-c e" . next-error))
-
-(add-hook 'python-mode-hook
-          (lambda ()
-            (smartparens-mode)
-            (elpy-mode)
-            (let ((backends (company-backends-for-buffer)))
-              (setq company-backends (cons 'elpy-company-backend backends)))))
-(put 'pyvenv-activate 'safe-local-variable #'stringp)
-
 ;;..............................................................................
 ;; shell scripts
 (add-hook 'sh-mode-hook #'electric-indent-local-mode)
@@ -213,32 +57,7 @@
 ;;   :config
 ;;   (bind-key "C-c s r" 'synosaurus-choose-and-replace text-mode-map))
 
-(use-package writegood-mode
-  :commands writegood-mode)
-
-(defun writing-mode-hooks ()
-  "Common hooks for writing modes."
-  ;;(setq company-backends '(company-yasnippet))
-  (flyspell-mode)
-  (whitespace-mode-with-local-variables)
-  (writegood-mode))
-;; performance problems in emacs 24.5 (e.g. email)
-;;(add-hook 'text-mode-hook #'writing-mode-hooks)
-(add-hook 'org-mode-hook #'writing-mode-hooks)
-(add-hook 'markdown-mode-hook #'writing-mode-hooks)
-
 (use-package graphviz-dot-mode)
-
-(defun markdown-flyspell-predicate ()
-  "Refine the default text predicate to ignore markdown specific things."
-  (and
-   (text-flyspell-predicate)
-   (not
-    ;; this relies on faces so doesn't work if flyspell-buffer is
-    ;; called before faces are available (e.g. in a hook)
-    (let ((f (get-text-property (- (point) 1) 'face)))
-      (member f '(markdown-pre-face markdown-language-keyword-face))))))
-(put #'markdown-mode #'flyspell-mode-predicate #'markdown-flyspell-predicate)
 
 (defun pandoc ()
   "If a hidden .pandoc file exists for the file, run it."

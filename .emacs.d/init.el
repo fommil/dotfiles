@@ -461,13 +461,6 @@ Inspired by `org-combine-plists'."
          ("M-o" . isearch-moccur)
          ("M-O" . isearch-moccur-all)))
 
-(use-package writeroom-mode
-  ;; BUGs to be aware of:
-  ;; https://github.com/joostkremers/writeroom-mode/issues/18
-  ;; https://github.com/company-mode/company-mode/issues/376
-  ;;:diminish writeroom-mode
-  :commands writeroom-mode)
-
 (use-package whitespace
   :commands whitespace-mode
   :diminish whitespace-mode
@@ -612,6 +605,7 @@ Inspired by `org-combine-plists'."
   :ensure nil
   :diminish eldoc-mode
   :commands eldoc-mode)
+(global-eldoc-mode -1)
 
 (use-package pcre2el
   :commands rxt-toggle-elisp-rx
@@ -637,161 +631,6 @@ Inspired by `org-combine-plists'."
             (smartparens-strict-mode t)
             (rainbow-delimiters-mode t)))
 
-
-;;..............................................................................
-;; Scala
-
-;; Java / Scala support for templates
-(defun mvn-package-for-buffer ()
-  "Calculate the expected package name for the buffer;
-assuming it is in a maven-style project."
-  ;; see https://github.com/fommil/dotfiles/issues/66
-  (let* ((kind (file-name-extension buffer-file-name))
-         (root (locate-dominating-file default-directory kind)))
-    (when root
-      (require 'subr-x) ;; maybe we should just use 's
-      (let ((calculated (replace-regexp-in-string
-                         (regexp-quote "/") "."
-                         (string-remove-suffix "/"
-                                               (string-remove-prefix
-                                                (expand-file-name (concat root "/" kind "/"))
-                                                default-directory))
-                         nil 'literal)))
-        (unless (or (null calculated)
-                    (string= "" calculated)
-                    (s-starts-with-p "." calculated))
-          calculated)))))
-
-(defun scala-mode-newline-comments ()
-  "Custom newline appropriate for `scala-mode'."
-  ;; shouldn't this be in a post-insert hook?
-  (interactive)
-  (newline-and-indent)
-  (scala-indent:insert-asterisk-on-multiline-comment))
-
-(defun c-mode-newline-comments ()
-  "Newline with indent and preserve multiline comments."
-  (interactive)
-  (c-indent-new-comment-line)
-  (indent-according-to-mode))
-
-(defun sbt-ctags ()
-  (interactive)
-  (sbt:command "genCtags"))
-
-(use-package scala-mode
-  :defer t
-  :init
-  (setq-default yatemplate-scala-header-skip nil)
-  (put 'yatemplate-scala-header-skip 'safe-local-variable #'booleanp)
-  (setq
-   scala-indent:use-javadoc-style t
-   scala-indent:align-parameters t)
-  :config
-
-  ;; prefer smartparens for parens handling
-  (remove-hook 'post-self-insert-hook
-               'scala-indent:indent-on-parentheses)
-
-  (bind-key "RET" 'scala-mode-newline-comments scala-mode-map)
-  (bind-key "s-<delete>" (sp-restrict-c 'sp-kill-sexp) scala-mode-map)
-  (bind-key "s-<backspace>" (sp-restrict-c 'sp-backward-kill-sexp) scala-mode-map)
-  (bind-key "s-<home>" (sp-restrict-c 'sp-beginning-of-sexp) scala-mode-map)
-  (bind-key "s-<end>" (sp-restrict-c 'sp-end-of-sexp) scala-mode-map)
-  ;; BUG https://github.com/Fuco1/smartparens/issues/468
-  ;; backwards/next not working particularly well
-
-  ;; i.e. bypass company-mode
-  (bind-key "C-<tab>" 'dabbrev-expand scala-mode-map)
-
-  (bind-key "<f12>" 'sbt-start scala-mode-map)
-  (bind-key "C-c c" 'sbt-command scala-mode-map)
-  (bind-key "C-c e" 'next-error scala-mode-map)
-
-  ;; overrides projectile
-  (bind-key "C-c p R" 'sbt-ctags scala-mode-map))
-
-(use-package sbt-mode
-  :commands sbt-start sbt-command
-  :init
-  (setq
-   sbt:sbt-history-file ".history"
-   sbt:ansi-support t
-   sbt:prefer-nested-projects t
-   sbt:scroll-to-bottom-on-output nil
-   sbt:default-command "test:compile")
-  (put 'sbt:default-command 'safe-local-variable #'stringp)
-  :config
-  ;; WORKAROUND: https://github.com/hvesalai/sbt-mode/issues/31
-  ;; allows using SPACE when in the minibuffer
-  (substitute-key-definition
-   'minibuffer-complete-word
-   'self-insert-command
-   minibuffer-local-completion-map)
-
-  ;; overrides projectile
-  (bind-key "C-c p R" 'sbt-ctags sbt:mode-map)
-  (bind-key "C-c c" 'sbt-command sbt:mode-map)
-  (bind-key "C-c e" 'next-error sbt:mode-map))
-
-(add-hook 'sbt-mode-hook
-          (lambda ()
-            (setq prettify-symbols-alist
-                  `((,(expand-file-name (getenv "SBT_VOLATILE_TARGET")) . ?☣)
-                    (,(expand-file-name (directory-file-name (projectile-project-root))) . ?§)
-                    ("target/scala-2.12" . ?☢)
-                    (,(expand-file-name "~") . ?~)))
-            ;; for some reason, local variables are ignored without this
-            ;;(hack-dir-local-variables-non-file-buffer)
-            (hack-local-variables)
-            (prettify-symbols-mode t)))
-
-(defcustom
-  scala-mode-prettify-symbols
-  '(;;("->" . ?→)
-    ;;("<-" . ?←)
-    ;;("=>" . ?⇒)
-    ;; ("<=" . ?≤)
-    ;; (">=" . ?≥)
-    ;; ("!=" . ?≠)
-    ;; implicit https://github.com/chrissimpkins/Hack/issues/214
-    ;;("+-" . ?±)
-    ;; https://contributors.scala-lang.org/t/proposed-syntax-for--root-/1035/78?u=fommil
-    ("_root_." . ?/)
-    )
-  "Prettify symbols for scala-mode.")
-
-(add-hook 'scala-mode-hook
-          (lambda ()
-            (whitespace-mode-with-local-variables)
-            (show-paren-mode t)
-            (smartparens-mode t)
-            (yas-minor-mode t)
-            (git-gutter-mode t)
-            (company-mode t)
-            (setq prettify-symbols-alist scala-mode-prettify-symbols)
-            (prettify-symbols-mode t)
-            (scala-mode:goto-start-of-code)))
-
-;;..............................................................................
-;; Java
-(use-package cc-mode
-  :ensure nil
-  :config
-  (bind-key "C-c c" 'sbt-command java-mode-map)
-  (bind-key "C-c e" 'next-error java-mode-map)
-  (bind-key "RET" 'c-mode-newline-comments java-mode-map))
-
-(add-hook 'java-mode-hook
-          (lambda ()
-            (whitespace-mode-with-local-variables)
-            (show-paren-mode t)
-            (smartparens-mode t)
-            (yas-minor-mode t)
-            (git-gutter-mode t)
-            (company-mode t)))
-
-
 ;;..............................................................................
 ;; C
 (add-hook 'c-mode-hook (lambda ()
@@ -800,42 +639,29 @@ assuming it is in a maven-style project."
                          (smartparens-mode t)))
 
 ;;..............................................................................
-;; org-mode
-(use-package org
-  ;;:pin org
-  ;;:ensure org-plus-contrib
-  :ensure nil
-  :defer t
+;; IRC
+(use-package erc
+  :commands erc erc-tls
   :init
   (setq
-   org-src-fontify-natively t
-   org-export-headline-levels 5)
-  :config
-  (bind-key "C-c c" 'leanpub-export org-mode-map))
+   erc-prompt-for-password nil ;; prefer ~/.authinfo for passwords
+   erc-hide-list '("JOIN" "PART" "QUIT")
+   erc-autojoin-channels-alist
+   '(("irc.freenode.net" "#emacs"))))
+(add-hook 'erc-mode 'erc-spelling-mode)
 
-(add-hook 'writeroom-mode-hook
-          (lambda ()
-            ;; NOTE weird sizing bug in writeroom
-            (delete-other-windows)))
+;;..............................................................................
+;; Miscellaneous editing modes
+(use-package yaml-mode
+  :mode ("\\.yml\\'" . yaml-mode))
 
-(add-hook 'org-mode-hook
-          (lambda ()
-            (yas-minor-mode t)
-            (company-mode t)
-            (visual-line-mode t)
-            (local-set-key (kbd "s-c") 'picture-mode)
-            (org-babel-do-load-languages
-             'org-babel-load-languages
-             '((ditaa . t)
-               (dot   . t)))))
+(use-package dockerfile-mode
+  :mode ("Dockerfile\\'" . dockerfile-mode))
 
-(use-package markdown-mode
-  :commands markdown-mode)
-(add-hook 'markdown-mode-hook
-          (lambda ()
-            (yas-minor-mode t)
-            (company-mode t)
-            (visual-line-mode t)))
+(require 'fommil-email)
+(require 'fommil-haskell)
+(require 'fommil-scala)
+(require 'fommil-manuscripts)
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; OS specific
@@ -848,7 +674,7 @@ assuming it is in a maven-style project."
 (use-package intellij-theme)
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;; Themeing
+;; Themes
 (defun dark-theme ()
   "A dark coloured theme for hacking when there is no screen glare."
   (interactive)
