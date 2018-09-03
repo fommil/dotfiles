@@ -5,7 +5,32 @@
 
 ;;; Commentary:
 ;;
-;;  Support for the Haskell language and ecosystem.
+;; Support for the Haskell language and ecosystem.
+;;
+;; Haskell workflow wants:
+;;
+;; - haskell-compile for running tests, with regex hits
+;;   (replace `haskell-compile' with a hydra that remembers the last command)
+;; - see / expand all members in an import (:browse at point)
+;; - type at point (in minibuffer)
+;;   haskell-doc-mode is too hacky and limited for my tastes
+;; - jump to source of symbol at point
+;;   maybe ctags are enough, https://github.com/MarcWeber/hasktags
+;; - import from current point by (existing) symbol name
+;; - import from current point by (popup) symbol search
+;; - import from current point by (popup) hoogle search
+;; - popup (transitive) view hoogle results
+;; - manage language extensions from point
+;; - cleanup imports
+;; - format on save / compile (hindent / brittany)
+;; - flycheck inline errors
+;; - jump to imports and back
+;; - convert () and $ notation
+;; - (for irc) erc should hide short usernames (god damn you `so')
+;;   https://emacs.stackexchange.com/questions/3749
+;; - specifying / calculating the repl target on startup per file
+;; - expand name of currently scoped function, with patterns
+;; - colour output when running tasty tests
 ;;
 ;;; Code:
 
@@ -50,30 +75,42 @@
     (setq haskell-cabal-tasty-last restriction)
     (compilation-start command 'haskell-compilation-mode)))
 
-;; Haskell workflow wants:
-;;
-;; - haskell-compile for running tests, with regex hits
-;;   (replace `haskell-compile' with a hydra that remembers the last command)
-;; - see / expand all members in an import (:browse at point)
-;; - type at point (in minibuffer)
-;;   haskell-doc-mode is too hacky and limited for my tastes
-;; - jump to source of symbol at point
-;;   maybe ctags are enough, https://github.com/MarcWeber/hasktags
-;; - import from current point by (existing) symbol name
-;; - import from current point by (popup) symbol search
-;; - import from current point by (popup) hoogle search
-;; - popup (transitive) view hoogle results
-;; - manage language extensions from point
-;; - cleanup imports
-;; - format on save / compile (hindent / brittany)
-;; - flycheck inline errors
-;; - jump to imports and back
-;; - convert () and $ notation
-;; - (for irc) erc should hide short usernames (god damn you `so')
-;;   https://emacs.stackexchange.com/questions/3749
-;; - specifying / calculating the repl target on startup per file
-;; - expand name of currently scoped function, with patterns
-;; - colour output when running tasty tests
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; WORKAROUNDS (with links to upstreams issues)
+(require 'ansi-color)
+
+;; https://github.com/haskell/haskell-mode/pull/1608
+(setq haskell-compile-color t)
+(defun haskell-compilation-filter-hook ()
+  "Local `compilation-filter-hook' for `haskell-compilation-mode'."
+  (when haskell-compile-ghc-filter-linker-messages
+    (delete-matching-lines "^ *Loading package [^ \t\r\n]+ [.]+ linking [.]+ done\\.$"
+                           (save-excursion (goto-char compilation-filter-start)
+                                           (line-beginning-position))
+                           (point)))
+  (when haskell-compile-color
+    (read-only-mode -1)
+    (ansi-color-apply-on-region compilation-filter-start (point-max))
+    (read-only-mode 1)))
+
+;; https://github.com/haskell/haskell-mode/pull/1608
+(setq haskell-compilation-error-regexp-alist
+  `((,(concat
+       "^ *\\(?1:[^\t\r\n]+?\\):"
+       "\\(?:"
+       "\\(?2:[0-9]+\\):\\(?4:[0-9]+\\)\\(?:-\\(?5:[0-9]+\\)\\)?" ;; "121:1" & "12:3-5"
+       "\\|"
+       "(\\(?2:[0-9]+\\),\\(?4:[0-9]+\\))-(\\(?3:[0-9]+\\),\\(?5:[0-9]+\\))" ;; "(289,5)-(291,36)"
+       "\\)"
+       ":\\(?6:\n?[ \t]+[Ww]arning:\\)?")
+     1 (2 . 3) (4 . 5) (6 . nil))
+    ("^    \\(?:Declared at:\\|            \\) \\(?1:[^ \t\r\n]+\\.el\\):\\(?2:[0-9]+\\):\\(?4:[0-9]+\\)$"
+     1 2 4 0)
+
+    (".*error, called at \\(.*\\.hs\\):\\([0-9]+\\):\\([0-9]+\\) in .*" 1 2 3 2 1)
+    (" +\\(.*\\.hs\\):\\([0-9]+\\):$" 1 2 nil 2 1)
+    (" at \\(?1:[^ \t\r\n]+\\):\\(?2:[0-9]+\\):\\(?4:[0-9]+\\)\\(?:-\\(?5:[0-9]+\\)\\)?[)]?$"
+     1 2 (4 . 5) 0)))
 
 (provide 'fommil-haskell)
 
