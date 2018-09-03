@@ -46,7 +46,7 @@
 (require 'haskell-compile)
 (add-hook 'haskell-mode-hook
           (lambda ()
-            (eldoc-mode -1) ;; I prefer explicit requests for types...
+            (haskell-doc-mode 1)
             (whitespace-mode-with-local-variables)
             (show-paren-mode t)
             (smartparens-mode t)
