@@ -11,11 +11,13 @@
 ;;
 ;; - haskell-compile for running tests, with regex hits
 ;;   (replace `haskell-compile' with a hydra that remembers the last command)
+;; - compile just one file, with cabal, to avoid long lags (ideally with squiggly)
 ;; - see / expand all members in an import (:browse at point)
 ;; - type at point (in minibuffer)
 ;;   haskell-doc-mode is too hacky and limited for my tastes,
 ;;   https://downloads.haskell.org/~ghc/latest/docs/html/users_guide/ghci.html#ghci-cmd-:type-at
 ;;   https://ghc.haskell.org/trac/ghc/ticket/15461
+;; - summarise an ADT when type-at-point is used on an explicit type param (also popup version)
 ;; - jump to source of symbol at point
 ;;   maybe ctags are enough, https://github.com/MarcWeber/hasktags
 ;; - import from current point by (existing) symbol name
@@ -30,7 +32,9 @@
 ;; - convert () and $ notation
 ;; - specifying / calculating the repl target on startup per file
 ;; - expand name of currently scoped function, with patterns
-;; - colour output when running tasty tests
+;; - better indent behaviour, it never seems to get it right
+;; - writing "left to right" vs "right to left", is there a way to jump?
+;; - gen instance typesig boilerplate
 ;;
 ;;; Code:
 
