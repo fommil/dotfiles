@@ -654,6 +654,8 @@ Inspired by `org-combine-plists'."
 (use-package erc-hl-nicks
   :init
   (setq erc-hl-nicks-skip-nicks '("so")))
+(custom-set-faces
+ '(erc-nick-default-face ((t nil))))
 
 ;;..............................................................................
 ;; Miscellaneous editing modes

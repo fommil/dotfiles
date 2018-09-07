@@ -37,8 +37,7 @@
     spin = checkout -b
     sith = push --force
     keep = stash save --keep-index
-    tidy = clean -fdx -e ensime.sbt -e local.sbt -e .ensime-server.conf -e .dir-locals.el -e .sbtopts -e .ensime -e .ensime_cache -e .ensime_snapshot
-    nuke = clean -fdx -e ensime.sbt -e local.sbt -e .ensime-server.conf -e .dir-locals.el -e .sbtopts
+    nuke = clean -fdx -e cabal.project.local -e .dir-locals.el
     cleantags = !git tag -l | xargs git tag -d
 [color]
     branch = auto

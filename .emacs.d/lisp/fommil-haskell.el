@@ -9,6 +9,9 @@
 ;;
 ;; Haskell workflow wants:
 ;;
+;; - scrap ghc-env, too many tools. Use "with-compiler: ghc-7.10.3"
+;;   and only have these binaries in bin, cabal discovers the rest.
+;;   https://github.com/sol/ghc-env for binary downloads
 ;; - haskell-compile for running tests, with regex hits
 ;;   (replace `haskell-compile' with a hydra that remembers the last command)
 ;; - compile just one file, with cabal, to avoid long lags (ideally with squiggly)
@@ -17,24 +20,37 @@
 ;;   haskell-doc-mode is too hacky and limited for my tastes,
 ;;   https://downloads.haskell.org/~ghc/latest/docs/html/users_guide/ghci.html#ghci-cmd-:type-at
 ;;   https://ghc.haskell.org/trac/ghc/ticket/15461
+;;   hmm... seems it is using the interactive shell already. But I don't like the eldoc nature of it.
 ;; - summarise an ADT when type-at-point is used on an explicit type param (also popup version)
 ;; - jump to source of symbol at point
 ;;   maybe ctags are enough, https://github.com/MarcWeber/hasktags
 ;; - import from current point by (existing) symbol name
 ;; - import from current point by (popup) symbol search
-;; - import from current point by (popup) hoogle search
-;; - popup (transitive) view hoogle results
+;; - import from current point by (popup) hoogle search (or hayoo)
+;; - popup (transitive) view hoogle / hayoo results
 ;; - manage language extensions from point
 ;; - cleanup imports
 ;; - format on save / compile (hindent / brittany)
+;; - or at least local alignment
 ;; - flycheck inline errors
 ;; - jump to imports and back
+;;   (maybe solved with imenu already)
 ;; - convert () and $ notation
 ;; - specifying / calculating the repl target on startup per file
 ;; - expand name of currently scoped function, with patterns
 ;; - better indent behaviour, it never seems to get it right
+;;   on that note, yasnippet tab expansion messes with indentation
 ;; - writing "left to right" vs "right to left", is there a way to jump?
 ;; - gen instance typesig boilerplate
+;; - send >>> commands in the region to the repl
+;; - use stack freeze files from cabal, e.g. https://www.stackage.org/lts-12.9/cabal.config
+;; - doctest (for running >>> things)
+;;   https://github.com/sol/doctest/issues/209
+;; - figure out how to use tasty patterns
+;;   https://ro-che.info/articles/2018-01-08-tasty-new-patterns
+;; - and tasty-discover
+;; - and autogen things for `missing-home-modules'
+;; - something like scalac-profiling
 ;;
 ;;; Code:
 
@@ -51,16 +67,17 @@
 (require 'haskell-compile)
 (add-hook 'haskell-mode-hook
           (lambda ()
-            (haskell-doc-mode 1)
+            (haskell-doc-mode -1) ;; I don't like the eldoc style...
             (whitespace-mode-with-local-variables)
             (show-paren-mode t)
             (smartparens-mode t)
             (yas-minor-mode t)
             (git-gutter-mode t)
             (company-mode t)
-            (setq prettify-symbols-alist scala-mode-prettify-symbols)
-            (prettify-symbols-mode t)
+            ;;(prettify-symbols-mode t)
             (setq company-backends (company-backends-for-buffer))))
+
+(setq haskell-compile-cabal-build-command "cd %s && cabal new-build")
 
 ;; what's the right scope for this?
 (setq haskell-cabal-tasty-last nil)
@@ -70,11 +87,11 @@
   (save-some-buffers (not compilation-ask-about-save)
                      compilation-save-buffers-predicate)
   (let* ((cabdir (haskell-cabal-find-dir))
-         (base (format "cd %s && cabal test tasty --test-option=--timeout=10s --show-detail=direct --test-option=--color=always" cabdir))
+         (base (format "cd %s && cabal new-run tasty -- --timeout=10s --color=always" cabdir))
          (restriction (if edit
                         (let ((custom (compilation-read-command "")))
                           (unless (string-empty-p custom)
-                            (format " --test-option=--pattern=%s" custom)))
+                            (format " --pattern=%s" custom)))
                         haskell-cabal-tasty-last))
          (command (concat base restriction)))
     (setq haskell-cabal-tasty-last restriction)
