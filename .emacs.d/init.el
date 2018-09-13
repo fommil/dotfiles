@@ -647,7 +647,7 @@ Inspired by `org-combine-plists'."
    erc-prompt-for-password nil ;; prefer ~/.authinfo for passwords
    erc-hide-list '("JOIN" "PART" "QUIT" "MODE")
    erc-autojoin-channels-alist
-   '(("freenode.net" "#qfpl" "#haskell" "#haskell-emacs"))))
+   '(("freenode.net" "#qfpl" "#hackage" "#haskell-emacs"))))
 (add-hook 'erc-mode 'erc-spelling-mode)
 
 ;; WORKAROUND: https://github.com/leathekd/erc-hl-nicks/issues/11

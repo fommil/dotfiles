@@ -51,10 +51,12 @@
 ;; - and tasty-discover
 ;; - and autogen things for `missing-home-modules'
 ;; - something like scalac-profiling
+;; - limit the stack / heap memory
 ;;
 ;;; Code:
 
 (use-package haskell-mode
+  :pin melpa
   :init
   (put 'haskell-compile-command 'safe-local-variable #'stringp)
   (setq haskell-doc-show-prelude nil)
@@ -96,43 +98,6 @@
          (command (concat base restriction)))
     (setq haskell-cabal-tasty-last restriction)
     (compilation-start command 'haskell-compilation-mode)))
-
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;; WORKAROUNDS (with links to upstreams issues)
-(require 'ansi-color)
-
-;; https://github.com/haskell/haskell-mode/pull/1608
-(setq haskell-compile-color t)
-(defun haskell-compilation-filter-hook ()
-  "Local `compilation-filter-hook' for `haskell-compilation-mode'."
-  (when haskell-compile-ghc-filter-linker-messages
-    (delete-matching-lines "^ *Loading package [^ \t\r\n]+ [.]+ linking [.]+ done\\.$"
-                           (save-excursion (goto-char compilation-filter-start)
-                                           (line-beginning-position))
-                           (point)))
-  (when haskell-compile-color
-    (read-only-mode -1)
-    (ansi-color-apply-on-region compilation-filter-start (point-max))
-    (read-only-mode 1)))
-
-;; https://github.com/haskell/haskell-mode/pull/1608
-(setq haskell-compilation-error-regexp-alist
-  `((,(concat
-       "^ *\\(?1:[^\t\r\n]+?\\):"
-       "\\(?:"
-       "\\(?2:[0-9]+\\):\\(?4:[0-9]+\\)\\(?:-\\(?5:[0-9]+\\)\\)?" ;; "121:1" & "12:3-5"
-       "\\|"
-       "(\\(?2:[0-9]+\\),\\(?4:[0-9]+\\))-(\\(?3:[0-9]+\\),\\(?5:[0-9]+\\))" ;; "(289,5)-(291,36)"
-       "\\)"
-       ":\\(?6:\n?[ \t]+[Ww]arning:\\)?")
-     1 (2 . 3) (4 . 5) (6 . nil))
-    ("^    \\(?:Declared at:\\|            \\) \\(?1:[^ \t\r\n]+\\.el\\):\\(?2:[0-9]+\\):\\(?4:[0-9]+\\)$"
-     1 2 4 0)
-
-    (".*error, called at \\(.*\\.hs\\):\\([0-9]+\\):\\([0-9]+\\) in .*" 1 2 3 2 1)
-    (" +\\(.*\\.hs\\):\\([0-9]+\\):$" 1 2 nil 2 1)
-    (" at \\(?1:[^ \t\r\n]+\\):\\(?2:[0-9]+\\):\\(?4:[0-9]+\\)\\(?:-\\(?5:[0-9]+\\)\\)?[)]?$"
-     1 2 (4 . 5) 0)))
 
 (provide 'fommil-haskell)
 
