@@ -16,7 +16,7 @@ header-includes:
  - \DefineVerbatimEnvironment{Highlighting}{Verbatim}{breaklines,commandchars=\\\{\},fontsize=\large}
 ---
 
-~~~~~{.emacs-lisp .numberLines}
+~~~~~{.lisp .numberLines}
 ' > "$TMP"
 
 cat "$INPUT" >> "$TMP"
