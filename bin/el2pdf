@@ -12,6 +12,7 @@ OUTPUT=$(echo "$1" | sed 's/[.]el$/.pdf/')
 
 echo '---
 header-includes:
+ - \usepackage[textwidth=7in]{geometry}
  - \usepackage{fvextra}
  - \DefineVerbatimEnvironment{Highlighting}{Verbatim}{breaklines,commandchars=\\\{\},fontsize=\large}
 ---
@@ -23,5 +24,5 @@ cat "$INPUT" >> "$TMP"
 
 echo "~~~~~~" >> "$TMP"
 
-pandoc "$TMP" --pdf-engine=xelatex -o "$OUTPUT" --highlight-style=haddock
+pandoc "$TMP" -V papersize:"letter" -o "$OUTPUT" --highlight-style=haddock
 rm "$TMP"
