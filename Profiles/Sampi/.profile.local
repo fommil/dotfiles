@@ -1,19 +1,13 @@
 #!/bin/bash
 
-# git clone https://github.com/gcuisinier/jenv.git ~/.jenv
-export PATH=$HOME/.jenv/bin:$PATH
-eval "$(jenv init -)"
-
-export YOURKIT_INSTALL=/opt/yourkit
-export YOURKIT_AGENT=$YOURKIT_INSTALL/bin/linux-x86-64/libyjpagent.so
+# git clone git@gitlab.com:fommil/ghc-env.git ~/.ghc-env
+export PATH=$HOME/.cabal/bin:$PATH
+export PATH=$HOME/.ghc-env/bin:$PATH
 
 export GOPATH=$HOME/.go
+# alternative to grive
 # go get -u github.com/github/hub
-# GO15VENDOREXPERIMENT=1 go get github.com/drone/drone-cli/drone
 export PATH=$GOPATH/bin:$PATH
-
-# yaourt's version is old
-export PATH="/home/fommil/.cask/bin:$PATH"
 
 export MAKEFLAGS="-j$(nproc)"
 # gcc -march=native -v -Q --help=target
@@ -24,6 +18,4 @@ export EMACS_SOURCE=$HOME/Projects/emacs
 # when building emacs25-git use this to use my local repo
 # source=("$pkgname::git+file:///home/fommil/Projects/emacs#branch=emacs-25")
 
-# use RAM compiles when building sbt-sensible projects
-# (not faster, but nicer on my lovely SSD...)
-export SBT_VOLATILE_TARGET=/tmp/fommil-sbt
+export PRINTER=Photosmart_5520
