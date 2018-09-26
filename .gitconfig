@@ -1,7 +1,9 @@
 [user]
     name = Sam Halliday
     email = sam.halliday@gmail.com
+    # git config user.name REPO_SPECIFIC_NAME
     # git config user.email REPO_SPECIFIC_EMAIL
+    # git config core.sshCommand "ssh -i ~/.ssh/id_rsa_REPO_SPECIFIC_KEY"
 [core]
     excludesfile = ~/.gitignore
     autocrlf = input

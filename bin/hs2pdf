@@ -1,0 +1,27 @@
+#!/bin/bash
+
+# inspired by: https://stackoverflow.com/a/48507868/1041691
+#
+#   hs2pdf <input.hs>
+#
+# generates <output.pdf>
+
+INPUT=$1
+TMP=$(echo "$1" | sed 's/[.]hs$/.md/')
+OUTPUT=$(echo "$1" | sed 's/[.]hs$/.pdf/')
+
+echo '---
+header-includes:
+ - \usepackage{fvextra}
+ - \DefineVerbatimEnvironment{Highlighting}{Verbatim}{breaklines,commandchars=\\\{\},fontsize=\large}
+---
+
+~~~~~{.haskell .numberLines}
+' > "$TMP"
+
+cat "$INPUT" >> "$TMP"
+
+echo "~~~~~~" >> "$TMP"
+
+pandoc "$TMP" --pdf-engine=xelatex -o "$OUTPUT" --highlight-style=haddock
+rm "$TMP"

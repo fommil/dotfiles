@@ -21,6 +21,7 @@
 ;;   https://downloads.haskell.org/~ghc/latest/docs/html/users_guide/ghci.html#ghci-cmd-:type-at
 ;;   https://ghc.haskell.org/trac/ghc/ticket/15461
 ;;   hmm... seems it is using the interactive shell already. But I don't like the eldoc nature of it.
+;; - convert values to types https://twitter.com/jyothsnasrin/status/1039530556080283648
 ;; - summarise an ADT when type-at-point is used on an explicit type param (also popup version)
 ;; - jump to source of symbol at point
 ;;   maybe ctags are enough, https://github.com/MarcWeber/hasktags
@@ -29,6 +30,7 @@
 ;; - import from current point by (popup) hoogle search (or hayoo)
 ;; - popup (transitive) view hoogle / hayoo results
 ;; - manage language extensions from point
+;; - documentation links for language extensions (e.g. eldocs readnig from the relevant part of the manual)
 ;; - cleanup imports
 ;; - format on save / compile (hindent / brittany)
 ;; - or at least local alignment
@@ -52,6 +54,7 @@
 ;; - and autogen things for `missing-home-modules'
 ;; - something like scalac-profiling
 ;; - limit the stack / heap memory
+;; - semanticdb approach to docs (and more): hi-haddock / .hie (!= HIE) / underground project
 ;;
 ;;; Code:
 
@@ -79,7 +82,7 @@
             ;;(prettify-symbols-mode t)
             (setq company-backends (company-backends-for-buffer))))
 
-(setq haskell-compile-cabal-build-command "cd %s && cabal new-build")
+(setq haskell-compile-cabal-build-command "cd %s && cabal new-build -O0")
 
 ;; what's the right scope for this?
 (setq haskell-cabal-tasty-last nil)
