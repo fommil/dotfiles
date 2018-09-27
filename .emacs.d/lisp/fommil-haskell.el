@@ -55,6 +55,7 @@
 ;; - something like scalac-profiling
 ;; - limit the stack / heap memory
 ;; - semanticdb approach to docs (and more): hi-haddock / .hie (!= HIE) / underground project
+;; - intero "apply suggestions" looks really useful
 ;;
 ;;; Code:
 
