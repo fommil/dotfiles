@@ -81,9 +81,12 @@
             (git-gutter-mode t)
             (company-mode t)
             ;;(prettify-symbols-mode t)
+            ;; needs https://github.com/elaforge/fast-tags/pull/43
+            (setq projectile-tags-command "fast-tags -Re --exclude=.stack-work --exclude=dist-newstyle .")
             (setq company-backends (company-backends-for-buffer))))
 
 (setq haskell-compile-cabal-build-command "cd %s && cabal new-build -O0")
+(setq haskell-cabal-tasty-command "cd %s && cabal new-run tasty -- --timeout=10s --color=always")
 
 ;; what's the right scope for this?
 (setq haskell-cabal-tasty-last nil)
@@ -93,7 +96,7 @@
   (save-some-buffers (not compilation-ask-about-save)
                      compilation-save-buffers-predicate)
   (let* ((cabdir (haskell-cabal-find-dir))
-         (base (format "cd %s && cabal new-run tasty -- --timeout=10s --color=always" cabdir))
+         (base (format haskell-cabal-tasty-command cabdir))
          (restriction (if edit
                         (let ((custom (compilation-read-command "")))
                           (unless (string-empty-p custom)
