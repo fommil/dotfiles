@@ -5,7 +5,7 @@ cabal-version:       >=1.10
 
 executable xmonad-x86_64-linux
   main-is:             xmonad.hs
-  ghc-options:         -O2
+  ghc-options:         -j
   build-depends:       base >=4.11 && <4.12
                        ,xmonad == 0.14.2
                        ,xmonad-contrib == 0.14
