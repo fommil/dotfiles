@@ -390,6 +390,7 @@ Inspired by `org-combine-plists'."
   :init (setq
          git-timemachine-abbreviation-length 4))
 
+;; TODO: make etags-select-find-tag complete properly
 (use-package etags-select
   ;; https://github.com/melpa/melpa/pull/5008
   ;; https://www.emacswiki.org/emacs/download/etags-select.el
