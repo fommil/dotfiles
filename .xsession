@@ -7,8 +7,6 @@
 #  Name=Xsession
 #  Exec=/etc/X11/Xsession
 
-. ~/.profile
-
 # https://wiki.archlinux.org/index.php/Java#Applications_not_resizing_with_WM.2C_menus_immediately_closing
 export _JAVA_AWT_WM_NONREPARENTING=1
 
@@ -32,6 +30,12 @@ fi
 # clipboard
 autocutsel -fork
 autocutsel -selection PRIMARY -fork
+
+# background
+
+if [ -f ~/.bg.png ] ; then
+    feh --bg-center --no-fehbg ~/.bg.png
+fi
 
 if [ -f ~/.xsession.local ] ; then
   . ~/.xsession.local

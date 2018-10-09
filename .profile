@@ -1,17 +1,18 @@
 #!/bin/sh
 
+# WORKAROUND: I'm getting logged in twice in xmonad's shell and I don't know why
+if [ -z "$FOMMIL_LOGGED_IN" ] ;
+   echo "ERROR: .profile ALREADY LOGGED IN"
+   exit 0;
+fi
+export FOMMIL_LOGGED_IN=t
+
 export PATH=$HOME/.local/bin:$HOME/.fommil/bin:$PATH
 
 export EDITOR=emacs
 export HISTCONTROL=ignoredups
 export WINEARCH=win32
 export WINEDEBUG=fixme-all,warn+cursor
-
-export COURSIER_VERBOSITY=-1
-export SCALACTIC_FILL_FILE_PATHNAMES=yes
-# WORKAROUND https://github.com/sbt/sbt-buildinfo/issues/96
-export SBT_IGNORE_BUILDTIME=yes
-export SONATYPE_USERNAME=fommil
 
 export HTML_TIDY=$HOME/.tidyrc
 export COWPATH=$HOME/.cows:/usr/share/cowsay/cows
