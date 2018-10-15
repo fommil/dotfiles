@@ -994,7 +994,7 @@ while [ $# -gt 0 ] ; do
            if [ "${TARGET_LOCATION}" ] ; then
                self_update "${TARGET_LOCATION}"
            else
-               self_update "${HOME}/.local/bin"
+               self_update "$(dirname $0)"
            fi
            break;;
        show)

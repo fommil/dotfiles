@@ -1,13 +1,12 @@
 #!/bin/sh
 
-# WORKAROUND: I'm getting logged in twice in xmonad's shell and I don't know why
-if [ -z "$FOMMIL_LOGGED_IN" ] ;
+# FIXME: I'm getting logged in twice in xmonad's shell and I don't know why
+if [ -z "$FOMMIL_LOGGED_IN" ] ; then
    echo "ERROR: .profile ALREADY LOGGED IN"
-   exit 0;
 fi
 export FOMMIL_LOGGED_IN=t
 
-export PATH=$HOME/.local/bin:$HOME/.fommil/bin:$PATH
+export PATH=$HOME/.cabal/bin:$HOME/.ghcup/bin:$HOME/.local/bin:$HOME/.fommil/bin:$PATH
 
 export EDITOR=emacs
 export HISTCONTROL=ignoredups

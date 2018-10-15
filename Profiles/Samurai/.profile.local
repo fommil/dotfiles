@@ -4,9 +4,6 @@
 mkdir -m 0770 /tmp/$USER-cache 2>/dev/null
 ln -s $HOME/.spotify/cache /tmp/$USER-cache/spotify 2>/dev/null
 
-# git clone git@gitlab.com:fommil/ghc-env.git ~/.ghcenv
-export PATH=$HOME/.cabal/bin:$HOME/.ghcup/bin:$PATH
-
 export MAKEFLAGS="-j$(nproc)"
 # gcc -march=native -v -Q --help=target
 export CFLAGS="-march=native -O3"
