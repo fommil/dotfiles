@@ -7,16 +7,6 @@
 
 ;;; Commentary:
 ;;
-;; Personalised Emacs configuration for the following primary uses;
-;;
-;;   - Scala
-;;   - R
-;;   - Java
-;;   - C
-;;   - elisp
-;;   - org-mode (with LaTeX)
-;;   - email
-;;
 ;; This file is broken into sections which gather similar features or
 ;; modes together.  Sections are delimited by a row of semi-colons
 ;; (stage/functional sections) or a row of dots (primary modes).

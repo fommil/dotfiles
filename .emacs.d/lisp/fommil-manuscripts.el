@@ -51,14 +51,14 @@
 (add-hook 'markdown-mode-hook #'writing-mode-hooks)
 
 (defun markdown-flyspell-predicate ()
-  "Refine the default text predicate to ignore markdown specific things."
-  (and
-   (text-flyspell-predicate)
-   (not
-    ;; this relies on faces so doesn't work if flyspell-buffer is
-    ;; called before faces are available (e.g. in a hook)
-    (let ((f (get-text-property (- (point) 1) 'face)))
-      (member f '(markdown-pre-face markdown-language-keyword-face))))))
+  "Don't spellcheck code and links and other non-text items."
+  (save-excursion
+    (goto-char (1- (point)))
+    (not (or (markdown-code-block-at-point-p)
+             (markdown-inline-code-at-point-p)
+             (markdown-in-comment-p)
+             (markdown-link-p)
+             (markdown-wiki-link-p)))))
 (put #'markdown-mode #'flyspell-mode-predicate #'markdown-flyspell-predicate)
 
 (provide 'fommil-manuscripts)

@@ -4,6 +4,14 @@
 mkdir -m 0770 /tmp/$USER-cache 2>/dev/null
 ln -s $HOME/.spotify/cache /tmp/$USER-cache/spotify 2>/dev/null
 
+# https://imagemagick.org/discourse-server/viewtopic.php?t=34893
+export MAGICK_OCL_DEVICE=OFF
+
+# curl -L https://raw.githubusercontent.com/pyenv/pyenv-installer/master/bin/pyenv-installer | bash
+export PATH=$HOME/.pyenv/bin:$PATH
+eval "$(pyenv init -pyenv init -)"
+eval "$(pyenv virtualenv-init -)"
+
 export MAKEFLAGS="-j$(nproc)"
 # gcc -march=native -v -Q --help=target
 export CFLAGS="-march=native -O3"

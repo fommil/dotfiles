@@ -1,4 +1,4 @@
-personal_ws-1.1 en 57 
+personal_ws-1.1 en 58 
 dimensionality
 interpolator
 subtrees
@@ -36,8 +36,8 @@ parallelised
 Rebalancing
 disjunctions
 parallelising
-bytecode
 codebase
+bytecode
 Lightsaber
 disjunction
 runtime
@@ -55,4 +55,5 @@ coproducts
 stacktraces
 Homomorphism
 commutativity
+Kubernetes
 monadic
