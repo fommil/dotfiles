@@ -1,14 +1,3 @@
-target/
-
-.bloop-config/
-.ensime_cache/
-.ensime_snapshot/
-.ensime
-ensime.sbt
-local.sbt
-.ensime-server.conf
-
-.history
 .projectile
 .dir-locals.el
 TAGS

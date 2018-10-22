@@ -88,6 +88,9 @@
 (setq haskell-compile-cabal-build-command "cd %s && cabal new-build -O0")
 (setq haskell-cabal-tasty-command "cd %s && cabal new-run tasty -- --timeout=10s --color=always")
 
+;; broken for stack...
+;; and for cabal often needs cabal.project.local containing "with-compiler: ghc-8.4.4"
+
 ;; what's the right scope for this?
 (setq haskell-cabal-tasty-last nil)
 (defun haskell-cabal-tasty (&optional edit)

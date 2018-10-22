@@ -143,8 +143,7 @@
   :config
   (setq dired-dwim-target t)
   ;; a workflow optimisation too far?
-  (bind-key "<f12>" 'sbt-start dired-mode-map)
-  (bind-key "C-c c" 'sbt-command dired-mode-map)
+  (bind-key "C-c c" 'haskell-compile dired-mode-map)
   (bind-key "C-c e" 'next-error dired-mode-map))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -317,15 +316,15 @@ Inspired by `org-combine-plists'."
   :demand
   ;; nice to have it on the modeline
   :init
-  ;; WORKAROUND https://github.com/Wilfred/ag.el/issues/141
-  (make-variable-buffer-local 'ag-ignore-list)
   (put 'ag-ignore-list 'safe-local-variable #'listp)
   (setq
    projectile-tags-backend 'etags-select
    projectile-use-git-grep t
+   projectile-globally-ignored-directories '(".git")
    projectile-globally-ignored-files '("TAGS" "*.min.js"))
   :config
   (projectile-mode)
+  (make-variable-buffer-local 'projectile-tags-command)
   (add-hook 'projectile-grep-finished-hook
             ;; not going to the first hit?
             (lambda () (pop-to-buffer next-error-last-buffer)))
@@ -392,6 +391,9 @@ Inspired by `org-combine-plists'."
   :init
   (setq ag-reuse-window 't)
   :config
+  ;; WORKAROUND https://github.com/Wilfred/ag.el/issues/141
+  (make-variable-buffer-local 'ag-ignore-list)
+
   (add-hook 'ag-search-finished-hook
             (lambda () (pop-to-buffer next-error-last-buffer))))
 

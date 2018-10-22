@@ -40,7 +40,7 @@
 # @VARIABLE: VERSION
 # @DESCRIPTION:
 # Version of this script.
-VERSION=0.0.4
+VERSION=0.0.5
 
 # @VARIABLE: SCRIPT
 # @DESCRIPTION:
@@ -87,7 +87,7 @@ DOWNLOADER_OPTS="--fail -O"
 # @VARIABLE: SCRIPT_UPDATE_URL
 # @DESCRIPTION:
 # Location to update this script from.
-SCRIPT_UPDATE_URL="https://raw.githubusercontent.com/hasufell/ghcup/master/ghcup"
+SCRIPT_UPDATE_URL="https://raw.githubusercontent.com/haskell/ghcup/master/ghcup"
 
 # @VARIABLE: GHC_DOWNLOAD_BASEURL
 # @DESCRIPTION:
@@ -98,7 +98,7 @@ GHC_DOWNLOAD_BASEURL="https://downloads.haskell.org/~ghc"
 # @DESCRIPTION:
 # The latests known good cabal-install version for
 # which a pre-built binary exists.
-KNOWN_GOOD_CABAL="2.2.0.0"
+KNOWN_GOOD_CABAL="2.4.0.0"
 
 # @VARIABLE: JOBS
 # @DESCRIPTION:
@@ -140,6 +140,7 @@ SUBCOMMANDS:
     self-update      Update this script in-place
     rm               Remove an already installed GHC
     install-cabal    Install cabal-install
+    debug-info       Print debug info (e.g. detected system/distro)
 
 DISCUSSION:
     ghcup installs the Glasgow Haskell Compiler from the official
@@ -215,7 +216,7 @@ FLAGS:
     -h, --help         Prints help information
 
 ARGS:
-    [TARGET-LOCATION]  Where to place the updated script (defaults to ~/.local/bin).
+    [TARGET-LOCATION]  Where to place the updated script (defaults to directory of the script).
 ")
     exit 1
 }
@@ -297,9 +298,10 @@ USAGE:
     ${SCRIPT} compile [FLAGS] <VERSION> <BOOTSTRAP-GHC>
 
 FLAGS:
-    -h, --help       Prints help information
-    -f, --force      Overwrite already existing installation
-    -j, --jobs <n>   How many jobs for compilation
+    -h, --help                     Prints help information
+    -f, --force                    Overwrite already existing installation
+    -j, --jobs <n>                 How many jobs for compilation
+    -c, --build-config <filepath>  Use the given config file as build config
 
 ARGS:
     <VERSION>        E.g. \"8.4.3\" or \"8.6.1\"
@@ -312,6 +314,28 @@ DISCUSSION:
 
 EXAMPLE:
     ghcup -v compile -f -j 4 8.4.2 ghc-8.2.2
+")
+    exit 1
+}
+
+# @FUNCTION: debug_info_usage
+# @DESCRIPTION:
+# Print the help message for 'ghcup debug-info' to STDERR
+# and exit the script with status code 1.
+debug_info_usage() {
+    (>&2 echo "ghcup-debug-info
+Print debug info (e.g. detected system/distro)
+
+USAGE:
+    ${SCRIPT} debug-info
+
+FLAGS:
+    -h, --help                     Prints help information
+
+DISCUSSION:
+    Prints debug information, e.g. detected system architecture,
+    distribution, version, as well as script variables. This
+    is mainly useful for debugging purposes.
 ")
     exit 1
 }
@@ -494,25 +518,25 @@ get_download_url() {
 
     # TODO: awkward, restructure
     case "${mydistro},${mydistrover},${myarch},${myghcver}" in
-    Debian,7,i386,8.2.2)
+    Debian*,7,i386,8.2.2)
         printf "%s" "${GHC_DOWNLOAD_BASEURL}/${myghcver}/ghc-${myghcver}-${myarch}-deb${mydistrover}-linux.tar.xz"
         ;;
     *,*,i386,*)
         printf "%s" "${GHC_DOWNLOAD_BASEURL}/${myghcver}/ghc-${myghcver}-${myarch}-deb8-linux.tar.xz"
         ;;
-    Debian,*,*,8.2.2)
+    Debian*,*,*,8.2.2)
         printf "%s" "${GHC_DOWNLOAD_BASEURL}/${myghcver}/ghc-${myghcver}-${myarch}-deb8-linux.tar.xz"
         ;;
-    Debian,8,*,*)
+    Debian*,8,*,*)
         printf "%s" "${GHC_DOWNLOAD_BASEURL}/${myghcver}/ghc-${myghcver}-${myarch}-deb8-linux.tar.xz"
         ;;
-    Debian,*,*,*)
+    Debian*,*,*,*)
         printf "%s" "${GHC_DOWNLOAD_BASEURL}/${myghcver}/ghc-${myghcver}-${myarch}-deb9-linux.tar.xz"
         ;;
-    Ubuntu,*,*,8.2.2)
+    Ubuntu*,*,*,8.2.2)
         printf "%s" "${GHC_DOWNLOAD_BASEURL}/${myghcver}/ghc-${myghcver}-${myarch}-deb8-linux.tar.xz"
         ;;
-    Ubuntu,*,*,*)
+    Ubuntu*,*,*,*)
         printf "%s" "${GHC_DOWNLOAD_BASEURL}/${myghcver}/ghc-${myghcver}-${myarch}-deb9-linux.tar.xz"
         ;;
     *,*,*,8.2.2)
@@ -564,13 +588,46 @@ get_ghc_location() {
 # @USAGE: <url>
 # @DESCRIPTION:
 # Downloads the given url as a file into the current directory.
-# @RETURN: status code from the downloader
 download() {
     [ -z "$1" ] && die "Internal error: no argument given to download"
     # shellcheck disable=SC2086
-    ${DOWNLOADER} ${DOWNLOADER_OPTS} "$1"
-    return $?
+    edo ${DOWNLOADER} ${DOWNLOADER_OPTS} "$1"
 }
+
+# @FUNCTION: unpack
+# @USAGE: <tarball>
+# @DESCRIPTION:
+# Uncompresses and unpacks the given tarball if needed by discovering the
+# file extension.
+unpack() {
+    [ -z "$1" ] && die "Internal error: no argument given to unpack"
+
+    filename=$1
+    file_ext=${filename##*.}
+
+    # this is for portability, since not all
+    # distros have tar with compression detection
+    # capability
+    case "${file_ext}" in
+        xz)
+            debug_message "xz -cd \"${filename}\" | tar -xf -"
+            ( xz -cd "${filename}" | tar -xf - ; ) || die "unpacking failed!"
+            ;;
+        gz)
+            debug_message "gzip -cd \"${filename}\" | tar -xf -"
+            ( gzip -cd "${filename}" | tar -xf - ; ) || die "unpacking failed!"
+            ;;
+        tar)
+            edo tar -xf "${filename}"
+            ;;
+        *)
+            die "Unknown file extension: \"${file_ext}\""
+    esac
+
+    unset filename file_ext
+}
+
+
 
 
 
@@ -590,6 +647,7 @@ install_ghc() {
     inst_location=$(get_ghc_location "$1")
     download_url=$(get_download_url "${myghcver}")
     download_tarball_name=$(basename "${download_url}")
+    first_install=true
 
     if ghc_already_installed "${myghcver}" ; then
         if ${FORCE} ; then
@@ -597,6 +655,7 @@ install_ghc() {
         else
             die "GHC already installed in ${inst_location}, use --force to overwrite"
         fi
+        first_install=false
     fi
 
     status_message "Installing GHC for $(get_distro_name) on architecture $(get_arch)"
@@ -605,9 +664,9 @@ install_ghc() {
     (
         edo cd "${tmp_dir}"
 
-        edo download "${download_url}"
+        download "${download_url}"
 
-        edo tar -xf ghc-*-linux.tar.xz
+        unpack "${download_tarball_name}"
         edo cd "ghc-${myghcver}"
 
         debug_message "Installing GHC into ${inst_location}"
@@ -622,6 +681,14 @@ install_ghc() {
     ) || {
         [ -e "${tmp_dir}/${download_tarball_name}" ] && rm "${tmp_dir}/${download_tarball_name}"
         [ -e "${tmp_dir}/ghc-${myghcver}" ] && rm -r "${tmp_dir}/ghc-${myghcver}"
+
+        if ${first_install} ; then
+            [ -e "${inst_location}" ] && rm -r "${inst_location}"
+        else
+            warning_message "GHC force installation failed. The install might be broken."
+            warning_message "Consider running: ghcup rm ${myghcver}"
+        fi
+
         die "Failed to install, consider updating this script via: ${SCRIPT} self-update"
     }
 
@@ -639,7 +706,7 @@ install_ghc() {
 
     status_message "Done installing, run \"ghci-${myghcver}\" or set up your current GHC via: ${SCRIPT} set ${myghcver}"
 
-    unset myghcver inst_location f download_url download_tarball_name
+    unset myghcver inst_location f download_url download_tarball_name first_install
 }
 
 
@@ -719,7 +786,7 @@ self_update() {
 
     (
         edo cd "$(mktemp -d)"
-        edo download "${SCRIPT_UPDATE_URL}"
+        download "${SCRIPT_UPDATE_URL}"
         edo chmod +x ghcup
         edo mv -f ghcup "${target_location}"/ghcup
 
@@ -848,9 +915,10 @@ install_cabal() {
 
     (
         edo cd "$(mktemp -d)"
-        edo download "https://downloads.haskell.org/~cabal/cabal-install-${mycabalver}/cabal-install-${mycabalver}-${myarch}-unknown-linux.tar.gz"
-        edo tar -xzf "cabal-install-${mycabalver}-${myarch}-unknown-linux.tar.gz"
+        download "https://downloads.haskell.org/~cabal/cabal-install-${mycabalver}/cabal-install-${mycabalver}-${myarch}-unknown-linux.tar.gz"
+        unpack "cabal-install-${mycabalver}-${myarch}-unknown-linux.tar.gz"
         edo mv -f cabal "${inst_location}"/cabal
+        rm "cabal-install-${mycabalver}-${myarch}-unknown-linux.tar.gz"
     ) || die "Failed to install cabal-install"
 
     status_message "Successfully installed cabal-install into"
@@ -866,10 +934,12 @@ install_cabal() {
 }
 
 # @FUNCTION: compile_ghc
-# @USAGE: <ghcversion> <bootstrap-ghc>
+# @USAGE: <ghcversion> <bootstrap-ghc> [build.mk]
 # @DESCRIPTION:
 # Compile and installs the given GHC version with the
 # specified GHC bootstrap version.
+# Can additionally take a custom file that will be used
+# as build configuration.
 compile_ghc() {
     { [ -z "$1" ] || [ -z "$2" ] ;} && die "Internal error: not enough arguments given to compile_ghc"
 
@@ -878,6 +948,14 @@ compile_ghc() {
     inst_location=$(get_ghc_location "$1")
     download_url="https://downloads.haskell.org/~ghc/${myghcver}/ghc-${myghcver}-src.tar.xz"
     download_tarball_name=$(basename "${download_url}")
+
+    if [ -n "$3" ] ; then
+        case "$3" in
+            /*) build_config=$3 ;;
+            *) build_config="$(pwd)/$3" ;;
+        esac
+        [ -e "${build_config}" ] || die "specified build config \"${build_config}\" file does not exist!"
+    fi
 
     if ghc_already_installed "${myghcver}" ; then
         if ${FORCE} ; then
@@ -893,20 +971,24 @@ compile_ghc() {
     (
         edo cd "${tmp_dir}"
 
-        edo download "${download_url}"
+        download "${download_url}"
 
         edo tar -xf ghc-*-src.tar.xz
         edo cd "ghc-${myghcver}"
 
-        cat <<-EOF > mk/build.mk || die
-			BuildFlavour = quick
-			V=0
-			BUILD_MAN = NO
-			BUILD_SPHINX_HTML = NO
-			BUILD_SPHINX_PDF = NO
-			HADDOCK_DOCS = YES
-			GhcWithLlvmCodeGen = YES
-			EOF
+        if [ -n "${build_config}" ] ; then
+            edo cat "${build_config}" > mk/build.mk
+        else
+			cat <<-EOF > mk/build.mk || die
+				V=0
+				BUILD_MAN = NO
+				BUILD_SPHINX_HTML = NO
+				BUILD_SPHINX_PDF = NO
+				HADDOCK_DOCS = YES
+				GhcWithLlvmCodeGen = YES
+				EOF
+        fi
+
 
         edo ./boot
         edo ./configure --prefix="${inst_location}" --with-ghc="${bootstrap_ghc}"
@@ -943,6 +1025,30 @@ Also check https://ghc.haskell.org/trac/ghc/wiki/Building/Preparation/Linux for 
 }
 
 
+    ###############################
+    #--[ Subcommand debug-info ]--#
+    ###############################
+
+
+# @FUNCTION: print_debug_info
+# @DESCRIPTION:
+# Print debug info (e.g. detected system/distro).
+print_debug_info() {
+    echo "Script version: ${VERSION}"
+    echo
+    echo "Script variables:"
+    echo "  GHC install location:     ${GHC_LOCATION}"
+    echo "  Binary install location:  ${BIN_LOCATION}"
+    echo "  Downloader:               ${DOWNLOADER} ${DOWNLOADER_OPTS} <url>"
+    echo "  Script update url:        ${SCRIPT_UPDATE_URL}"
+    echo "  GHC download baseurl:     ${GHC_DOWNLOAD_BASEURL}"
+    echo "  Known good cabal version: ${KNOWN_GOOD_CABAL}"
+    echo
+    echo "Detected system information:"
+    echo "  Architecture:   $(get_arch)"
+    echo "  Distribution:   $(get_distro_name)"
+    echo "  Distro version: $(get_distro_ver)"
+}
 
 
     #######################
@@ -1074,6 +1180,8 @@ while [ $# -gt 0 ] ; do
                        shift 1;;
                    -j|--jobs) JOBS=$2
                        shift 2;;
+                   -c|--build-config) BUILD_CONFIG=$2
+                       shift 2;;
                    *) GHC_VER=$1
                       BOOTSTRAP_GHC=$2
                       break;;
@@ -1081,7 +1189,17 @@ while [ $# -gt 0 ] ; do
            done
            [ "${GHC_VER}" ] || compile_usage
            [ "${BOOTSTRAP_GHC}" ] || compile_usage
-           compile_ghc "${GHC_VER}" "${BOOTSTRAP_GHC}"
+           compile_ghc "${GHC_VER}" "${BOOTSTRAP_GHC}" "${BUILD_CONFIG}"
+           break;;
+       debug-info)
+           shift 1
+           while [ $# -gt 0 ] ; do
+               case $1 in
+                   -h|--help) debug_info_usage;;
+                   *) debug_info_usage;;
+               esac
+           done
+           print_debug_info
            break;;
        *) usage;;
        esac
