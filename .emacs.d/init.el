@@ -285,12 +285,12 @@ Inspired by `org-combine-plists'."
   (setq
    clean-buffer-list-kill-regexps '("^[*].*")
    clean-buffer-list-kill-never-regexps
-   '("^\\([#]\\|[*]\\(scratch\\|sbt\\|Messages\\)\\).*")))
+   '("^\\([#]\\|[*]\\(scratch\\|Messages\\)\\).*")))
 
 (use-package persistent-scratch
   :config
   (persistent-scratch-setup-default)
-  (setq persistent-scratch-what-to-save nil))
+  (setq persistent-scratch-what-to-save '(major-mode)))
 
 (use-package undo-tree
   :diminish undo-tree-mode
@@ -594,6 +594,9 @@ Inspired by `org-combine-plists'."
   (bind-key "M-<left>" 'sp-forward-slurp-sexp emacs-lisp-mode-map)
   (bind-key "M-<right>" 'sp-forward-barf-sexp emacs-lisp-mode-map))
 
+(use-package flycheck-cask)
+(add-hook 'flycheck-mode-hook #'flycheck-cask-setup)
+
 (use-package eldoc
   :ensure nil
   :diminish eldoc-mode
@@ -612,6 +615,7 @@ Inspired by `org-combine-plists'."
 (add-hook 'emacs-lisp-mode-hook
           (lambda ()
             (setq show-trailing-whitespace t)
+            (setq flycheck-checker 'emacs-lisp) ;; no emacs-lisp-checkdoc
 
             (show-paren-mode t)
             (whitespace-mode-with-local-variables)

@@ -9,12 +9,6 @@
 ;;
 ;; Haskell workflow wants:
 ;;
-;; - scrap ghc-env, too many tools. Use "with-compiler: ghc-7.10.3"
-;;   and only have these binaries in bin, cabal discovers the rest.
-;;   https://github.com/sol/ghc-env for binary downloads
-;; - haskell-compile for running tests, with regex hits
-;;   (replace `haskell-compile' with a hydra that remembers the last command)
-;; - compile just one file, with cabal, to avoid long lags (ideally with squiggly)
 ;; - see / expand all members in an import (:browse at point)
 ;; - type at point (in minibuffer)
 ;;   haskell-doc-mode is too hacky and limited for my tastes,
@@ -59,16 +53,35 @@
 ;;
 ;;; Code:
 
+(add-to-load-path (expand-file-name "~/Projects/haskell-mode"))
+(require 'haskell-mode-autoloads)
+
+(add-to-load-path (expand-file-name "~/Projects/haskell-tng.el"))
+(require 'haskell-tng-mode)
+
 (use-package haskell-mode
-  :pin melpa
+  ;; :pin melpa
+  :ensure nil ;; local build disables `package' / autoloading
   :init
   (put 'haskell-compile-command 'safe-local-variable #'stringp)
+  (put 'haskell-compile-stack-build-command 'safe-local-variable #'stringp)
+  (put 'haskell-compile-stack-build-alt-command 'safe-local-variable #'stringp)
   (setq haskell-doc-show-prelude nil)
   :config
   (bind-key "C-c i" 'haskell-doc-show-type haskell-mode-map)
   (bind-key "C-c t" 'haskell-cabal-tasty haskell-mode-map)
   (bind-key "C-c c" 'haskell-compile haskell-mode-map)
-  (bind-key "C-c e" 'next-error haskell-mode-map))
+  (bind-key "C-c e" 'next-error haskell-mode-map)
+
+  (bind-key "C-c f" 'stylish-haskell haskell-mode-map)
+
+  ;; i.e. bypass company-mode
+  (bind-key "C-<tab>" 'dabbrev-expand haskell-mode-map))
+
+(defun stylish-haskell ()
+  (interactive)
+  (call-process "stylish-haskell" nil nil nil "-i" (buffer-name))
+  (revert-buffer t t t))
 
 (require 'haskell-compile)
 (add-hook 'haskell-mode-hook
@@ -85,13 +98,14 @@
             (setq projectile-tags-command "fast-tags -Re --exclude=.stack-work --exclude=dist-newstyle .")
             (setq company-backends (company-backends-for-buffer))))
 
-(setq haskell-compile-cabal-build-command "cd %s && cabal new-build -O0")
-(setq haskell-cabal-tasty-command "cd %s && cabal new-run tasty -- --timeout=10s --color=always")
+(setq haskell-compile-cabal-build-command "cabal new-build -O0")
 
-;; broken for stack...
+(setq haskell-compile-stack-build-alt-command "stack test")
+(setq haskell-compile-cabal-build-alt-command "cabal new-run tasty -- --timeout=10s --color=always")
+
 ;; and for cabal often needs cabal.project.local containing "with-compiler: ghc-8.4.4"
 
-;; what's the right scope for this?
+(setq haskell-cabal-tasty-command "cabal new-run tasty -- --timeout=10s --color=always")
 (setq haskell-cabal-tasty-last nil)
 (defun haskell-cabal-tasty (&optional edit)
   "Invokes `cabal tasty', with an optional pattern restriction."

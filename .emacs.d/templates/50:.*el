@@ -12,9 +12,4 @@
 $0
 
 (provide '`(substring (buffer-name) 0 -3)`)
-
-;; Local Variables:
-;; compile-command: "cask exec ert-runner `(buffer-name)`"
-;; End:
-
 ;;; `(buffer-name)` ends here
