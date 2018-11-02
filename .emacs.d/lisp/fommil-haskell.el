@@ -28,7 +28,6 @@
 ;; - cleanup imports
 ;; - format on save / compile (hindent / brittany)
 ;; - or at least local alignment
-;; - flycheck inline errors
 ;; - jump to imports and back
 ;;   (maybe solved with imenu already)
 ;; - convert () and $ notation
@@ -73,12 +72,18 @@
   (bind-key "C-c c" 'haskell-compile haskell-mode-map)
   (bind-key "C-c e" 'next-error haskell-mode-map)
 
-  (bind-key "C-c f" 'stylish-haskell haskell-mode-map)
+  (bind-key "C-c C-r f" 'stylish-haskell haskell-mode-map)
 
   ;; i.e. bypass company-mode
   (bind-key "C-<tab>" 'dabbrev-expand haskell-mode-map))
 
+(use-package hlint-refactor
+  :config
+  (bind-key "C-c C-r b" 'hlint-refactor-refactor-buffer haskell-mode-map)
+  (bind-key "C-c C-r r" 'hlint-refactor-refactor-at-point haskell-mode-map))
+
 (defun stylish-haskell ()
+  "Apply `stylish-haskell' rules."
   (interactive)
   (call-process "stylish-haskell" nil nil nil "-i" (buffer-name))
   (revert-buffer t t t))
@@ -88,12 +93,16 @@
           (lambda ()
             (haskell-doc-mode -1) ;; I don't like the eldoc style...
             (whitespace-mode-with-local-variables)
-            (show-paren-mode t)
-            (smartparens-mode t)
-            (yas-minor-mode t)
-            (git-gutter-mode t)
-            (company-mode t)
+            (show-paren-mode 1)
+            (smartparens-mode 1)
+            (yas-minor-mode 1)
+            (git-gutter-mode 1)
+            (company-mode 1)
             ;;(prettify-symbols-mode t)
+
+            (setq-local flycheck-checker 'haskell-hlint)
+            ;;(flycheck-mode 1) ;; I find it distracting...
+
             ;; needs https://github.com/elaforge/fast-tags/pull/43
             (setq projectile-tags-command "fast-tags -Re --exclude=.stack-work --exclude=dist-newstyle .")
             (setq company-backends (company-backends-for-buffer))))
