@@ -72,6 +72,8 @@
 
   (bind-key "C-c c" 'haskell-compile haskell-mode-map)
   (bind-key "C-c e" 'next-error haskell-mode-map)
+
+  (require 'haskell-compile)
   (bind-key "C-c c" 'haskell-compile haskell-compilation-mode-map)
   (bind-key "C-c e" 'next-error haskell-compilation-mode-map)
 
