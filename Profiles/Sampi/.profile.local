@@ -1,20 +1,13 @@
 #!/bin/bash
 
-# git clone git@gitlab.com:fommil/ghc-env.git ~/.ghc-env
-export PATH=$HOME/.cabal/bin:$PATH
-export PATH=$HOME/.ghc-env/bin:$PATH
-
-export GOPATH=$HOME/.go
-# alternative to grive
-# go get -u github.com/github/hub
-export PATH=$GOPATH/bin:$PATH
+export PATH=$HOME/.ghcup/bin:$HOME/.cabal/bin:$PATH
 
 export MAKEFLAGS="-j$(nproc)"
 # gcc -march=native -v -Q --help=target
 export CFLAGS="-march=native -O3"
 export CXXFLAGS="$CFLAGS"
 
-export EMACS_SOURCE=$HOME/Projects/emacs
+#export EMACS_SOURCE=$HOME/Projects/emacs
 # when building emacs25-git use this to use my local repo
 # source=("$pkgname::git+file:///home/fommil/Projects/emacs#branch=emacs-25")
 
