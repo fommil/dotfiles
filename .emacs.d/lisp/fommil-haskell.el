@@ -69,8 +69,11 @@
   :config
   (bind-key "C-c i" 'haskell-doc-show-type haskell-mode-map)
   (bind-key "C-c t" 'haskell-cabal-tasty haskell-mode-map)
+
   (bind-key "C-c c" 'haskell-compile haskell-mode-map)
   (bind-key "C-c e" 'next-error haskell-mode-map)
+  (bind-key "C-c c" 'haskell-compile haskell-compilation-mode-map)
+  (bind-key "C-c e" 'next-error haskell-compilation-mode-map)
 
   (bind-key "C-c C-r f" 'stylish-haskell haskell-mode-map)
 
@@ -85,6 +88,7 @@
 (defun stylish-haskell ()
   "Apply `stylish-haskell' rules."
   (interactive)
+  (save-buffer)
   (call-process "stylish-haskell" nil nil nil "-i" (buffer-name))
   (revert-buffer t t t))
 
