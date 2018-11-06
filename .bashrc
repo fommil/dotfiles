@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # exit early if not interactive
-#if [ -z "$PS1" ] ; then return ; fi
+if [ -z "$PS1" ] ; then return ; fi
 
 # copied here from .profile (I don't know why it's not available)
 function source_if_exists {

@@ -1,8 +1,18 @@
 #!/bin/sh
 
+function source_if_exists {
+    if [ -f "$1" ] ; then
+        source "$1"
+    fi
+}
+
+# https://stackoverflow.com/a/820533/1041691
+source_if_exists $HOME/.bashrc
+
 # FIXME: I'm getting logged in twice in xmonad's shell and I don't know why
 if [ -z "$FOMMIL_LOGGED_IN" ] ; then
-   echo "ERROR: .profile ALREADY LOGGED IN"
+    echo "DEBUG: was logged in already"
+    return
 fi
 export FOMMIL_LOGGED_IN=t
 
@@ -15,12 +25,6 @@ export WINEDEBUG=fixme-all,warn+cursor
 
 export HTML_TIDY=$HOME/.tidyrc
 export COWPATH=$HOME/.cows:/usr/share/cowsay/cows
-
-function source_if_exists {
-    if [ -f "$1" ] ; then
-        source "$1"
-    fi
-}
 
 # place local system fixes in here
 source_if_exists $HOME/.profile.local

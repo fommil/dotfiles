@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/bin/sh
 
 # ~/.cache should be a symbolic link to here
 mkdir -m 0770 /tmp/$USER-cache 2>/dev/null
