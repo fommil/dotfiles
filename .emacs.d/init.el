@@ -427,7 +427,9 @@ Inspired by `org-combine-plists'."
 
 (use-package flycheck
   :diminish flycheck-mode
-  :commands flycheck-mode)
+  :commands flycheck-mode
+  :init
+  (setq-default flycheck-disabled-checkers '(emacs-lisp-checkdoc)))
 
 (use-package yasnippet
   :diminish yas-minor-mode
@@ -615,7 +617,6 @@ Inspired by `org-combine-plists'."
 (add-hook 'emacs-lisp-mode-hook
           (lambda ()
             (setq show-trailing-whitespace t)
-            (setq flycheck-checker 'emacs-lisp) ;; no emacs-lisp-checkdoc
 
             (show-paren-mode t)
             (whitespace-mode-with-local-variables)

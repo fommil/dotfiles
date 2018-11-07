@@ -9,8 +9,7 @@ function source_if_exists {
 # https://stackoverflow.com/a/820533/1041691
 source_if_exists $HOME/.bashrc
 
-# FIXME: I'm getting logged in twice in xmonad's shell and I don't know why
-if [ -z "$FOMMIL_LOGGED_IN" ] ; then
+if [ "$FOMMIL_LOGGED_IN" = "t" ] ; then
     echo "DEBUG: was logged in already"
     return
 fi
