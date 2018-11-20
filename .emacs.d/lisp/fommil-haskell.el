@@ -76,6 +76,8 @@
   :ensure nil ;; local build disables `package' / autoloading
   :init
   (put 'haskell-compile-command 'safe-local-variable #'stringp)
+  (put 'haskell-compile-ghc-build-command 'safe-local-variable #'stringp)
+  (put 'haskell-compile-ghc-build-alt-command 'safe-local-variable #'stringp)
   (put 'haskell-compile-stack-build-command 'safe-local-variable #'stringp)
   (put 'haskell-compile-stack-build-alt-command 'safe-local-variable #'stringp)
   (put 'haskell-compile-cabal-build-command 'safe-local-variable #'stringp)
@@ -138,8 +140,8 @@
 
 (setq haskell-compile-cabal-build-command "cabal new-build -O0")
 
-(setq haskell-compile-stack-build-alt-command "stack test")
-(setq haskell-compile-cabal-build-alt-command "cabal new-run tasty -- --timeout=10s --color=always")
+(setq haskell-compile-stack-build-alt-command "stack clean")
+(setq haskell-compile-cabal-build-alt-command "cabal new-clean -s")
 
 ;; and for cabal often needs cabal.project.local containing "with-compiler: ghc-8.4.4"
 
