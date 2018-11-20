@@ -138,14 +138,14 @@
             (setq projectile-tags-command "fast-tags -Re --exclude=.stack-work --exclude=dist-newstyle .")
             (setq company-backends (company-backends-for-buffer))))
 
-(setq haskell-compile-cabal-build-command "cabal new-build -O0")
+(setq haskell-compile-cabal-build-command "cabal-hpack new-build -O0")
 
 (setq haskell-compile-stack-build-alt-command "stack clean")
-(setq haskell-compile-cabal-build-alt-command "cabal new-clean -s")
+(setq haskell-compile-cabal-build-alt-command "cabal-hpack new-clean -s")
 
 ;; and for cabal often needs cabal.project.local containing "with-compiler: ghc-8.4.4"
 
-(setq haskell-cabal-tasty-command "cabal new-run tasty -- --timeout=10s --color=always")
+(setq haskell-cabal-tasty-command "cabal-hpack new-run tasty -- --timeout=10s --color=always")
 (setq haskell-cabal-tasty-last nil)
 (defun haskell-cabal-tasty (&optional edit)
   "Invokes `cabal tasty', with an optional pattern restriction."

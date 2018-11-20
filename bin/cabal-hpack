@@ -1,4 +1,4 @@
 #!/bin/sh
 
-find . -maxdepth 2 -name package.yaml -exec hpack {} \;
+find . -maxdepth 2 -type f -name package.yaml -print0 | xargs -0 -L 1 -P 0 hpack --silent
 exec cabal "$@"
