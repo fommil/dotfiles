@@ -39,7 +39,7 @@
     spin = checkout -b
     sith = push --force
     keep = stash save --keep-index
-    nuke = clean -fdx -e cabal.project.local -e .dir-locals.el
+    nuke = clean -fdx -e cabal.project.local -e .dir-locals.el -e .projectile
     cleantags = !git tag -l | xargs git tag -d
 [color]
     branch = auto

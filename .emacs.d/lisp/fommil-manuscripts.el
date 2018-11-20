@@ -19,7 +19,7 @@
    org-src-fontify-natively t
    org-export-headline-levels 5)
   :config
-  (bind-key "C-c c" 'leanpub-export org-mode-map))
+  (bind-key "C-c c" 'compile org-mode-map))
 
 (add-hook 'org-mode-hook
           (lambda ()

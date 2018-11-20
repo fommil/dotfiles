@@ -1,3 +1,4 @@
 .projectile
 .dir-locals.el
 TAGS
+cabal.project.local

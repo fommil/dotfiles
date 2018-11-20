@@ -15,7 +15,9 @@
       (hour (string-to-number (format-time-string "%H"))))
  (if (and (< day 6) (< hour 18) (> hour 8))
      (find-file "~/Work")
-   (find-file "~/Projects")))
+   (find-file "~/Projects/ghc-prof-flamegraph/ghc-prof-flamegraph.hs")
+   (find-file "~/Projects/haskell-tng.el/haskell-tng-font-lock.el")
+   (find-file "~/.emacs.d/scratch.el")))
 
 ;;(find-file "~/Projects/scalaz72")
 ;;(find-file "~/Projects/fpmortals/example/")
@@ -23,7 +25,7 @@
 
 (when window-system
   (let ((hour (string-to-number (format-time-string "%H"))))
-    (if (< hour 20)
+    (if (and (< 8 hour) (< hour 20))
         (light-theme)
       (dark-theme))))
 

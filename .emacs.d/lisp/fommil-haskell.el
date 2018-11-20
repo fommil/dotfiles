@@ -58,6 +58,19 @@
 (add-to-load-path (expand-file-name "~/Projects/haskell-tng.el"))
 (require 'haskell-tng-mode)
 
+(defcustom
+  haskell-mode-prettify-symbols
+  '(;;("->" . ?→)
+    ;;("<-" . ?←)
+    ;;("=>" . ?⇒)
+    ;; ("<=" . ?≤)
+    ;; (">=" . ?≥)
+    ;; ("!=" . ?≠)
+    ;;("+-" . ?±)
+    ("forall" . ?∀)
+    )
+  "Prettify symbols for haskell-mode.")
+
 (use-package haskell-mode
   ;; :pin melpa
   :ensure nil ;; local build disables `package' / autoloading
@@ -65,6 +78,9 @@
   (put 'haskell-compile-command 'safe-local-variable #'stringp)
   (put 'haskell-compile-stack-build-command 'safe-local-variable #'stringp)
   (put 'haskell-compile-stack-build-alt-command 'safe-local-variable #'stringp)
+  (put 'haskell-compile-cabal-build-command 'safe-local-variable #'stringp)
+  (put 'haskell-compile-cabal-build-alt-command 'safe-local-variable #'stringp)
+
   (setq haskell-doc-show-prelude nil)
   :config
   (bind-key "C-c i" 'haskell-doc-show-type haskell-mode-map)
@@ -76,6 +92,10 @@
   (require 'haskell-compile)
   (bind-key "C-c c" 'haskell-compile haskell-compilation-mode-map)
   (bind-key "C-c e" 'next-error haskell-compilation-mode-map)
+
+  (require 'haskell-cabal)
+  (bind-key "C-c c" 'haskell-compile haskell-cabal-mode-map)
+  (bind-key "C-c e" 'next-error haskell-cabal-mode-map)
 
   (bind-key "C-c C-r f" 'stylish-haskell haskell-mode-map)
 
@@ -108,6 +128,9 @@
 
             (setq-local flycheck-checker 'haskell-hlint)
             ;;(flycheck-mode 1) ;; I find it distracting...
+
+            (setq prettify-symbols-alist haskell-mode-prettify-symbols)
+            (prettify-symbols-mode t)
 
             ;; needs https://github.com/elaforge/fast-tags/pull/43
             (setq projectile-tags-command "fast-tags -Re --exclude=.stack-work --exclude=dist-newstyle .")
