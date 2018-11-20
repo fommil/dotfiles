@@ -1,9 +1,0 @@
-#!/bin/bash
-
-if [ -x /usr/bin/chromium ]; then
-  CHROME=/usr/bin/chromium
-elif [ -x /usr/bin/chromium-browser ]; then
-  CHROME=/usr/bin/chromium-browser
-fi
-
-exec $CHROME --app="https://wunderlist.com"

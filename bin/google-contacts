@@ -1,4 +1,0 @@
-#!/bin/bash
-
-# sudo easy_install -U goobook
-goobook query "$*" | sed 's/\(.*\)\t\(.*\)\t.*/\2 \<\1\>/' | sed '/^$/d'

@@ -1,0 +1,4 @@
+#!/bin/sh
+
+find . -maxdepth 2 -name package.yaml -exec hpack {} \;
+exec cabal "$@"
