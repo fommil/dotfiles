@@ -4,6 +4,9 @@ build-depends: base, type-level-sets
 -}
 -- more to come https://github.com/haskell/cabal/issues/5698
 
+-- a matching repl would be:
+-- cabal new-repl -w ghc-8.4.4 --build-depends type-level-sets
+
 {-# LANGUAGE PolyKinds #-}
 {-# LANGUAGE TypeOperators #-}
 {-# LANGUAGE MultiParamTypeClasses #-}
