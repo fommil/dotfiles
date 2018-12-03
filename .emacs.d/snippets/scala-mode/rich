@@ -1,6 +1,0 @@
-# -*- mode: snippet -*-
-#name: syntax
-# --
-implicit final class ${1:}Syntax(private val v: $1) extends AnyVal {
-  $0
-}

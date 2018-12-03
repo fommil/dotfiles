@@ -1,4 +1,0 @@
-# -*- mode: snippet -*-
-#name: a
-# --
-@inline def apply[F[_]](implicit F: ${1:}[F]): $1[F] = F

@@ -1,4 +1,0 @@
-# -*- mode: snippet -*-
-#name: wart
-# --
-@SuppressWarnings(Array("org.wartremover.warts.$0"))

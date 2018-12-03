@@ -1,9 +1,0 @@
-;; Copyright (C) `(format-time-string "%Y")` `yatemplate-owner`
-;; License: `yatemplate-license`
-
-;; $1
-(ns fommil.$2
-  (:use
-   [clojure.core.async :as async :only [<! >! go go-loop]]))
-
-$0
