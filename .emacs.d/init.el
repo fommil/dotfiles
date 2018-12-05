@@ -11,11 +11,6 @@
 ;; modes together.  Sections are delimited by a row of semi-colons
 ;; (stage/functional sections) or a row of dots (primary modes).
 
-;; https://lists.gnu.org/archive/html/emacs-devel/2017-09/msg00211.html
-(eval-after-load "enriched"
-  '(defun enriched-decode-display-prop (start end &optional param)
-     (list start end)))
-
 ;;; Code:
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; User Site Local
@@ -103,7 +98,7 @@
 (when window-system
   (tool-bar-mode -1)
   (scroll-bar-mode -1))
-(global-auto-revert-mode t)
+(global-auto-revert-mode 1)
 
 (electric-indent-mode 0)
 (remove-hook 'post-self-insert-hook
@@ -136,7 +131,7 @@
 (use-package subword
   :ensure nil
   :diminish subword-mode
-  :config (global-subword-mode t))
+  :config (global-subword-mode 1))
 
 (use-package dired
   :ensure nil
@@ -308,9 +303,9 @@ Inspired by `org-combine-plists'."
    ido-show-dot-for-dired nil ;; remember C-d
    ido-enable-dot-prefix t)
   :config
-  (ido-mode t)
+  (ido-mode 1)
   (ido-everywhere t)
-  (flx-ido-mode t))
+  (flx-ido-mode 1))
 
 (use-package projectile
   :demand
@@ -447,7 +442,7 @@ Inspired by `org-combine-plists'."
   (setq auto-insert-alist nil)
   (setq-default yatemplate-license "http://www.gnu.org/licenses/lgpl-3.0.en.html")
   :config
-  (auto-insert-mode t)
+  (auto-insert-mode 1)
   (yatemplate-fill-alist))
 
 (use-package color-moccur
@@ -590,11 +585,20 @@ Inspired by `org-combine-plists'."
   :commands emacs-lisp-mode
   :config
   (bind-key "RET" 'comment-indent-new-line emacs-lisp-mode-map)
-  (bind-key "C-c c" 'compile emacs-lisp-mode-map)
+  (bind-key "C-c c" 'emacs-lisp-cask-compile emacs-lisp-mode-map)
 
   ;; barf / slurp need some experimentation
   (bind-key "M-<left>" 'sp-forward-slurp-sexp emacs-lisp-mode-map)
   (bind-key "M-<right>" 'sp-forward-barf-sexp emacs-lisp-mode-map))
+
+(defun emacs-lisp-cask-compile (&optional alt)
+  (interactive "P")
+  (if-let (default-directory
+            (locate-dominating-file default-directory "Cask"))
+      (if alt
+          (compile "cask clean")
+        (call-interactively 'compile))
+    (error "This is not a Cask project")))
 
 (use-package flycheck-cask)
 (add-hook 'flycheck-mode-hook #'flycheck-cask-setup)
@@ -617,24 +621,25 @@ Inspired by `org-combine-plists'."
 (add-hook 'emacs-lisp-mode-hook
           (lambda ()
             (setq show-trailing-whitespace t)
+            (setq-local compile-command "cask exec ert-runner")
 
-            (show-paren-mode t)
+            (show-paren-mode 1)
             (whitespace-mode-with-local-variables)
-            (rainbow-mode t)
-            (prettify-symbols-mode t)
-            (eldoc-mode t)
-            (flycheck-mode t)
-            (yas-minor-mode t)
-            (company-mode t)
-            (smartparens-strict-mode t)
-            (rainbow-delimiters-mode t)))
+            (rainbow-mode 1)
+            (prettify-symbols-mode 1)
+            (eldoc-mode 1)
+            (flycheck-mode 1)
+            (yas-minor-mode 1)
+            (company-mode 1)
+            (smartparens-strict-mode 1)
+            (rainbow-delimiters-mode 1)))
 
 ;;..............................................................................
 ;; C
 (add-hook 'c-mode-hook (lambda ()
-                         (yas-minor-mode t)
-                         (company-mode t)
-                         (smartparens-mode t)))
+                         (yas-minor-mode 1)
+                         (company-mode 1)
+                         (smartparens-mode 1)))
 
 ;;..............................................................................
 ;; IRC

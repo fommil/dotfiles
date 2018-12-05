@@ -52,11 +52,9 @@
 ;;
 ;;; Code:
 
-(add-to-load-path (expand-file-name "~/Projects/haskell-mode"))
-(require 'haskell-mode-autoloads)
+;;(add-to-load-path (expand-file-name "~/Projects/haskell-mode"))
+;;(require 'haskell-mode-autoloads)
 
-(add-to-load-path (expand-file-name "~/Projects/haskell-tng.el"))
-(require 'haskell-tng-mode)
 
 (defcustom
   haskell-mode-prettify-symbols
@@ -72,7 +70,7 @@
   "Prettify symbols for haskell-mode.")
 
 (use-package haskell-mode
-  ;; :pin melpa
+  :pin melpa
   :ensure nil ;; local build disables `package' / autoloading
   :init
   (put 'haskell-compile-command 'safe-local-variable #'stringp)
