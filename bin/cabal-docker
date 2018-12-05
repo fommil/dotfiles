@@ -1,0 +1,92 @@
+#!/usr/bin/env bash
+
+set -e
+
+# This script is for building Haskell applications inside an isolated docker
+# environment. e.g. so that OSX developers can create Linux binaries.
+#
+# This script should be called exactly as if cabal were being called, with a
+# prefix specifying the docker image to use. e.g.
+#
+#   BUILD_IMAGE=haskell:8.4.3 cabal-docker new-build all
+#
+# The cabal package list is shared between host and container, but global cabal
+# configuration is not. The version of cabal on the host and container must
+# match or there may be incompatibilities.
+#
+# The project's source dependencies and `docker-bin` directory is shared between
+# the host and container. This allows the flag --symlink-bindir=`docker-bin` to
+# work as expected (except the files will be binaries, not symlinks).
+#
+# Obtaining binaries from v2-build is a bit tedious. There are two methods:
+#
+#   1. cabal-plan list-bin[s]
+#   2. cabal new-exec which -- name-of-executable
+#
+# and then `cp -L` that (in the container) to a location that the host can see.
+
+# TODO rewrite this as a Haskell app and publish on Hackage
+
+SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
+
+if [ -z "$BUILD_IMAGE" ] ; then
+    if [ -f Dockerfile ] ; then
+        BUILD_IMAGE=$(docker build -q "$SCRIPT_DIR")
+    else
+        echo "cabal-docker must be called with a BUILD_IMAGE"
+        exit 1
+    fi
+fi
+
+# store all container caches in our ~/.cabal/docker
+CONTAINER_CACHE="$HOME/.cabal/docker/$(echo "${BUILD_IMAGE}" | sed 's/[^a-Z0-9]/_/g')"
+
+# calling the script with no parameters returns the location of the cache.
+# useful to extract build artefacts.
+if [ $# -eq 0 ]; then
+    echo "$CONTAINER_CACHE"
+    exit 0
+fi
+
+# the container's ~/.cabal
+CABAL_DIR="$CONTAINER_CACHE/cabal"
+mkdir -p "$CABAL_DIR" 2>/dev/null
+
+# the container's dist-newstyle
+TARGET_DIR="${CONTAINER_CACHE}/$(pwd)/dist-newstyle"
+mkdir -p "$TARGET_DIR" 2>/dev/null
+
+# share source dependencies between host and container
+SRCDEP_DIR="$(pwd)/dist-newstyle/src"
+mkdir -p "$SRCDEP_DIR" 2>/dev/null
+
+# we have to mount the entire monorepo in docker, because TemplateHaskell might
+# be referring to relative paths outside this subdir.
+GIT_ROOT_DIR="$(git rev-parse --show-toplevel)"
+if [ -z "${GIT_ROOT_DIR}" ] ; then
+    echo "sorry, only works in git repositories"
+    exit 1
+fi
+GIT_PREFIX_DIR="$(git rev-parse --show-prefix)"
+
+# TODO: files like .ghc.environment.x86_64-linux-8.4.3 are currently created
+#       that shouldn't be, we should disable these in the container's
+#       ~/.cabal/config when cabal supports disabling it.
+rm .ghc.* 2>/dev/null || true
+
+mkdir -p dist 2>/dev/null
+
+# don't use -t or we get carriage returns
+# https://github.com/moby/moby/issues/8513
+docker run --rm --network=host \
+       -v "$GIT_ROOT_DIR":/work \
+       -v "$CABAL_DIR":"/.cabal" \
+       -v "$HOME/.cabal/packages":"/.cabal/packages" \
+       -v "$TARGET_DIR":"/work/${GIT_PREFIX_DIR}/dist-newstyle" \
+       -v "$SRCDEP_DIR":"/work/${GIT_PREFIX_DIR}/dist-newstyle/src" \
+       -u "$(id -u)" \
+       -w "/work/${GIT_PREFIX_DIR}" \
+       "$BUILD_IMAGE" \
+       cabal "$@"
+
+rm .ghc.* 2>/dev/null || true
