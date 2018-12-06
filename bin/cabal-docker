@@ -69,9 +69,8 @@ if [ -z "${GIT_ROOT_DIR}" ] ; then
 fi
 GIT_PREFIX_DIR="$(git rev-parse --show-prefix)"
 
-# TODO: files like .ghc.environment.x86_64-linux-8.4.3 are currently created
-#       that shouldn't be, we should disable these in the container's
-#       ~/.cabal/config when cabal supports disabling it.
+# not needed for
+# --write-ghc-environment-files=never
 rm .ghc.* 2>/dev/null || true
 
 mkdir -p dist 2>/dev/null
@@ -89,4 +88,6 @@ docker run --rm --network=host \
        "$BUILD_IMAGE" \
        cabal "$@"
 
+# not needed for
+# --write-ghc-environment-files=never
 rm .ghc.* 2>/dev/null || true

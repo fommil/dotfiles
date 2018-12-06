@@ -1,8 +1,8 @@
 #!/bin/sh
 
 # invokes hpack and stackage-to-hackage (when needed) to produce cabal.project
-# and cabal.project.freeze, passing all arguments through to cabal. Must be
-# called from the same directory that contains the stack.yaml.
+# and cabal.project.freeze. Must be called from the same directory that contains
+# the stack.yaml.
 
 # TODO: rewrite as a Haskell app and release on Hackage
 
@@ -11,6 +11,8 @@ if [ ! -f stack.yaml ] ; then
     exit 1
 fi
 
+find . -maxdepth 2 -type f -name package.yaml -print0 | xargs -0 -r -L 1 -P 0 hpack --silent
+
 if [ ! -f cabal.project ] ||
        [ ! -f cabal.project.freeze ] ||
        [ $(find . -maxdepth 1 -type f -name "*.yaml" -newer cabal.project | wc -l) -gt 0 ] ; then
@@ -18,7 +20,3 @@ if [ ! -f cabal.project ] ||
     stackage-to-hackage stack.yaml
     cabal v2-freeze # trims the constraints
 fi
-
-find . -maxdepth 2 -type f -name package.yaml -print0 | xargs -0 -r -L 1 -P 0 hpack --silent
-
-exec cabal "$@"
