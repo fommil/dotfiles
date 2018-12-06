@@ -424,7 +424,7 @@ Inspired by `org-combine-plists'."
   :diminish flycheck-mode
   :commands flycheck-mode
   :init
-  (setq-default flycheck-disabled-checkers '(emacs-lisp-checkdoc)))
+  (setq flycheck-check-syntax-automatically '(mode-enabled save)))
 
 (use-package yasnippet
   :diminish yas-minor-mode
@@ -623,6 +623,8 @@ Inspired by `org-combine-plists'."
             (setq show-trailing-whitespace t)
             (setq-local compile-command "cask exec ert-runner")
 
+            ;; disable emacs-lisp-checkdoc
+            (setq-local flycheck-checkers '(emacs-lisp))
             (show-paren-mode 1)
             (whitespace-mode-with-local-variables)
             (rainbow-mode 1)
