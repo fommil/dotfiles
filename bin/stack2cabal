@@ -1,8 +1,7 @@
 #!/bin/sh
 
-# invokes hpack and stackage-to-hackage (when needed) to produce cabal.project
-# and cabal.project.freeze. Must be called from the same directory that contains
-# the stack.yaml.
+# invokes hpack and stackage-to-hackage producing cabal.project,
+# cabal.project.freeze and *.cabal files.
 
 # TODO: rewrite as a Haskell app and release on Hackage
 
@@ -13,10 +12,6 @@ fi
 
 find . -maxdepth 2 -type f -name package.yaml -print0 | xargs -0 -r -L 1 -P 0 hpack --silent
 
-if [ ! -f cabal.project ] ||
-       [ ! -f cabal.project.freeze ] ||
-       [ $(find . -maxdepth 1 -type f -name "*.yaml" -newer cabal.project | wc -l) -gt 0 ] ; then
-    echo "Generating cabal.project and cabal.project.freeze"
-    stackage-to-hackage stack.yaml
-    cabal v2-freeze # trims the constraints
-fi
+echo "Generating cabal.project and cabal.project.freeze"
+stackage-to-hackage stack.yaml
+cabal v2-freeze # trims the constraints
