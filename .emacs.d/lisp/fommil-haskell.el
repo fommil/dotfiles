@@ -80,6 +80,7 @@
   (put 'haskell-compile-stack-build-alt-command 'safe-local-variable #'stringp)
   (put 'haskell-compile-cabal-build-command 'safe-local-variable #'stringp)
   (put 'haskell-compile-cabal-build-alt-command 'safe-local-variable #'stringp)
+  (put 'flycheck-ghc-language-extensions 'safe-local-variable #'flycheck-string-list-p)
 
   (setq haskell-doc-show-prelude nil)
   :config
@@ -124,10 +125,10 @@
             (yas-minor-mode 1)
             (git-gutter-mode 1)
             (company-mode 1)
-            ;;(prettify-symbols-mode t)
 
-            (setq-local flycheck-checker 'haskell-hlint)
-            ;;(flycheck-mode 1) ;; I find it distracting...
+            (setq-local flycheck-checkers '(haskell-ghc))
+            ;; haskell-hlint disabled, I find it distracting
+            (flycheck-mode 1)
 
             (setq prettify-symbols-alist haskell-mode-prettify-symbols)
             (prettify-symbols-mode t)
