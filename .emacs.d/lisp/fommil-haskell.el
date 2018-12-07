@@ -126,6 +126,8 @@
             (git-gutter-mode 1)
             (company-mode 1)
 
+            (make-variable-buffer-local 'haskell--compile-cabal-last)
+
             (setq-local flycheck-checkers '(haskell-ghc))
             ;; haskell-hlint disabled, I find it distracting
             (flycheck-mode 1)

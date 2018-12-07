@@ -1,4 +1,4 @@
-personal_ws-1.1 en 58 
+personal_ws-1.1 en 60 
 dimensionality
 interpolator
 subtrees
@@ -21,6 +21,7 @@ monoidal
 covariant
 coproduct
 typeclass
+ADT
 libre
 compiletime
 FP
@@ -44,6 +45,7 @@ runtime
 Mappable
 subtype
 monad
+hellscape
 associativity
 IntelliJ
 breakpoint
