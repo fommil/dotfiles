@@ -420,11 +420,15 @@ Inspired by `org-combine-plists'."
   :diminish rainbow-mode
   :commands rainbow-mode)
 
+;; TODO show compile buffer output as flycheck squiggles
 (use-package flycheck
   :diminish flycheck-mode
   :commands flycheck-mode
   :init
-  (setq flycheck-check-syntax-automatically '(mode-enabled save)))
+  (setq flycheck-check-syntax-automatically '(mode-enabled save))
+  :config
+  ;; disables the timed popup, use C-h .
+  (defun flycheck-display-error-at-point-soon ()))
 
 (use-package yasnippet
   :diminish yas-minor-mode

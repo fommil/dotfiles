@@ -128,10 +128,6 @@
 
             (make-variable-buffer-local 'haskell--compile-cabal-last)
 
-            (setq-local flycheck-checkers '(haskell-ghc))
-            ;; haskell-hlint disabled, I find it distracting
-            (flycheck-mode 1)
-
             (setq prettify-symbols-alist haskell-mode-prettify-symbols)
             (prettify-symbols-mode t)
 
@@ -163,6 +159,18 @@
          (command (concat base restriction)))
     (setq haskell-cabal-tasty-last restriction)
     (compilation-start command 'haskell-compilation-mode)))
+
+;; customises the stock behaviour to only support cabal, prefering cabal.project files
+(defun haskell-compile (&optional edit-command)
+  (interactive "P")
+  (save-some-buffers (not compilation-ask-about-save) compilation-save-buffers-predicate)
+  (when-let (cabaldir (or (locate-dominating-file default-directory "cabal.project")
+                          (locate-dominating-file default-directory "cabal.project.local")
+                          (haskell-cabal-find-dir)))
+    (haskell--compile cabaldir edit-command
+                      'haskell--compile-cabal-last
+                      haskell-compile-cabal-build-command
+                      haskell-compile-cabal-build-alt-command)))
 
 (provide 'fommil-haskell)
 
