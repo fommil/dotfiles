@@ -26,6 +26,7 @@ set -e
 # and then `cp -L` that (in the container) to a location that the host can see.
 
 # TODO rewrite this as a Haskell app and publish on Hackage
+# TODO set "write-ghc-environment-files: never" in config
 
 SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 
@@ -69,10 +70,6 @@ if [ -z "${GIT_ROOT_DIR}" ] ; then
 fi
 GIT_PREFIX_DIR="$(git rev-parse --show-prefix)"
 
-# not needed for
-# --write-ghc-environment-files=never
-rm .ghc.* 2>/dev/null || true
-
 mkdir -p dist 2>/dev/null
 
 # don't use -t or we get carriage returns
@@ -87,7 +84,3 @@ docker run --rm --network=host \
        -w "/work/${GIT_PREFIX_DIR}" \
        "$BUILD_IMAGE" \
        cabal "$@"
-
-# not needed for
-# --write-ghc-environment-files=never
-rm .ghc.* 2>/dev/null || true

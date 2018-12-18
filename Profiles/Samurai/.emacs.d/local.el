@@ -30,11 +30,11 @@
       (dark-theme))))
 
 ;; flycheck is CPU intensive so only for desktops
-(add-hook 'haskell-mode-hook
-          (lambda ()
-            ;;(setq-local flycheck-checkers '(haskell-ghc haskell-hlint))
-            (setq-local flycheck-checkers '(haskell-ghc))
-            (flycheck-mode 1)))
+;; (add-hook 'haskell-mode-hook
+;;           (lambda ()
+;;             ;;(setq-local flycheck-checkers '(haskell-ghc haskell-hlint))
+;;             (setq-local flycheck-checkers '(haskell-ghc))
+;;             (flycheck-mode 1)))
 
 ;; Local Variables:
 ;; byte-compile-warnings: (not free-vars unresolved)

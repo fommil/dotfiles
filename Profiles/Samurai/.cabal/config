@@ -12,4 +12,4 @@ symlink-bindir: /home/fommil/.cabal/bin
 build-summary: /home/fommil/.cabal/logs/build.log
 remote-build-reporting: anonymous
 jobs: $ncpus
---write-ghc-environment-files: never
+write-ghc-environment-files: never
