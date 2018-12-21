@@ -58,6 +58,13 @@
   (call-process "stylish-haskell" nil nil nil "-i" buffer-file-name)
   (revert-buffer t t t))
 
+(defun stack2cabal ()
+  "Prepare a stack project for use with cabal."
+  (interactive)
+  (when-let
+      (default-directory (locate-dominating-file default-directory "stack.yaml"))
+    (call-process "stack2cabal")))
+
 (require 'haskell-compile)
 (add-hook 'haskell-mode-hook
           (lambda ()

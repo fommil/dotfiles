@@ -1,16 +1,16 @@
-import Control.Monad
-import XMonad
-import XMonad.Config
-import XMonad.Actions.GridSelect
-import XMonad.Actions.SpawnOn
-import XMonad.Hooks.DynamicLog
-import XMonad.Hooks.SetWMName
-import XMonad.Hooks.UrgencyHook
-import XMonad.Util.EZConfig
-import qualified Data.Map as M
-import qualified XMonad.StackSet as W
-import System.Environment
-import System.Exit
+import           Control.Monad
+import qualified Data.Map                  as M
+import           System.Environment
+import           System.Exit
+import           XMonad
+import           XMonad.Actions.GridSelect
+import           XMonad.Actions.SpawnOn
+import           XMonad.Config
+import           XMonad.Hooks.DynamicLog
+import           XMonad.Hooks.SetWMName
+import           XMonad.Hooks.UrgencyHook
+import qualified XMonad.StackSet           as W
+import           XMonad.Util.EZConfig
 
 myNormalBorderColor  = "#7a7a7a"
 myFocusedBorderColor = "#000000"
@@ -36,10 +36,10 @@ startup :: Bool -> X ()
 startup initial = do
                   setWMName "LG3D"
                   when initial $ do
-                    spawnOn "1" "urxvt"
---                    spawnOn "2" "emacs"
-                    spawnOn "3" "chromium"
---                    spawnOn "4" "spotify"
+                    spawnOnOnce "1" "urxvt"
+--                    spawnOnOnce "2" "emacs"
+                    spawnOnOnce "3" "chromium"
+--                    spawnOnOnce "9" "spotify"
 
 manageHook' :: ManageHook
 manageHook' = composeAll
