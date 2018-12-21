@@ -55,7 +55,7 @@
   "Apply `stylish-haskell' rules."
   (interactive)
   (save-buffer)
-  (call-process "stylish-haskell" nil nil nil "-i" (buffer-name))
+  (call-process "stylish-haskell" nil nil nil "-i" buffer-file-name)
   (revert-buffer t t t))
 
 (require 'haskell-compile)

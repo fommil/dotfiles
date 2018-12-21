@@ -369,6 +369,11 @@ Inspired by `org-combine-plists'."
   :bind (("s-g" . magit-status)
          ("s-b" . magit-blame)))
 
+;; BLOCKED https://github.com/magit/forge/issues/21
+;; BLOCKED https://github.com/magit/forge/issues/22
+;; https://emacsair.me/2018/12/19/forge-0.1/
+;;(use-package forge)
+
 (use-package git-timemachine
   :commands git-timemachine
   :init (setq

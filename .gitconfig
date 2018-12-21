@@ -56,3 +56,5 @@
 # for repos that use HTTPS, this stores passwords in a cache (1 hour)
 #git config credential.helper cache
 #git config credential.helper "cache --timeout=3600"
+[protocol]
+	version = 2

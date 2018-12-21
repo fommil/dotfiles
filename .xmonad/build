@@ -1,6 +1,7 @@
 #!/bin/sh
 
 cd ~/.xmonad
-cabal new-build
+cabal v2-build
+XMONAD_EXE=$(cabal v2-exec -- which xmonad-x86_64-linux)
 # cabal 2.4 allows customising the output directory to something easier with --symlink-bindir=
-/bin/cp -f dist-newstyle/build/x86_64-linux/ghc-8.4.4/dotxmonad-0.1.0.0/x/xmonad-x86_64-linux/opt/build/xmonad-x86_64-linux/xmonad-x86_64-linux ${1:-.}
+/bin/cp -f ${XMONAD_EXE} ${1:-.}
