@@ -141,6 +141,19 @@
   (bind-key "C-c c" 'haskell-compile dired-mode-map)
   (bind-key "C-c e" 'next-error dired-mode-map))
 
+(use-package xref
+  :ensure nil
+  :config
+  (bind-key "<up>" #'xref-prev-line-quiet xref--xref-buffer-mode-map)
+  (bind-key "<down>" #'xref-next-line-quiet xref--xref-buffer-mode-map))
+
+(defun xref-next-line-quiet ()
+  (interactive)
+  (xref--search-property 'xref-item))
+(defun xref-prev-line-quiet ()
+  (interactive)
+  (xref--search-property 'xref-item t))
+
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; This section is for generic interactive convenience methods.
 ;; Arguably could be uploaded to MELPA as package 'fommil-utils.
@@ -318,7 +331,6 @@ Inspired by `org-combine-plists'."
    projectile-globally-ignored-directories '(".git")
    projectile-globally-ignored-files '("TAGS" "*.min.js"))
   :config
-  (projectile-mode)
   (make-variable-buffer-local 'projectile-tags-command)
   (add-hook 'projectile-grep-finished-hook
             ;; not going to the first hit?
@@ -326,6 +338,7 @@ Inspired by `org-combine-plists'."
   :bind
   (("s-f" . projectile-find-file)
    ("s-F" . projectile-ag)))
+(projectile-mode)
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; This section is for loading and tweaking generic modes that are
