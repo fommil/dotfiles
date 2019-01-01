@@ -313,7 +313,7 @@ Inspired by `org-combine-plists'."
   :init
   (put 'ag-ignore-list 'safe-local-variable #'listp)
   (setq
-   projectile-tags-backend 'etags-select
+   projectile-tags-backend 'xref
    projectile-use-git-grep t
    projectile-globally-ignored-directories '(".git")
    projectile-globally-ignored-files '("TAGS" "*.min.js"))
@@ -378,13 +378,6 @@ Inspired by `org-combine-plists'."
   :commands git-timemachine
   :init (setq
          git-timemachine-abbreviation-length 4))
-
-;; TODO: make etags-select-find-tag complete properly
-(use-package etags-select
-  ;; https://github.com/melpa/melpa/pull/5008
-  ;; https://www.emacswiki.org/emacs/download/etags-select.el
-  :ensure nil
-  :commands etags-select-find-tag)
 
 (use-package ag
   :commands ag

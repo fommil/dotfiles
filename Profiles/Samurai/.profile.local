@@ -3,6 +3,7 @@
 # ~/.cache should be a symbolic link to here
 mkdir -m 0770 /tmp/$USER-cache 2>/dev/null
 ln -s $HOME/.spotify/cache /tmp/$USER-cache/spotify 2>/dev/null
+ln -s $HOME/.stackage /tmp/$USER-cache/stackage 2>/dev/null
 
 # https://imagemagick.org/discourse-server/viewtopic.php?t=34893
 export MAGICK_OCL_DEVICE=OFF
