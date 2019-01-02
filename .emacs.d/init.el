@@ -331,6 +331,7 @@ Inspired by `org-combine-plists'."
    projectile-globally-ignored-directories '(".git")
    projectile-globally-ignored-files '("TAGS" "*.min.js"))
   :config
+  (define-key projectile-mode-map (kbd "C-c p") 'projectile-command-map)
   (make-variable-buffer-local 'projectile-tags-command)
   (add-hook 'projectile-grep-finished-hook
             ;; not going to the first hit?
@@ -338,7 +339,7 @@ Inspired by `org-combine-plists'."
   :bind
   (("s-f" . projectile-find-file)
    ("s-F" . projectile-ag)))
-(projectile-mode)
+(projectile-mode 1)
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; This section is for loading and tweaking generic modes that are
