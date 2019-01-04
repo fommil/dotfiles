@@ -4,8 +4,9 @@ set -e
 
 # When on your working branch, constructs a squashed rebase to the provided
 # branch. Use when working on a shared branch with a colleague who doesn't
-# understand how rebasing works, or if somebody helpfully uses github to
-# "Update" your branch to master and resolves your conflicts.
+# understand how rebasing works, if somebody helpfully uses github to "Update"
+# your branch to master and resolves your conflicts, or if you're in a PR
+# centipede.
 #
 # https://stackoverflow.com/questions/47327103/
 

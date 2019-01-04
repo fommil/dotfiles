@@ -38,7 +38,7 @@ startup initial = do
                   when initial $ do
                     spawnOnOnce "1" "urxvt"
 --                    spawnOnOnce "2" "emacs"
-                    spawnOnOnce "3" "firefox"
+--                    spawnOnOnce "3" "firefox"
 --                    spawnOnOnce "9" "spotify"
 
 manageHook' :: ManageHook
