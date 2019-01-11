@@ -166,6 +166,13 @@
     (indent-region (point-min) (point-max) nil)
     (untabify (point-min) (point-max))))
 
+(defun indent-defun ()
+  "Indent the current function."
+  (interactive)
+  (save-mark-and-excursion
+    (mark-defun)
+    (indent-region (point) (mark))))
+
 (defun unfill-paragraph (&optional region)
   ;; http://www.emacswiki.org/emacs/UnfillParagraph
   "Transforms a paragraph in REGION into a single line of text."
@@ -593,6 +600,7 @@ Inspired by `org-combine-plists'."
 (global-set-key (kbd "<f5>") 'revert-buffer-no-confirm)
 (global-set-key (kbd "M-Q") 'unfill-paragraph)
 (global-set-key (kbd "<f6>") 'dot-emacs)
+(global-set-key (kbd "C-x \\") 'indent-defun)
 
 ;;..............................................................................
 ;; elisp

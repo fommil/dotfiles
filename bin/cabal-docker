@@ -40,7 +40,7 @@ if [ -z "$BUILD_IMAGE" ] ; then
 fi
 
 # store all container caches in our ~/.cabal/docker
-CONTAINER_CACHE="$HOME/.cabal/docker/$(echo "${BUILD_IMAGE}" | sed 's/[^a-Z0-9]/_/g')"
+CONTAINER_CACHE="$HOME/.cabal/docker/$(echo "${BUILD_IMAGE}" | sed 's/[^a-zA-Z0-9]/_/g')"
 
 # calling the script with no parameters returns the location of the cache.
 # useful to extract build artefacts.

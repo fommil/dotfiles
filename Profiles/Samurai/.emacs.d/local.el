@@ -15,9 +15,7 @@
       (hour (string-to-number (format-time-string "%H"))))
  (if (and (< day 6) (< hour 18) (> hour 8))
      (find-file "~/Work")
-   (find-file "~/Projects/ghc-prof-flamegraph/ghc-prof-flamegraph.hs")
-   (find-file "~/Projects/haskell-tng.el/haskell-tng-font-lock.el")
-   (find-file "~/.emacs.d/scratch.el")))
+   (find-file "~/Projects/haskell-tng.el/haskell-tng-smie.el")))
 
 ;;(find-file "~/Projects/scalaz72")
 ;;(find-file "~/Projects/fpmortals/example/")
