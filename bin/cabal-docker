@@ -26,7 +26,6 @@ set -e
 # and then `cp -L` that (in the container) to a location that the host can see.
 
 # TODO rewrite this as a Haskell app and publish on Hackage
-# TODO set "write-ghc-environment-files: never" in config
 
 SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 
@@ -71,6 +70,17 @@ fi
 GIT_PREFIX_DIR="$(git rev-parse --show-prefix)"
 
 mkdir -p dist 2>/dev/null
+
+# disable generation of .ghc.* files
+if [ ! -f "$CABAL_DIR/config" ] ; then
+    docker run --rm --network=host \
+       -v "$CABAL_DIR":"/.cabal" \
+       -v "$HOME/.cabal/packages":"/.cabal/packages" \
+       -u "$(id -u)" \
+       "$BUILD_IMAGE" \
+       cabal user-config init
+    echo "write-ghc-environment-files: never" >> "$CABAL_DIR/config"
+fi
 
 # don't use -t or we get carriage returns
 # https://github.com/moby/moby/issues/8513
