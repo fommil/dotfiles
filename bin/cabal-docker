@@ -8,7 +8,7 @@ set -e
 # This script should be called exactly as if cabal were being called, with a
 # prefix specifying the docker image to use. e.g.
 #
-#   BUILD_IMAGE=haskell:8.4.3 cabal-docker new-build all
+#   DOCKER_CABAL_IMAGE=haskell:8.4.3 cabal-docker new-build all
 #
 # The cabal package list is shared between host and container, but global cabal
 # configuration is not. The version of cabal on the host and container must
@@ -29,17 +29,17 @@ set -e
 
 SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 
-if [ -z "$BUILD_IMAGE" ] ; then
+if [ -z "$DOCKER_CABAL_IMAGE" ] ; then
     if [ -f Dockerfile ] ; then
-        BUILD_IMAGE=$(docker build -q "$SCRIPT_DIR")
+        DOCKER_CABAL_IMAGE=$(docker build -q "$SCRIPT_DIR")
     else
-        echo "cabal-docker must be called with a BUILD_IMAGE"
+        echo "cabal-docker must be called with a DOCKER_CABAL_IMAGE"
         exit 1
     fi
 fi
 
 # store all container caches in our ~/.cabal/docker
-CONTAINER_CACHE="$HOME/.cabal/docker/$(echo "${BUILD_IMAGE}" | sed 's/[^a-zA-Z0-9]/_/g')"
+CONTAINER_CACHE="$HOME/.cabal/docker/$(echo "${DOCKER_CABAL_IMAGE}" | sed 's/[^a-zA-Z0-9]/_/g')"
 
 # calling the script with no parameters returns the location of the cache.
 # useful to extract build artefacts.
@@ -77,7 +77,7 @@ if [ ! -f "$CABAL_DIR/config" ] ; then
        -v "$CABAL_DIR":"/.cabal" \
        -v "$HOME/.cabal/packages":"/.cabal/packages" \
        -u "$(id -u)" \
-       "$BUILD_IMAGE" \
+       "$DOCKER_CABAL_IMAGE" \
        cabal user-config init
     echo "write-ghc-environment-files: never" >> "$CABAL_DIR/config"
 fi
@@ -92,5 +92,5 @@ docker run --rm --network=host \
        -v "$SRCDEP_DIR":"/work/${GIT_PREFIX_DIR}/dist-newstyle/src" \
        -u "$(id -u)" \
        -w "/work/${GIT_PREFIX_DIR}" \
-       "$BUILD_IMAGE" \
+       "$DOCKER_CABAL_IMAGE" \
        cabal "$@"
