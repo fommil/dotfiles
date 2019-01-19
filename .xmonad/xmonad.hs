@@ -10,6 +10,7 @@ import           XMonad.Hooks.DynamicLog
 import           XMonad.Hooks.SetWMName
 import           XMonad.Hooks.UrgencyHook
 import qualified XMonad.StackSet           as W
+import           XMonad.Util.SpawnOnce
 import           XMonad.Util.EZConfig
 
 myNormalBorderColor  = "#7a7a7a"
@@ -38,8 +39,8 @@ startup initial = do
                   when initial $ do
                     spawnOnOnce "1" "urxvt"
 --                    spawnOnOnce "2" "emacs"
---                    spawnOnOnce "3" "firefox"
---                    spawnOnOnce "9" "spotify"
+                    spawnOnOnce "3" "firefox"
+                    spawnOnOnce "9" "deadbeef"
 
 manageHook' :: ManageHook
 manageHook' = composeAll

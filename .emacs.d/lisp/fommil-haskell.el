@@ -85,15 +85,14 @@
 (setq haskell-compile-cabal-build-command "cabal v2-build -O0")
 (setq haskell-compile-cabal-build-alt-command "cabal v2-clean")
 
-;; customises the stock behaviour to only support cabal, prefering cabal.project files
+;; customises the stock behaviour to only support cabal
 (defun haskell-compile (&optional edit-command)
   (interactive "P")
   (save-some-buffers (not compilation-ask-about-save) compilation-save-buffers-predicate)
-  (when-let (cabaldir (or (locate-dominating-file default-directory "cabal.project")
+  (when-let (cabaldir (or (haskell-cabal-find-dir)
+                          (locate-dominating-file default-directory "cabal.project")
                           (locate-dominating-file default-directory "cabal.project.local")
-                          (locate-dominating-file default-directory "cabal.project.freeze")
-                          (locate-dominating-file default-directory "cabal.config")
-                          (haskell-cabal-find-dir)))
+                          (locate-dominating-file default-directory "cabal.project.freeze")))
     (haskell--compile cabaldir edit-command
                       'haskell--compile-cabal-last
                       haskell-compile-cabal-build-command
