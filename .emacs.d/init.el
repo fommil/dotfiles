@@ -616,7 +616,7 @@ Inspired by `org-combine-plists'."
   (bind-key "M-<right>" 'sp-forward-barf-sexp emacs-lisp-mode-map))
 
 (defun emacs-lisp-cask-compile ()
-  (interactive "P")
+  (interactive)
   (if-let (default-directory
             (locate-dominating-file default-directory "Cask"))
     (call-interactively 'compile)
