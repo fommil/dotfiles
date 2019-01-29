@@ -1,14 +1,19 @@
-#!/bin/bash
+#!/bin/sh
 
-export PATH=$HOME/.ghcup/bin:$HOME/.cabal/bin:$PATH
+# curl -fsSL https://raw.githubusercontent.com/cask/cask/master/go | python
+export PATH="$HOME/.cask/bin:$PATH"
+
+# curl -L https://raw.githubusercontent.com/pyenv/pyenv-installer/master/bin/pyenv-installer | bash
+export PATH=$HOME/.pyenv/bin:$PATH
+eval "$(pyenv init -pyenv init -)"
+eval "$(pyenv virtualenv-init -)"
 
 export MAKEFLAGS="-j$(nproc)"
 # gcc -march=native -v -Q --help=target
 export CFLAGS="-march=native -O3"
 export CXXFLAGS="$CFLAGS"
 
-#export EMACS_SOURCE=$HOME/Projects/emacs
+# export EMACS_SOURCE=$HOME/Projects/emacs
 # when building emacs25-git use this to use my local repo
 # source=("$pkgname::git+file:///home/fommil/Projects/emacs#branch=emacs-25")
 
-export PRINTER=Photosmart_5520

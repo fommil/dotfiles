@@ -615,13 +615,11 @@ Inspired by `org-combine-plists'."
   (bind-key "M-<left>" 'sp-forward-slurp-sexp emacs-lisp-mode-map)
   (bind-key "M-<right>" 'sp-forward-barf-sexp emacs-lisp-mode-map))
 
-(defun emacs-lisp-cask-compile (&optional alt)
+(defun emacs-lisp-cask-compile ()
   (interactive "P")
   (if-let (default-directory
             (locate-dominating-file default-directory "Cask"))
-      (if alt
-          (compile "cask clean")
-        (call-interactively 'compile))
+    (call-interactively 'compile)
     (error "This is not a Cask project")))
 
 (use-package flycheck-cask)
