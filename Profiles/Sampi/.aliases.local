@@ -2,4 +2,5 @@ alias update="sudo pacman -Syu ; update-emacs"
 alias update-aggressive="yay -Syu --devel --aur ; update-emacs"
 alias keepers="sudo pacman -Qqet"
 alias keepers-detail='for p in $(pacman -Qqe) ; do desc=$(pacman -Qi $p | grep "^Description" | sed "s/^Description *//") ; echo "$p$desc" ; done'
+alias keepers-optional='comm -23 <(expac -l"\n" "%o" | sort -u) <(expac -l"\n" "%n\n%S" | sort -u)'
 alias cleanup='sudo pacman -Rsn $(pacman -Qdtq | tr "\n" " ")'
