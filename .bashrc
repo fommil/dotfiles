@@ -91,6 +91,14 @@ function docker-nuke {
     echo "consider using 'docker system prune --all'"
 }
 
+function ffmpeg-mkv2mp4 {
+    ffmpeg -i "$1" -f mp4 -codec copy "${1%.*}.mp4"
+}
+
+function ffmpeg-mp4 {
+    ffmpeg -i "$1" -f mp4 -c:a libmp3lame -qscale:a 0 -c:v libx264 -vf scale="${2:-640}":-2 "${1%.*}-recode.mp4"
+}
+
 # Local settings and overrides
 source_if_exists ~/.bashrc.local
 source_if_exists ~/.aliases
