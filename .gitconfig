@@ -39,8 +39,9 @@
     spin = checkout -b
     sith = push --force
     keep = stash save --keep-index
-    nuke = clean -fdx -e cabal.project.local -e .dir-locals.el -e .projectile -e default-services.yaml
+    nuke = clean -fdx -e cabal.project.local -e .dir-locals.el -e .projectile
     cleantags = !git tag -l | xargs git tag -d
+    cleanbranches = !git branch | sed 's/*//' | xargs git branch -D
 [color]
     branch = auto
     diff = auto
@@ -58,3 +59,5 @@
 #git config credential.helper "cache --timeout=3600"
 [protocol]
 	version = 2
+[github]
+	user = fommil
