@@ -51,6 +51,19 @@
   (bind-key "C-c C-r b" 'hlint-refactor-refactor-buffer haskell-mode-map)
   (bind-key "C-c C-r r" 'hlint-refactor-refactor-at-point haskell-mode-map))
 
+;; override the hlint-refactor definition to see lang extensions
+(defun hlint-refactor-refactor-buffer (&optional args)
+  (interactive)
+  (hlint-refactor-call-process-region-preserve-point
+   (point-min)
+   (point-max)
+   "hlint"
+   (append (when flycheck-hlint-language-extensions
+             `("-X"
+               ,(s-join "," flycheck-hlint-language-extensions)))
+           '("--refactor" "-")
+           args)))
+
 (defun stylish-haskell ()
   "Apply `stylish-haskell' rules."
   (interactive)

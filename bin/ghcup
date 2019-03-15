@@ -39,7 +39,7 @@
 # @VARIABLE: VERSION
 # @DESCRIPTION:
 # Version of this script.
-VERSION=0.0.6
+VERSION=0.0.7
 
 # @VARIABLE: SCRIPT
 # @DESCRIPTION:
@@ -184,8 +184,7 @@ FLAGS:
                      (these will not be removed by ghcup)
 
 SUBCOMMANDS:
-    install          Install GHC
-    compile          Compile and install GHC from source
+    install          Install GHC$(${VERBOSE} && printf "\n    compile          Compile and install GHC from source (UNSTABLE!!!)")
     show             Show current/installed GHC
     set              Set currently active GHC version
     list             Show available GHCs and other tools (upstream)
@@ -193,6 +192,7 @@ SUBCOMMANDS:
     rm               Remove an already installed GHC
     install-cabal    Install cabal-install
     debug-info       Print debug info (e.g. detected system/distro)
+    changelog        Show the changelog of a GHC release (online)
 
 DISCUSSION:
     ghcup installs the Glasgow Haskell Compiler from the official
@@ -421,6 +421,32 @@ DISCUSSION:
     exit 1
 }
 
+# @FUNCTION: changelog_usage
+# @DESCRIPTION:
+# Print the help message for 'ghcup set' to STDERR
+# and exit the script with status code 1.
+changelog_usage() {
+    (>&2 echo "ghcup-changelog
+View the online changelog for the given GHC version
+
+USAGE:
+    ${SCRIPT} changelog [FLAGS] [VERSION|TAG]
+
+FLAGS:
+    -h, --help       Prints help information
+
+ARGS:
+    [VERSION|TAG]    E.g. \"8.4.3\" or \"8.6.3\" or
+                     a tag like \"recommended\" or \"latest\"
+                     (default: discovers latest version)
+
+DISCUSSION:
+    Opens the online changelog for the given GHC version via
+    xdg-open.
+")
+    exit 1
+}
+
 
 
 
@@ -451,6 +477,27 @@ edo()
         printf "\\033[0;34m%s\\033[0m\\n" "$*" 1>&2
     fi
     "$@" || exit 2
+}
+
+# @FUNCTION: emake
+# @USAGE: [arguments]
+# @DESCRIPTION:
+# Wrapper around 'make', may call 'gmake' if it exists.
+emake() { # avoid re-checking for gmake
+    if [ -n "${MAKE}" ] ; then
+        # shellcheck disable=SC2086
+        edo ${MAKE} "$@"
+    else
+        if command_exists gmake ; then
+            MAKE="gmake"
+            # shellcheck disable=SC2086
+            edo ${MAKE} "$@"
+        else
+            MAKE="make"
+            # shellcheck disable=SC2086
+            edo ${MAKE} "$@"
+        fi
+    fi
 }
 
 # @FUNCTION: debug_message
@@ -629,9 +676,9 @@ get_distro_ver() {
             printf "%s" "$(uname -v)"
             ;;
         FreeBSD)
-            # we only care about the numeric version part left of
-            # the '-' in "11.2-RELEASE".
-            printf "%s" "$(uname -r | cut -d - -f 1)"
+            # we only care about the major numeric version part left of
+            # the '.' in "11.2-RELEASE".
+            printf "%s" "$(uname -r | cut -d . -f 1)"
             ;;
         *)
             # Fall back to uname, e.g. "Linux <version>", also works for BSD, etc.
@@ -847,6 +894,37 @@ download() {
     [ -z "$1" ] && die "Internal error: no argument given to download"
     # shellcheck disable=SC2086
     edo ${DOWNLOADER} ${DOWNLOADER_OPTS} "$1"
+}
+
+# @FUNCTION: download_to_cache
+# @USAGE: <url>
+# @DESCRIPTION:
+# Downloads the given url as a file into the cache directory
+# and makes sure the file is deleted on failed/interrupted download.
+download_to_cache() {
+    [ -z "$1" ] && die "Internal error: no argument given to download_to_cache"
+
+    _dtc_download_url="$1"
+    _dtc_download_tarball_name=$(basename "${_dtc_download_url}")
+
+    rm_tarball() {
+        if [ -e "${CACHE_LOCATION}/${_dtc_download_tarball_name}" ] ; then
+            rm "${CACHE_LOCATION}/${_dtc_download_tarball_name}"
+        fi
+    }
+
+    (
+        trap 'rm_tarball' 2
+        edo cd "${CACHE_LOCATION}"
+        # shellcheck disable=SC2086
+        edo ${DOWNLOADER} ${DOWNLOADER_OPTS} "${_dtc_download_url}"
+        trap - 2
+    ) || {
+        rm_tarball
+        die "Failed to download"
+    }
+
+    unset _dtc_download_tarball_name _dtc_download_url
 }
 
 # @FUNCTION: download_silent
@@ -1173,8 +1251,7 @@ install_ghc() {
     (
         if ${CACHING} ; then
             if [ ! -e "${CACHE_LOCATION}/${download_tarball_name}" ] ; then
-                edo cd "${CACHE_LOCATION}"
-                download "${download_url}"
+                download_to_cache "${download_url}"
             fi
             edo cd "${tmp_dir}"
             unpack "${CACHE_LOCATION}/${download_tarball_name}"
@@ -1189,7 +1266,7 @@ install_ghc() {
         debug_message "Installing GHC into ${inst_location}"
 
         edo ./configure --prefix="${inst_location}"
-        edo make install
+        emake install
 
         # clean up
         edo cd ..
@@ -1448,8 +1525,7 @@ install_cabal() {
     (
         if ${CACHING} ; then
             if [ ! -e "${CACHE_LOCATION}/${download_tarball_name}" ] ; then
-                edo cd "${CACHE_LOCATION}"
-                download "${download_url}"
+                download_to_cache "${download_url}"
             fi
             edo cd "${tmp_dir}"
             unpack "${CACHE_LOCATION}/${download_tarball_name}"
@@ -1516,8 +1592,7 @@ compile_ghc() {
     (
         if ${CACHING} ; then
             if [ ! -e "${CACHE_LOCATION}/${download_tarball_name}" ] ; then
-                edo cd "${CACHE_LOCATION}"
-                download "${download_url}"
+                download_to_cache "${download_url}"
             fi
             edo cd "${tmp_dir}"
             unpack "${CACHE_LOCATION}/${download_tarball_name}"
@@ -1545,8 +1620,8 @@ compile_ghc() {
 
         edo ./boot
         edo ./configure --prefix="${inst_location}" --with-ghc="${bootstrap_ghc}"
-        edo make -j${JOBS}
-        edo make install
+        emake -j${JOBS}
+        emake install
 
         # clean up
         edo cd ..
@@ -1645,6 +1720,39 @@ list() {
 
     unset mytool meta_file
 }
+
+
+    ##############################
+    #--[ Subcommand changelog ]--#
+    ##############################
+
+
+# @FUNCTION: changelog_url
+# @USAGE: <ghcversion>
+# @DESCRIPTION:
+# Print the changelog url for the given GHC version to stdout.
+# @STDOUT: the changelog url
+changelog_url() {
+    [ -z "$1" ] && die "Internal error: no argument given to changelog"
+
+    printf "https://downloads.haskell.org/~ghc/%s/docs/html/users_guide/%s-notes.html" "$1" "$1"
+}
+
+
+# @FUNCTION: changelog
+# @USAGE: <ghcversion>
+# @DESCRIPTION:
+# Opens the changelog for the given ghc version via xdg-open.
+changelog() {
+    [ -z "$1" ] && die "Internal error: no argument given to changelog"
+
+    url=$(changelog_url "$1")
+
+    xdg-open "${url}" || die "failed to xdg-open the following url: ${url}"
+
+    unset url
+}
+
 
 
 
@@ -1891,6 +1999,34 @@ while [ $# -gt 0 ] ; do
                esac
            done
            list "${TOOL}"
+           break;;
+       changelog)
+           shift 1
+           while [ $# -gt 0 ] ; do
+               case $1 in
+                   -h|--help) changelog_usage;;
+                   -f|--force) FORCE=true
+                       shift 1;;
+                   *) GHC_VER=$1
+                      break;;
+               esac
+           done
+           if [ -z "${GHC_VER}" ] ; then
+               _tool_ver="$(get_tool_ver_from_tag "ghc" "latest")"
+               if [ -z "${_tool_ver}" ] ; then
+                   die "Could not find a latest GHC version, please report a bug at ${BUG_URL}!"
+               fi
+               changelog "${_tool_ver}"
+           else
+               # could be a version or a tag, let's check
+               if array_contains "${GHC_VER}" "$(known_tool_versions "ghc")" ; then
+                   changelog "${GHC_VER}"
+               elif array_contains "${GHC_VER}" "$(known_tool_tags "ghc")" ; then
+                   changelog "$(get_tool_ver_from_tag "ghc" "${GHC_VER}")"
+               else
+                   die "\"${GHC_VER}\" is not a known version or tag!"
+               fi
+           fi
            break;;
        *) usage;;
        esac
