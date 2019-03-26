@@ -645,6 +645,9 @@ Inspired by `org-combine-plists'."
             (setq show-trailing-whitespace t)
             (setq-local compile-command "cask exec ert-runner")
 
+            ;; the default elisp--xref-backend is C-h f, not TAGS lookup
+            (setq xref-backend-functions '(etags--xref-backend))
+
             ;; disable emacs-lisp-checkdoc
             (setq-local flycheck-checkers '(emacs-lisp))
             (show-paren-mode 1)
