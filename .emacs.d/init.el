@@ -357,6 +357,9 @@ Inspired by `org-combine-plists'."
   :commands highlight-symbol
   :bind ("s-h" . highlight-symbol))
 
+(use-package hl-todo
+  :config (global-hl-todo-mode 1))
+
 (use-package expand-region
   :commands 'er/expand-region
   :bind ("C-=" . er/expand-region))
