@@ -74,17 +74,19 @@ mkdir -p dist 2>/dev/null
 # disable generation of .ghc.* files
 if [ ! -f "$CABAL_DIR/config" ] ; then
     docker run --rm --network=host \
+       --entrypoint=cabal \
        -v "$CABAL_DIR":"/.cabal" \
        -v "$HOME/.cabal/packages":"/.cabal/packages" \
        -u "$(id -u)" \
        "$DOCKER_CABAL_IMAGE" \
-       cabal user-config init
+       user-config init
     echo "write-ghc-environment-files: never" >> "$CABAL_DIR/config"
 fi
 
 # don't use -t or we get carriage returns
 # https://github.com/moby/moby/issues/8513
 docker run --rm --network=host \
+       --entrypoint=cabal \
        -v "$GIT_ROOT_DIR":/work \
        -v "$CABAL_DIR":"/.cabal" \
        -v "$HOME/.cabal/packages":"/.cabal/packages" \
@@ -93,4 +95,4 @@ docker run --rm --network=host \
        -u "$(id -u)" \
        -w "/work/${GIT_PREFIX_DIR}" \
        "$DOCKER_CABAL_IMAGE" \
-       cabal "$@"
+       "$@"
