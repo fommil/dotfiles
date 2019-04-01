@@ -5,6 +5,7 @@ version:             0.1.0.0
 executable xmonad-x86_64-linux
   main-is:             xmonad.hs
   ghc-options:         -j
+                       -threaded
   build-depends:        xmonad ^>= 0.15
                        ,xmonad-contrib ^>= 0.15
                        ,containers

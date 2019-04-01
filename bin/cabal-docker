@@ -81,6 +81,10 @@ if [ ! -f "$CABAL_DIR/config" ] ; then
        "$DOCKER_CABAL_IMAGE" \
        user-config init
     echo "write-ghc-environment-files: never" >> "$CABAL_DIR/config"
+    # BUG https://github.com/haskell/cabal/issues/5942
+    # the next two are ignored, user must specify every time
+    echo "install-method: copy" >> "$CABAL_DIR/config"
+    echo "overwrite-policy: always" >> "$CABAL_DIR/config"
 fi
 
 # don't use -t or we get carriage returns
