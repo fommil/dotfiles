@@ -11,6 +11,11 @@
 ;;
 ;;  1. indentation for WLDO almost always gets it wrong
 ;;  2. alternative indentation should prioritise the previous line and next line
+;;  3. defining top-levels are terrible, lines following a type defn should be top
+;;     level unless there is a -> or =>
+;;  4. GADT definitions are bad, seems to prefer the :: not the entries
+;;  5. why is sp-wrap-with-pair doing a re-indent?
+;;  6. tag lookup on a FQN.symbol picks up the wrong thing
 ;;
 ;;; Code:
 
