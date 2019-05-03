@@ -41,4 +41,4 @@ alias markdown="hsmarkdown"
 alias open="xdg-open"
 alias volume="pavucontrol"
 
-alias gitup='for A in ~/Projects/* ; do cd $A ; echo $A ; git up ; done'
+alias git-up='for A in ~/Projects/* ; do cd $A ; echo $A ; git up ; done'
