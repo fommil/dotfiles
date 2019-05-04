@@ -91,8 +91,8 @@ function docker-nuke {
     echo "consider using 'docker system prune --all'"
 }
 
-function ffmpeg-mkv2mp4 {
-    ffmpeg -i "$1" -f mp4 -codec copy "${1%.*}.mp4"
+function ffmpeg-h264-mp4 {
+    ffmpeg -i "$1" -f mp4 -c:a libmp3lame -qscale:a 0 -c:v copy "${1%.*}.mp4"
 }
 
 function ffmpeg-mp4 {
