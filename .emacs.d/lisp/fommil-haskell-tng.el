@@ -13,7 +13,8 @@
 ;;  2. alternative indentation should prioritise the previous line and next line
 ;;  3. top-levels should be 0 if the previous line is the opener, unless there is a -> or =>
 ;;  4. GADT definitions are bad, seems to prefer the :: not the entries
-;;  5. tag lookup on a FQN.symbol picks up the wrong thing
+;;  5. tag lookup on a FQN.symbol picks up the wrong thing, same with highlight-symbol. @ should be punctuation
+;;  6. list indentation, e.g. aligning commas, doesn't work
 ;;
 ;;; Code:
 
