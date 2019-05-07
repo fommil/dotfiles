@@ -15,6 +15,7 @@
 ;;  4. GADT definitions are bad, seems to prefer the :: not the entries
 ;;  5. tag lookup on a FQN.symbol picks up the wrong thing, same with highlight-symbol. @ should be punctuation
 ;;  6. list indentation, e.g. aligning commas, doesn't work
+;;  7. "foo :: Blah <- blah blah" treated as a type signature
 ;;
 ;;; Code:
 
