@@ -16,6 +16,8 @@
 ;;  5. tag lookup on a FQN.symbol picks up the wrong thing, same with highlight-symbol. @ should be punctuation
 ;;  6. list indentation, e.g. aligning commas, doesn't work
 ;;  7. "foo :: Blah <- blah blah" treated as a type signature
+;;  8. Data.List \\ is not handled correctly
+;;  9. last compile command in buffer should always be first in the prompted history, even if another command was used elsewhere
 ;;
 ;;; Code:
 
