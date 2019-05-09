@@ -9,15 +9,11 @@
 ;;
 ;;  TODO send some PRs to haskell-tng
 ;;
-;;  1. indentation for WLDO almost always gets it wrong. Should be matching on the last inferred ; unless it's the first one, in which case it should be where +2
-;;  2. alternative indentation should prioritise the previous line and next line
-;;  3. top-levels should be 0 if the previous line is the opener, unless there is a -> or =>
-;;  4. GADT definitions are bad, seems to prefer the :: not the entries
-;;  5. tag lookup on a FQN.symbol picks up the wrong thing, same with highlight-symbol. @ should be punctuation
-;;  6. list indentation, e.g. aligning commas, doesn't work
-;;  7. "foo :: Blah <- blah blah" treated as a type signature
-;;  8. Data.List \\ is not handled correctly
-;;  9. last compile command in buffer should always be first in the prompted history, even if another command was used elsewhere
+;;  - indentation for WLDO almost always gets it wrong. Should be matching on the last inferred ; unless it's the first one, in which case it should be where +2
+;;  - alternative indentation should prioritise the previous line and next line
+;;  - top-levels should be 0 if the previous line is the opener, unless there is a -> or =>
+;;  - GADT definitions are bad, seems to prefer the :: not the entries
+;;  - list indentation, e.g. aligning commas, doesn't work
 ;;
 ;;; Code:
 
