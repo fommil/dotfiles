@@ -67,6 +67,7 @@
  tags-revert-without-query t
  tags-add-tables nil
  compilation-scroll-output 'first-error
+ compilation-ask-about-save nil
  source-directory (getenv "EMACS_SOURCE")
  org-confirm-babel-evaluate nil
  nxml-slash-auto-complete-flag t
