@@ -1,5 +1,5 @@
-alias update="sudo pacman -Syu ; update-emacs"
-alias update-aggressive="yay -Syu --devel --aur ; update-emacs"
+alias update="sudo pacman -Syu ; update-emacs ; cabal v2-update ; xmonad --recompile"
+alias update-aggressive="yay -Syu --devel --aur ; update"
 alias keepers="sudo pacman -Qqet"
 alias cleanup='sudo pacman -Rsn $(pacman -Qdtq | tr "\n" " ")'
 
