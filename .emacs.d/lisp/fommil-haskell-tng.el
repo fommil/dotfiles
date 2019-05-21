@@ -50,6 +50,7 @@
 
    (setq company-backends (company-backends-for-buffer))))
 
+(bind-key "C-c C" 'stack2cabal haskell-tng-mode-map)
 (bind-key "C-c c" 'haskell-tng-compile haskell-tng-mode-map)
 (bind-key "C-c e" 'next-error haskell-tng-mode-map)
 (bind-key "C-c c" 'haskell-tng-compile haskell-tng-compilation-mode-map)
