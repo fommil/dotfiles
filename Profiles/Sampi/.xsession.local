@@ -1,8 +1,5 @@
 #!/bin/bash
 
-# ~/.cache should be a symbolic link to here
-mkdir -m 0770 /run/user/$UID/cache
-
 # TODO make this shared if the file exists
 feh --bg-center --no-fehbg ~/.bg.jpg
 
