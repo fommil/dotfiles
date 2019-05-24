@@ -50,6 +50,9 @@
 
    (setq company-backends (company-backends-for-buffer))))
 
+(bind-key "C-M-<return>" 'haskell-tng-smie:debug-newline haskell-tng-mode-map)
+(bind-key "C-M-<tab>" 'haskell-tng-smie:debug-tab haskell-tng-mode-map)
+
 (bind-key "C-c C" 'stack2cabal haskell-tng-mode-map)
 (bind-key "C-c c" 'haskell-tng-compile haskell-tng-mode-map)
 (bind-key "C-c e" 'next-error haskell-tng-mode-map)
