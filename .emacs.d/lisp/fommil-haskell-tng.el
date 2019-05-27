@@ -7,14 +7,6 @@
 ;;
 ;;  An alternative to haskell-mode that I found on Twitter.
 ;;
-;;  TODO send some PRs to haskell-tng
-;;
-;;  - indentation for WLDO almost always gets it wrong. Should be matching on the last inferred ; unless it's the first one, in which case it should be where +2
-;;  - alternative indentation should prioritise the previous line and next line
-;;  - top-levels should be 0 if the previous line is the opener, unless there is a -> or =>
-;;  - GADT definitions are bad, seems to prefer the :: not the entries
-;;  - list indentation, e.g. aligning commas, doesn't work
-;;
 ;;; Code:
 
 (require 'smartparens)
