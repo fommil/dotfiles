@@ -555,35 +555,6 @@ Inspired by `org-combine-plists'."
   (bind-key "s-<up>" 'sp-backward-up-sexp smartparens-mode-map)
   (bind-key "s-<down>" 'sp-down-sexp smartparens-mode-map))
 
-(use-package hydra
-  :commands defhydra
-  :bind ("C-M-s" . hydra-splitter/body))
-
-(defun hydra-splitter/body ()
-  "Defines a Hydra to resize the windows."
-  ;; overwrites the original function and calls it
-  ;; https://github.com/abo-abo/hydra/issues/149
-  (interactive)
-  (require 'hydra-examples)
-  (funcall
-   (defhydra hydra-splitter nil "splitter"
-     ("<left>" hydra-move-splitter-left)
-     ("<down>" hydra-move-splitter-down)
-     ("<up>" hydra-move-splitter-up)
-     ("<right>" hydra-move-splitter-right))))
-
-(defun hydra-smerge/body ()
-  "Defines a Hydra to give ediff commands in `smerge-mode'."
-  (interactive)
-  (funcall
-   (defhydra hydra-smerge nil "smerge"
-     ("p" smerge-prev)
-     ("n" smerge-next)
-     ("e" smerge-ediff)
-     ("a" smerge-keep-mine)
-     ("b" smerge-keep-other))))
-;;(add-hook 'smerge-mode-hook (lambda () (hydra-smerge/body)))
-
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; This section is for overriding common emacs keybindings with tweaks.
 (global-unset-key (kbd "C-z")) ;; I hate you so much C-z
