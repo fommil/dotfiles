@@ -56,5 +56,13 @@
 ;; i.e. bypass company-mode
 (bind-key "C-<tab>" 'dabbrev-expand haskell-tng-mode-map)
 
+;; quick hack to jump to imports. Would be better to manage without visiting,
+;; and at the very least a way to pop back to where we were.
+(bind-key "C-c n i"
+          (lambda ()
+            (interactive)
+            (re-search-backward (rx line-start "import")))
+          haskell-tng-mode-map)
+
 (provide 'fommil-haskell-tng)
 ;;; fommil-haskell-tng.el ends here
