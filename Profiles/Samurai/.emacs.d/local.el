@@ -21,19 +21,20 @@
 ;;(find-file "~/Projects/fpmortals/example/")
 ;;(find-file "~/Projects/fpmortals/manuscript/book.org")
 
-(when window-system
-  (let ((hour (string-to-number (format-time-string "%H"))))
-    (if (and (< 8 hour) (< hour 20))
-        (light-theme)
-      (dark-theme))))
+;; (when window-system
+;;   (let ((hour (string-to-number (format-time-string "%H"))))
+;;     (if (and (< 8 hour) (< hour 20))
+;;         (light-theme)
+;;       (dark-theme))))
+(light-theme)
 
 ;; flycheck is CPU intensive so only for desktops
-(add-hook 'haskell-mode-hook
-          (lambda ()
-            (setq-local flycheck-checkers '(haskell-ghc haskell-hlint))
-            ;;(setq-local flycheck-checkers '(haskell-ghc))
-            ;;(flycheck-mode 1)
-            ))
+;; (add-hook 'haskell-mode-hook
+;;           (lambda ()
+;;             (setq-local flycheck-checkers '(haskell-ghc haskell-hlint))
+;;             ;;(setq-local flycheck-checkers '(haskell-ghc))
+;;             ;;(flycheck-mode 1)
+;;             ))
 
 ;; Local Variables:
 ;; byte-compile-warnings: (not free-vars unresolved)
