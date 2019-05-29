@@ -43,7 +43,10 @@
 (defun writing-mode-hooks ()
   "Common hooks for writing modes."
   ;;(setq company-backends '(company-yasnippet))
-  (flyspell-mode)
+
+  ;; flyspell causes too much of a slowdown
+  ;; (flyspell-mode)
+
   (whitespace-mode-with-local-variables))
 ;; performance problems in emacs 24.5 (e.g. email)
 ;;(add-hook 'text-mode-hook #'writing-mode-hooks)
