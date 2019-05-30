@@ -20,6 +20,7 @@ localfolders = ~/Mail
 [Repository Remote]
 type = Gmail
 auth_mechanisms = PLAIN
+ssl_version = tls1_2
 maxconnections=1
 remoteuser = Sam.Halliday@gmail.com
 realdelete=no
