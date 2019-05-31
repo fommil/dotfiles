@@ -50,6 +50,7 @@ manageHook' = composeAll
               , className =? "zoom" --> doFloat
               , className =? "xpad" --> doFloat
               , title     =? "Downloads" --> doFloat
+              , title     =? "Save File" --> doFloat
               , title     =? "Save As..." --> doFloat
               , title     =? "Open" --> doFloat
               ]
