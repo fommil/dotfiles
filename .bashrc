@@ -101,6 +101,7 @@ function ffmpeg-mp4 {
 
 # Local settings and overrides
 source_if_exists ~/.bashrc.local
+source_if_exists ~/.bashrc.sec
 source_if_exists ~/.aliases
 source_if_exists ~/.aliases.local
 source_if_exists ~/.aliases.sec

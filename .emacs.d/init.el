@@ -401,14 +401,13 @@ Inspired by `org-combine-plists'."
   :init (setq
          git-timemachine-abbreviation-length 4))
 
+;; WORKAROUND https://github.com/Wilfred/ag.el/issues/141
+(make-variable-buffer-local 'ag-ignore-list)
 (use-package ag
   :commands ag
   :init
   (setq ag-reuse-window 't)
   :config
-  ;; WORKAROUND https://github.com/Wilfred/ag.el/issues/141
-  (make-variable-buffer-local 'ag-ignore-list)
-
   (add-hook 'ag-search-finished-hook
             (lambda () (pop-to-buffer next-error-last-buffer))))
 

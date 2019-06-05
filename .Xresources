@@ -10,6 +10,10 @@ Xft.rgba: rgb
 Xcursor.theme: Human
 Xcursor.theme_core: true
 
+! try to avoid the screen flashing white when starting Emacs...
+Emacs.default.attributeBackground: black
+Emacs.default.attributeForeground: white
+
 !------------------------------------------------------------------------------!
 ! rxvt unicode !
 !------------------------------------------------------------------------------!
