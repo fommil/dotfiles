@@ -18,8 +18,8 @@ export PATH="$HOME/.cask/bin:$PATH"
 
 # curl -L https://raw.githubusercontent.com/pyenv/pyenv-installer/master/bin/pyenv-installer | bash
 export PATH=$HOME/.pyenv/bin:$PATH
-eval "$(pyenv init -pyenv init -)"
-eval "$(pyenv virtualenv-init -)"
+eval "$(pyenv init -)"
+#eval "$(virtualenv init -)"
 
 export MAKEFLAGS="-j$(nproc)"
 # gcc -march=native -v -Q --help=target
