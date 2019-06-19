@@ -293,6 +293,9 @@ Inspired by `org-combine-plists'."
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; This section is for global modes that should be loaded in order to
 ;; make them immediately available.
+
+(use-package diminish) ;; optional dependency of use-package
+
 (use-package midnight
   :init
   (setq

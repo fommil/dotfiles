@@ -42,6 +42,8 @@
 
    (setq company-backends (company-backends-for-buffer))))
 
+(bind-key "RET" 'comment-indent-new-line haskell-tng-mode-map)
+
 (bind-key "C-M-<return>" 'haskell-tng-smie:debug-newline haskell-tng-mode-map)
 (bind-key "C-M-<tab>" 'haskell-tng-smie:debug-tab haskell-tng-mode-map)
 
