@@ -105,3 +105,5 @@ source_if_exists ~/.bashrc.sec
 source_if_exists ~/.aliases
 source_if_exists ~/.aliases.local
 source_if_exists ~/.aliases.sec
+
+echo "don't forget about is-up"
