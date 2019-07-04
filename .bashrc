@@ -96,7 +96,12 @@ function ffmpeg-h264-mp4 {
 }
 
 function ffmpeg-mp4 {
-    ffmpeg -i "$1" -f mp4 -c:a libmp3lame -qscale:a 0 -c:v libx264 -vf scale="${2:-640}":-2 "${1%.*}-recode.mp4"
+    ffmpeg -i "$1" -f mp4 -c:a libmp3lame -qscale:a 0 -c:v libx264 "${1%.*}-recode.mp4"
+}
+
+function ffmpeg-mp4-scale {
+    SCALE="${2:-640}"
+    ffmpeg -i "$1" -f mp4 -c:a libmp3lame -qscale:a 0 -c:v libx264 -vf scale="${SCALE}":-2 "${1%.*}-scale-${SCALE}.mp4"
 }
 
 # Local settings and overrides
