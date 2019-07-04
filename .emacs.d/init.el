@@ -669,7 +669,7 @@ Inspired by `org-combine-plists'."
 (use-package dockerfile-mode
   :mode ("Dockerfile\\'" . dockerfile-mode))
 
-;;(require 'fommil-email)
+(require 'fommil-email)
 (require 'fommil-haskell-tng)
 ;;(require 'fommil-scala)
 (require 'fommil-manuscripts)

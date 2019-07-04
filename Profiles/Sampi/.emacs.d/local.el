@@ -6,7 +6,7 @@
 ;;; Code:
 
 (add-to-list 'default-frame-alist
-             '(font . "Hack-16"))
+             '(font . "Hack-18"))
 
 (dark-theme)
 ;;(light-theme)
