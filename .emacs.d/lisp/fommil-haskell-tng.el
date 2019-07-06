@@ -66,5 +66,18 @@
             (re-search-backward (rx line-start "import")))
           haskell-tng-mode-map)
 
+;; (add-hook 'sbt-mode-hook
+;;           (lambda ()
+;;             (setq prettify-symbols-alist
+;;                   `((,(expand-file-name (getenv "SBT_VOLATILE_TARGET")) . ?☣)
+;;                     (,(expand-file-name (directory-file-name (projectile-project-root))) . ?§)
+;;                     ("target/scala-2.12" . ?☢)
+;;                     (,(expand-file-name "~") . ?~)))
+;;             ;; for some reason, local variables are ignored without this
+;;             ;;(hack-dir-local-variables-non-file-buffer)
+;;             (hack-local-variables)
+;;             (prettify-symbols-mode t)))
+
+
 (provide 'fommil-haskell-tng)
 ;;; fommil-haskell-tng.el ends here
