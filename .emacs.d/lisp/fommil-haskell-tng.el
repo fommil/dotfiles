@@ -1,7 +1,7 @@
 ;;; fommil-haskell-tng.el --- Haskell TNG -*- lexical-binding: t -*-
 
 ;; Copyright (C) 2019 Sam Halliday
-;; License: http://www.gnu.org/licenses/lgpl-3.0.en.html
+;; License: http://www.gnu.org/licenses/gpl-3.0.en.html
 
 ;;; Commentary:
 ;;
@@ -42,29 +42,32 @@
 
    (setq company-backends (company-backends-for-buffer))))
 
-(bind-key "RET" 'comment-indent-new-line haskell-tng-mode-map)
-
-(bind-key "C-M-<return>" 'haskell-tng-smie:debug-newline haskell-tng-mode-map)
-(bind-key "C-M-<tab>" 'haskell-tng-smie:debug-tab haskell-tng-mode-map)
-
-(bind-key "C-c C" 'stack2cabal haskell-tng-mode-map)
-(bind-key "C-c c" 'haskell-tng-compile haskell-tng-mode-map)
-(bind-key "C-c e" 'next-error haskell-tng-mode-map)
-(bind-key "C-c c" 'haskell-tng-compile haskell-tng-compilation-mode-map)
-(bind-key "C-c e" 'next-error haskell-tng-compilation-mode-map)
-
-(bind-key "C-c C-r f" 'haskell-tng-contrib:stylish-haskell haskell-tng-mode-map)
+(bind-key "C-M-<return>" 'haskell-tng--smie-debug-newline haskell-tng-mode-map)
+(bind-key "C-M-<tab>" 'haskell-tng--smie-debug-tab haskell-tng-mode-map)
 
 ;; i.e. bypass company-mode
 (bind-key "C-<tab>" 'dabbrev-expand haskell-tng-mode-map)
 
 ;; quick hack to jump to imports. Would be better to manage without visiting,
 ;; and at the very least a way to pop back to where we were.
-(bind-key "C-c n i"
+(bind-key "C-c C-n i"
           (lambda ()
             (interactive)
             (re-search-backward (rx line-start "import")))
           haskell-tng-mode-map)
+
+(bind-key "C-c C-n m"
+          (lambda ()
+            (interactive)
+            (save-excursion
+              (goto-char (point-min))
+              (re-search-forward (rx bol "module" word-end) nil nil)
+              (forward-comment (point-max))
+              (re-search-forward (rx point (group (+ (not space))) space))
+              (kill-new (match-string 1))))
+          haskell-tng-mode-map)
+
+;; TODO find-tag + copy the target's module name
 
 ;; (add-hook 'sbt-mode-hook
 ;;           (lambda ()
@@ -78,6 +81,11 @@
 ;;             (hack-local-variables)
 ;;             (prettify-symbols-mode t)))
 
+(bind-key "M-<up>"
+          (lambda ()
+            (interactive)
+            (haskell-tng--smie-ancestors 1))
+          haskell-tng-mode-map)
 
 (provide 'fommil-haskell-tng)
 ;;; fommil-haskell-tng.el ends here

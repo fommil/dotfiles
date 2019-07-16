@@ -649,9 +649,7 @@ Inspired by `org-combine-plists'."
   :init
   (setq
    erc-prompt-for-password nil ;; prefer ~/.authinfo for passwords
-   erc-hide-list '("JOIN" "PART" "QUIT" "MODE")
-   erc-autojoin-channels-alist
-   '(("freenode.net" "#qfpl" "#hackage" "#haskell-emacs"))))
+   erc-hide-list '("JOIN" "PART" "QUIT" "MODE")))
 (add-hook 'erc-mode 'erc-spelling-mode)
 
 ;; WORKAROUND: https://github.com/leathekd/erc-hl-nicks/issues/11
@@ -699,5 +697,6 @@ Inspired by `org-combine-plists'."
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; User Site Local
 (load (expand-file-name "local.el" user-emacs-directory) 'no-error)
+(load (expand-file-name "local.sec.el" user-emacs-directory) 'no-error)
 
 ;;; init.el ends here

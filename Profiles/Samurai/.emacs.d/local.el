@@ -6,7 +6,7 @@
 ;;; Code:
 
 (add-to-list 'default-frame-alist
-             '(font . "Hack-14"))
+             '(font . "Hack-18"))
 
 ;; I'll usually want access to these..
 (find-file (expand-file-name "scratch.el" user-emacs-directory))
