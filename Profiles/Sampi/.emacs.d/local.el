@@ -6,7 +6,7 @@
 ;;; Code:
 
 (add-to-list 'default-frame-alist
-             '(font . "Hack-18"))
+             '(font . "Hack-20"))
 
 (dark-theme)
 ;;(light-theme)
@@ -15,6 +15,7 @@
 (find-file (expand-file-name "scratch.el" user-emacs-directory))
 
 (find-file "~/Projects/haskell-tng.el")
+(find-file "~/Projects/haskell-tng.el/haskell-tng-smie.el")
 
 ;; flycheck is CPU intensive so only for desktops
 ;; (add-hook 'haskell-mode-hook
