@@ -457,10 +457,7 @@ Inspired by `org-combine-plists'."
   :commands yas-minor-mode
   :bind ("s-<tab>" . yas-expand)
   :config
-  ;; TAB conflicts with too many things
-  (define-key yas-minor-mode-map [tab] nil)
-  (define-key yas-minor-mode-map (kbd "TAB") nil)
-  (yas-reload-all))
+  (yas-reload-all nil t))
 
 (use-package yatemplate
   :defer 2 ;; WORKAROUND https://github.com/mineo/yatemplate/issues/3
@@ -528,8 +525,6 @@ Inspired by `org-combine-plists'."
   smartparens-mode
   sp-restrict-to-pairs-interactive
   sp-local-pair
-  :init
-  (setq sp-interactive-dwim t)
   :config
   (require 'smartparens-config)
   (sp-use-smartparens-bindings)
