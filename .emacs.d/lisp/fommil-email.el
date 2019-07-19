@@ -18,7 +18,7 @@
    user-mail-address "sam.halliday@gmail.com"
    send-mail-function 'sendmail-send-it
    message-kill-buffer-on-exit t
-   message-signature "Best regards,\nSam\n"
+   message-signature "Best regards,\nSam\n<#part sign=pgpmime>"
    notmuch-search-line-faces '(("unread" :weight bold)
                                ("flagged" :inherit 'font-lock-string-face))
    notmuch-fcc-dirs nil
@@ -30,7 +30,12 @@
                             (:name "all" :key "a" :query "*")))
   :config
   (add-hook 'message-setup-hook #'company-mode)
-  (add-hook 'message-setup-hook #'mml-secure-sign-pgpmime))
+  ;; we don't use the mml-secure-sign-* functions because they put the part
+  ;; before the signature. Instead, we hack the signature to have it at the end.
+  ;; It's very unfortunate that there is no way to customise this.
+  ;;
+  ;; (add-hook 'message-setup-hook #'mml-secure-sign-pgpmime)
+  )
 
 (provide 'fommil-email)
 
