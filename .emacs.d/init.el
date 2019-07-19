@@ -385,7 +385,10 @@ Inspired by `org-combine-plists'."
 
 (use-package git-gutter
   :diminish git-gutter-mode
-  :commands git-gutter-mode)
+  :commands git-gutter-mode
+  :init
+  ;; always a column reserved, but no flickering
+  (setq git-gutter:unchanged-sign ""))
 
 (use-package magit
   :commands magit-status magit-blame

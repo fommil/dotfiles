@@ -69,23 +69,18 @@
 
 ;; TODO find-tag + copy the target's module name
 
-;; (add-hook 'sbt-mode-hook
-;;           (lambda ()
-;;             (setq prettify-symbols-alist
-;;                   `((,(expand-file-name (getenv "SBT_VOLATILE_TARGET")) . ?☣)
-;;                     (,(expand-file-name (directory-file-name (projectile-project-root))) . ?§)
-;;                     ("target/scala-2.12" . ?☢)
-;;                     (,(expand-file-name "~") . ?~)))
-;;             ;; for some reason, local variables are ignored without this
-;;             ;;(hack-dir-local-variables-non-file-buffer)
-;;             (hack-local-variables)
-;;             (prettify-symbols-mode t)))
-
 (bind-key "M-<up>"
           (lambda ()
             (interactive)
             (haskell-tng--smie-ancestors 1))
           haskell-tng-mode-map)
+
+;; ;; debugging
+;; (bind-key "C-<right>"
+;;           (lambda ()
+;;             (interactive)
+;;             (message "%S" (car (smie-indent-forward-token))))
+;;           haskell-tng-mode-map)
 
 (provide 'fommil-haskell-tng)
 ;;; fommil-haskell-tng.el ends here
