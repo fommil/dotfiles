@@ -1,0 +1,19 @@
+#!/bin/bash
+
+# TODO mount without root
+# LABEL=SONY_CAMERA /mnt/camera exfat-fuse rw,noatime,uid=1000,gid=1000,noauto,user,allow_other 0 0
+sudo mount /mnt/camera
+
+mkdir ~/tmp/camera
+cp /mnt/camera/DCIM/101MSDCF/*.{JPG,AVI} ~/tmp/camera/
+jpegoptim --max=90 ~/tmp/camera/*.JPG
+
+for f in ~/tmp/camera/*.AVI ; do
+    ffmpeg -i "$f" -f mp4 -c:a libmp3lame -qscale:a 0 -strict unofficial -c:v libx264 "${f%.*}.mp4" && rm $f
+done
+mv -n ~/tmp/camera/*.mp4 ~/Videos/
+
+echo "import by copying ~/tmp/camera into shotwell and then delete from camera"
+echo "rm -f ~/tmp/camera && rm -rf /mnt/camera/DCIM/101MSDCF/* && sudo umount /mnt/camera"
+echo "s3cmd sync s3://fommil/Photos/ /home/s3/fommil/Photos/ --no-check-md5 -m application/octet-stream"
+shotwell &
