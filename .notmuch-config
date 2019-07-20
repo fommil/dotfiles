@@ -7,7 +7,7 @@ primary_email=sam.halliday@gmail.com
 
 [new]
 tags=new
-ignore=
+ignore=.mbsyncstate;.uidvalidity
 
 [search]
 exclude_tags=deleted;spam
