@@ -19,6 +19,7 @@
    send-mail-function 'sendmail-send-it
    message-kill-buffer-on-exit t
    message-signature "Best regards,\nSam\n<#part sign=pgpmime>"
+   mm-text-html-renderer 'lynx
    notmuch-search-line-faces '(("unread" :weight bold)
                                ("flagged" :inherit 'font-lock-string-face))
    notmuch-fcc-dirs nil
