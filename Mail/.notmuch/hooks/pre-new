@@ -1,4 +1,25 @@
 #!/bin/sh
 
-/usr/bin/mbsync -a
+function maildate () {
+    SUB=$(basename "$(dirname "$1")")
+    FILE=$(basename "$1")
+    DATE=$(sed -n '0,/^Date: /s/^Date: *//p' "$1" 2>/dev/null)
+    YM=$(date -d "$DATE" +%Y-%m 2>/dev/null)
+    if [ $? != 0 ] || [ -z "$DATE" ] ; then YM="00-00" ; fi
+    DIR="$HOME/Mail/archive/$YM/$SUB"
+    mkdir -p "$DIR" 2>/dev/null
+    mv -nv "$1" "$DIR/$FILE"
+}
+export -f maildate
 
+# TODO fail on errors
+# TODO pull archive
+
+/usr/bin/mbsync gmail
+find "$HOME/Mail/gmail/[Gmail]/All Mail/"{cur,new} -type f -print0 | \
+    xargs -0 -l1 -I {} bash -c 'maildate "{}"'
+
+# TODO decide if we want to push up
+# /usr/bin/mbsync --push-delete gmail
+
+# TODO backup the archive
