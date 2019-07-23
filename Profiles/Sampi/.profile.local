@@ -17,3 +17,4 @@ export CXXFLAGS="$CFLAGS"
 # when building emacs25-git use this to use my local repo
 # source=("$pkgname::git+file:///home/fommil/Projects/emacs#branch=emacs-25")
 
+systemctl start --user kbfs
