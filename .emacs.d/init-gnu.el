@@ -27,7 +27,7 @@
 
 (when (display-graphic-p)
   (setq
-   browse-url-generic-program "chromium"
+   browse-url-generic-program "firefox"
    x-select-enable-clipboard t
    interprogram-paste-function 'x-cut-buffer-or-selection-value))
 
