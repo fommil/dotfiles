@@ -2,8 +2,7 @@
 
 set -e
 
-# TODO leave starred items in gmail
-# TODO optimise this, there's a lot could be parallelised or done in the background
+# TODO keep starred items in gmail
 
 function maildate () {
     SUB=$(basename "$(dirname "$1")")
@@ -18,15 +17,17 @@ function maildate () {
 export -f maildate
 
 cd ~/Mail/archive
-git pull origin master
+git pull origin master &
+gitpid=$!
 
 /usr/bin/mbsync gmail
+
+wait $gitpid
 find "$HOME/Mail/gmail/[Gmail]/All Mail/"{cur,new} -type f -print0 | \
     xargs -0 -l1 -I {} bash -c 'maildate "{}"'
 
 cd ~/Mail/archive
-git add -A && git commit -m "sync" || true
-git push
-
-/usr/bin/mbsync --push-delete gmail
-
+if [ -n "$(git diff --shortstat 2>/dev/null)" ] ; then
+  git add -A && git commit -m "sync" || true
+  git push
+fi
