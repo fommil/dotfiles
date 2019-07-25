@@ -27,7 +27,8 @@ find "$HOME/Mail/gmail/[Gmail]/All Mail/"{cur,new} -type f -print0 | \
     xargs -0 -l1 -I {} bash -c 'maildate "{}"'
 
 cd ~/Mail/archive
-if [ -n "$(git diff --shortstat 2>/dev/null)" ] ; then
-  git add -A && git commit -m "sync" || true
+git add -A
+if ! git diff HEAD --quiet ; then
+  git commit -m "sync"
   git push
 fi
