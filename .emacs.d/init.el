@@ -391,11 +391,11 @@ Inspired by `org-combine-plists'."
   (setq git-gutter:unchanged-sign ""))
 
 (use-package magit
-  :commands magit-status magit-blame
+  :commands magit-status magit-blame-addition
   :init (setq
          git-commit-style-convention-checks nil)
   :bind (("s-g" . magit-status)
-         ("s-b" . magit-blame)))
+         ("s-b" . magit-blame-addition)))
 
 ;; BLOCKED https://github.com/magit/forge/issues/21
 ;; BLOCKED https://github.com/magit/forge/issues/22
@@ -614,6 +614,9 @@ Inspired by `org-combine-plists'."
 
 (add-hook 'emacs-lisp-mode-hook
           (lambda ()
+            (when (locate-dominating-file default-directory "elpa")
+              (read-only-mode 1))
+
             (setq show-trailing-whitespace t)
             (setq-local compile-command "cask exec ert-runner")
 

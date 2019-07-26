@@ -9,78 +9,51 @@
 ;;
 ;;; Code:
 
+(require 'company)
+(require 'rx)
 (require 'smartparens)
-;; WORKAROUND smartparens is indenting all the time, which is not good
-(defun sp--indent-region (_1 _2 &optional _3)
-  ;; disable this function
-  )
 
-;; (defun sp--indent-region (start end &optional column)
-;;   "Call `indent-region' unless `aggressive-indent-mode' is enabled.
+(use-package haskell-tng-mode
+  :ensure nil
+  :load-path "~/Projects/haskell-tng.el"
+  :mode ((rx ".hs" eos) . haskell-tng-mode)
 
-;; START, END and COLUMN are the same as in `indent-region'."
-;;   (unless (bound-and-true-p aggressive-indent-mode)
-;;     ;; Don't issue "Indenting region..." message.
-;;     (cl-letf (((symbol-function 'message) #'ignore))
-;;       (indent-region start end column))))
+  :config
+  (require 'haskell-tng-contrib)
+  (require 'haskell-tng-contrib-projectile)
+  (require 'haskell-tng-contrib-smartparens)
+  (require 'haskell-tng-contrib-yasnippet)
 
+  :bind
+  (:map
+   haskell-tng-compilation-mode-map
+   (("C-c c" . haskell-tng-compile)
+    ("C-c e" . next-error)))
+  (:map
+   haskell-tng-mode-map
+   ("C-<tab>" . dabbrev-expand)
 
-(add-to-load-path "~/Projects/haskell-tng.el")
-(require 'haskell-tng-mode)
-(require 'haskell-tng-contrib)
+   ("<return>" . haskell-tng-newline)
+   ("C-c c" . haskell-tng-compile)
+   ("C-c e" . next-error)
+
+   ("C-M-<return>" . haskell-tng--smie-debug-newline)
+   ("C-M-<tab>" . haskell-tng--smie-debug-tab)
+
+   ("C-c C-n i" . haskell-tng-goto-imports)
+   ("C-c C-n m" . haskell-tng-current-module)
+
+   ("C-c C" . haskell-tng-stack2cabal)
+   ("C-c C-r f" . haskell-tng-stylish-haskell)))
 
 (add-hook
  'haskell-tng-mode-hook
  (lambda ()
    (whitespace-mode-with-local-variables)
    (show-paren-mode 1)
-   (smartparens-mode 1)
-   (yas-minor-mode 1)
    (git-gutter-mode 1)
    (company-mode 1)
-   (prettify-symbols-mode 1)
-
    (setq company-backends (company-backends-for-buffer))))
-
-(bind-key "C-M-<return>" 'haskell-tng--smie-debug-newline haskell-tng-mode-map)
-(bind-key "C-M-<tab>" 'haskell-tng--smie-debug-tab haskell-tng-mode-map)
-
-;; i.e. bypass company-mode
-(bind-key "C-<tab>" 'dabbrev-expand haskell-tng-mode-map)
-
-;; quick hack to jump to imports. Would be better to manage without visiting,
-;; and at the very least a way to pop back to where we were.
-(bind-key "C-c C-n i"
-          (lambda ()
-            (interactive)
-            (re-search-backward (rx line-start "import")))
-          haskell-tng-mode-map)
-
-(bind-key "C-c C-n m"
-          (lambda ()
-            (interactive)
-            (save-excursion
-              (goto-char (point-min))
-              (re-search-forward (rx bol "module" word-end) nil nil)
-              (forward-comment (point-max))
-              (re-search-forward (rx point (group (+ (not space))) space))
-              (kill-new (match-string 1))))
-          haskell-tng-mode-map)
-
-;; TODO find-tag + copy the target's module name
-
-(bind-key "M-<up>"
-          (lambda ()
-            (interactive)
-            (haskell-tng--smie-ancestors 1))
-          haskell-tng-mode-map)
-
-;; ;; debugging
-;; (bind-key "C-<right>"
-;;           (lambda ()
-;;             (interactive)
-;;             (message "%S" (car (smie-indent-forward-token))))
-;;           haskell-tng-mode-map)
 
 (provide 'fommil-haskell-tng)
 ;;; fommil-haskell-tng.el ends here
