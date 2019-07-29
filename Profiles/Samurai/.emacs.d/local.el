@@ -19,6 +19,8 @@
 
 (find-file "~/Projects/haskell-tng.el/")
 
+(notmuch)
+
 ;;(find-file "~/Projects/scalaz72")
 ;;(find-file "~/Projects/fpmortals/example/")
 ;;(find-file "~/Projects/fpmortals/manuscript/book.org")

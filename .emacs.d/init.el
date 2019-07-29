@@ -614,7 +614,9 @@ Inspired by `org-combine-plists'."
 
 (add-hook 'emacs-lisp-mode-hook
           (lambda ()
-            (when (locate-dominating-file default-directory "elpa")
+            (when (and
+                   (locate-dominating-file default-directory "elpa")
+                   (not (equal default-directory (expand-file-name user-emacs-directory))))
               (read-only-mode 1))
 
             (setq show-trailing-whitespace t)
