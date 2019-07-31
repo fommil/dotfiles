@@ -379,6 +379,7 @@ Inspired by `org-combine-plists'."
   :bind (("C-S-s" . vr/isearch-forward)
          ("s-S" . vr/query-replace)))
 
+;; TODO consider https://github.com/kostafey/popup-switcher
 (use-package popup-imenu
   :commands popup-imenu
   :bind ("M-i" . popup-imenu))
@@ -614,12 +615,15 @@ Inspired by `org-combine-plists'."
 
 (add-hook 'emacs-lisp-mode-hook
           (lambda ()
-            (when (and
-                   (locate-dominating-file default-directory "elpa")
-                   (not (equal default-directory (expand-file-name user-emacs-directory))))
+            (when
+                (string-prefix-p
+                 (expand-file-name "elpa" user-emacs-directory)
+                 (expand-file-name default-directory))
               (read-only-mode 1))
 
             (setq show-trailing-whitespace t)
+
+            ;; TODO prefer projectile to compile / test
             (setq-local compile-command "cask exec ert-runner")
 
             ;; the default elisp--xref-backend is C-h f, not TAGS lookup
