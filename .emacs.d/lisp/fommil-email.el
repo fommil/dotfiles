@@ -21,6 +21,7 @@
    message-signature "Best regards,\nSam\n<#part sign=pgpmime>"
    epa-file-name-regexp (rx "." (| "gpg" "asc") eos)
    mm-text-html-renderer 'lynx
+   notmuch-show-logo nil
    notmuch-search-line-faces '(("unread" :weight bold)
                                ("flagged" :inherit 'font-lock-string-face))
    notmuch-fcc-dirs nil
