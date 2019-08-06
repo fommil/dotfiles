@@ -33,15 +33,17 @@
    haskell-tng-mode-map
    ("C-<tab>" . dabbrev-expand)
 
-   ("<return>" . haskell-tng-newline)
+   ("RET" . haskell-tng-newline)
    ("C-c c" . haskell-tng-compile)
    ("C-c e" . next-error)
 
-   ("C-M-<return>" . haskell-tng--smie-debug-newline)
+   ("C-M-RET" . haskell-tng--smie-debug-newline)
    ("C-M-<tab>" . haskell-tng--smie-debug-tab)
 
    ("C-c C-n i" . haskell-tng-goto-imports)
    ("C-c C-n m" . haskell-tng-current-module)
+
+   ("C-c C-i s" . haskell-tng-fqn-at-point)
 
    ("C-c C" . haskell-tng-stack2cabal)
    ("C-c C-r f" . haskell-tng-stylish-haskell)))

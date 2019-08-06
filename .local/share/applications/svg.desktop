@@ -1,0 +1,9 @@
+# don't forget to run this to make the associations:
+# update-desktop-database ~/.local/share/applications
+[Desktop Entry]
+Type=Application
+Name=Images
+MimeType=image/svg+xml
+Exec=/usr/bin/firefox %U
+NoDisplay=true
+Terminal=false
