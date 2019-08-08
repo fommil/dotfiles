@@ -19,7 +19,9 @@
   :mode ((rx ".hs" eos) . haskell-tng-mode)
 
   :config
+  (require 'haskell-tng-hsinspect)
   (require 'haskell-tng-contrib)
+  (require 'haskell-tng-contrib-company)
   (require 'haskell-tng-contrib-projectile)
   (require 'haskell-tng-contrib-smartparens)
   (require 'haskell-tng-contrib-yasnippet)
@@ -53,9 +55,7 @@
  (lambda ()
    (whitespace-mode-with-local-variables)
    (show-paren-mode 1)
-   (git-gutter-mode 1)
-   (company-mode 1)
-   (setq company-backends (company-backends-for-buffer))))
+   (git-gutter-mode 1)))
 
 (provide 'fommil-haskell-tng)
 ;;; fommil-haskell-tng.el ends here
