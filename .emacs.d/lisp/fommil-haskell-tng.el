@@ -29,8 +29,8 @@
   :bind
   (:map
    haskell-tng-compilation-mode-map
-   (("C-c c" . haskell-tng-compile)
-    ("C-c e" . next-error)))
+   ("C-c c" . haskell-tng-compile)
+   ("C-c e" . next-error))
   (:map
    haskell-tng-mode-map
    ("C-<tab>" . dabbrev-expand)
