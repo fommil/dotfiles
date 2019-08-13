@@ -39,7 +39,7 @@
     spin = checkout -b
     sith = push --force
     keep = stash save --keep-index
-    nuke = clean -fdx -e cabal.project.local -e .dir-locals.el -e .projectile
+    nuke = clean -fdx -e cabal.project.local -e .dir-locals.el -e .projectile -e .hsinspect.env
     clean-tags = !git tag -l | xargs git tag -d
     clean-branches = !git branch | sed 's/*//' | xargs git branch -D
     recent-branches = for-each-ref --sort=-committerdate --count=10 --format='%(refname:short)' refs/heads/
@@ -52,6 +52,8 @@
     ui = auto
 [apply]
     whitespace = warn
+[checkout]
+    defaultRemote=origin
 [magit]
     # I am a happy supporter of magit! :-)
  	hideCampaign = true

@@ -112,3 +112,8 @@ source_if_exists ~/.aliases.local
 source_if_exists ~/.aliases.sec
 
 echo "don't forget about is-up"
+
+function hsinspect-init {
+  cabal v2-build -O0 :all &&
+  cabal v2-exec -O0 -- sh -c 'cat $GHC_ENVIRONMENT > .hsinspect.env'
+}
