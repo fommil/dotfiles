@@ -8,8 +8,7 @@ require-sandbox: True
 remote-repo-cache: /home/fommil/.cabal/packages
 world-file: /home/fommil/.cabal/world
 extra-prog-path: /home/fommil/.cabal/bin
-symlink-bindir: /home/fommil/.cabal/bin
---copy-bindir: /home/fommil/.cabal/bin
+installdir: /home/fommil/.cabal/bin
 build-summary: /home/fommil/.cabal/logs/build.log
 remote-build-reporting: anonymous
 jobs: $ncpus
