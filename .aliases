@@ -47,3 +47,4 @@ alias is-up='until ping -c1 www.google.com >/dev/null 2>&1; do :; done'
 # https://stackoverflow.com/a/16751081
 alias linelengths="awk '{++a[length()]} END{for (i in a) print i, a[i]}'"
 
+alias hsinspect-init="$HOME/Projects/haskell-tng.el/cabal-ghcflags.sh"

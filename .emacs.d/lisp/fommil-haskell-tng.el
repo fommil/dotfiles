@@ -48,7 +48,9 @@
    ("C-c C-i s" . haskell-tng-fqn-at-point)
 
    ("C-c C" . haskell-tng-stack2cabal)
-   ("C-c C-r f" . haskell-tng-stylish-haskell)))
+   ;;("C-c C-r f" . haskell-tng-stylish-haskell)
+   ("C-c C-r f" . haskell-tng-stylish-ormolu)
+   ))
 
 (add-hook
  'haskell-tng-mode-hook

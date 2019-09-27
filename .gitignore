@@ -2,4 +2,5 @@
 .dir-locals.el
 TAGS
 cabal.project.local
-.hsinspect.env
+.ghc.flags
+.ghc.version
