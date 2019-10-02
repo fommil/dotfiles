@@ -39,7 +39,7 @@
    ("C-c c" . haskell-tng-compile)
    ("C-c e" . next-error)
 
-   ("C-M-RET" . haskell-tng--smie-debug-newline)
+   ("C-M-<return>" . haskell-tng--smie-debug-newline)
    ("C-M-<tab>" . haskell-tng--smie-debug-tab)
 
    ("C-c C-n i" . haskell-tng-goto-imports)
