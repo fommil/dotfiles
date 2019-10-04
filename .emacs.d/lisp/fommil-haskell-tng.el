@@ -20,11 +20,20 @@
 
   :config
   (require 'haskell-tng-hsinspect)
-  (require 'haskell-tng-contrib)
-  (require 'haskell-tng-contrib-company)
-  (require 'haskell-tng-contrib-projectile)
-  (require 'haskell-tng-contrib-smartparens)
-  (require 'haskell-tng-contrib-yasnippet)
+  (require 'haskell-tng-extra)
+  (require 'haskell-tng-extra-abbrev)
+  (require 'haskell-tng-extra-company)
+  (require 'haskell-tng-extra-projectile)
+  (require 'haskell-tng-extra-smartparens)
+  (require 'haskell-tng-extra-yasnippet)
+
+  ;; TODO this abbrev doesn't work
+  (define-abbrev
+    haskell-tng-mode-abbrev-table
+    "???" "panic \"TODO not implemented\"")
+  (define-abbrev
+    haskell-tng-mode-abbrev-table
+    "panic" "panic \"TODO not implemented\"")
 
   :bind
   (:map

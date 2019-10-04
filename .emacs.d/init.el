@@ -60,6 +60,7 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; This section is for global settings for built-in packages that autoload
 (setq
+ save-abbrevs 'silent
  help-window-select t
  show-paren-delay 0.5
  dabbrev-case-fold-search nil
@@ -413,7 +414,9 @@ Inspired by `org-combine-plists'."
 (use-package ag
   :commands ag
   :init
-  (setq ag-reuse-window 't)
+  (setq
+   ag-reuse-window t
+   ag-highlight-search t)
   :config
   (add-hook 'ag-search-finished-hook
             (lambda () (pop-to-buffer next-error-last-buffer))))
