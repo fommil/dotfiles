@@ -672,10 +672,10 @@ Inspired by `org-combine-plists'."
 ;;..............................................................................
 ;; Miscellaneous editing modes
 (use-package yaml-mode
-  :mode ("\\.yml\\'" . yaml-mode))
+  :mode ((rx ".yml" eos) . yaml-mode))
 
 (use-package dockerfile-mode
-  :mode ("Dockerfile\\'" . dockerfile-mode))
+  :mode ((rx "Dockerfile" eos) . dockerfile-mode))
 
 (require 'fommil-email)
 (require 'fommil-haskell-tng)
