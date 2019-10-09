@@ -58,7 +58,7 @@
 
    ("C-c C" . haskell-tng-stack2cabal)
    ;;("C-c C-r f" . haskell-tng-stylish-haskell)
-   ("C-c C-r f" . haskell-tng-stylish-ormolu)
+   ("C-c C-r f" . haskell-tng-ormolu)
    ))
 
 (add-hook
