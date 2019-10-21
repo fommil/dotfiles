@@ -45,20 +45,26 @@
    ("C-<tab>" . dabbrev-expand)
 
    ("RET" . haskell-tng-newline)
+
+   ;; building
    ("C-c c" . haskell-tng-compile)
    ("C-c e" . next-error)
+   ("C-c C" . haskell-tng-stack2cabal)
 
+   ;; debugging
    ("C-M-<return>" . haskell-tng--smie-debug-newline)
    ("C-M-<tab>" . haskell-tng--smie-debug-tab)
 
+   ;; navigation
    ("C-c C-n i" . haskell-tng-goto-imports)
    ("C-c C-n m" . haskell-tng-current-module)
 
+   ;; hsinspect
    ("C-c C-i s" . haskell-tng-fqn-at-point)
+   ("C-c C-i i" . haskell-tng-import-symbol-at-point)
 
-   ("C-c C" . haskell-tng-stack2cabal)
-   ;;("C-c C-r f" . haskell-tng-stylish-haskell)
-   ("C-c C-r f" . haskell-tng-ormolu)
+   ;; refactoring
+   ("C-c C-r f" . haskell-tng-format)
    ))
 
 (add-hook
