@@ -409,8 +409,6 @@ Inspired by `org-combine-plists'."
   :init (setq
          git-timemachine-abbreviation-length 4))
 
-;; WORKAROUND https://github.com/Wilfred/ag.el/issues/141
-(make-variable-buffer-local 'ag-ignore-list)
 (use-package ag
   :commands ag
   :init

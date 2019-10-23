@@ -65,6 +65,9 @@
 
    ;; refactoring
    ("C-c C-r f" . haskell-tng-format)
+   ("C-c C-r I" . haskell-tng-import-module)
+   ;; can't make up my mind...
+   ("C-c C-r i" . haskell-tng-import-symbol-at-point)
    ))
 
 (add-hook
