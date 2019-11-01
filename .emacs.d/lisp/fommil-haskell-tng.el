@@ -18,6 +18,9 @@
   :load-path "~/Projects/haskell-tng.el"
   :mode ((rx ".hs" eos) . haskell-tng-mode)
 
+  :init
+  (setq haskell-tng-compile-always-ask nil)
+
   :config
   (require 'haskell-tng-hsinspect)
   (require 'haskell-tng-extra)
@@ -27,10 +30,6 @@
   (require 'haskell-tng-extra-smartparens)
   (require 'haskell-tng-extra-yasnippet)
 
-  ;; TODO this abbrev doesn't work
-  (define-abbrev
-    haskell-tng-mode-abbrev-table
-    "???" "panic \"TODO not implemented\"")
   (define-abbrev
     haskell-tng-mode-abbrev-table
     "panic" "panic \"TODO not implemented\"")
@@ -61,12 +60,10 @@
 
    ;; hsinspect
    ("C-c C-i s" . haskell-tng-fqn-at-point)
-   ("C-c C-i i" . haskell-tng-import-symbol-at-point)
 
    ;; refactoring
    ("C-c C-r f" . haskell-tng-format)
    ("C-c C-r I" . haskell-tng-import-module)
-   ;; can't make up my mind...
    ("C-c C-r i" . haskell-tng-import-symbol-at-point)
    ))
 

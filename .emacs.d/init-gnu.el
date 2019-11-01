@@ -27,6 +27,9 @@
 
 (when (display-graphic-p)
   (setq
+   ;; gtk tooltips are not very nice
+   x-gtk-use-system-tooltips nil
+   ;; firefox respects your privacy
    browse-url-generic-program "firefox"
    x-select-enable-clipboard t
    interprogram-paste-function 'x-cut-buffer-or-selection-value))
