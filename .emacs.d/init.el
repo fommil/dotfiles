@@ -677,7 +677,7 @@ Inspired by `org-combine-plists'."
 
 (require 'fommil-email)
 (require 'fommil-haskell-tng)
-;;(require 'fommil-scala)
+(require 'fommil-python)
 (require 'fommil-manuscripts)
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
