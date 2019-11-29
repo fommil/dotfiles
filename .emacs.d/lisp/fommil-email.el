@@ -18,6 +18,8 @@
    user-mail-address "sam.halliday@gmail.com"
    send-mail-function 'sendmail-send-it
    message-kill-buffer-on-exit t
+   message-citation-line-format "\n%N wrote:"
+   message-citation-line-function #'message-insert-formatted-citation-line
    message-signature "Best regards,\nSam\n<#part sign=pgpmime>"
    epa-file-name-regexp (rx "." (| "gpg" "asc") eos)
    mm-text-html-renderer 'lynx
