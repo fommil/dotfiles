@@ -1,2 +1,2 @@
 packages: ./
-with-compiler: ghc-8.4.4
+with-compiler: ghc-8.6.5

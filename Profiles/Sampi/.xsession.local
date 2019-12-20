@@ -5,7 +5,7 @@ feh --bg-center --no-fehbg ~/.bg.jpg
 
 # TODO use a redshift config file
 #redshift -b 0.9:0.7 &
-redshift -l 56.291000:-3.722257 -b 0.9:0.6 &
+redshift -l 56.291000:-3.722257 -b 0.9:0.5 &
 
 xmobar &
 

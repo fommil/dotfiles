@@ -54,17 +54,14 @@
    ("C-M-<return>" . haskell-tng--smie-debug-newline)
    ("C-M-<tab>" . haskell-tng--smie-debug-tab)
 
-   ;; navigation
+   ;; navigating and refactoring
+   ("<f12>" . haskell-tng-hsinspect)
+   ("C-c C-i s" . haskell-tng-fqn-at-point)
    ("C-c C-n i" . haskell-tng-goto-imports)
    ("C-c C-n m" . haskell-tng-current-module)
-
-   ;; hsinspect
-   ("C-c C-i s" . haskell-tng-fqn-at-point)
-
-   ;; refactoring
    ("C-c C-r f" . haskell-tng-format)
-   ("C-c C-r I" . haskell-tng-import-module)
    ("C-c C-r i" . haskell-tng-import-symbol-at-point)
+   ("M-." . haskell-tng-jump-to-definition)
    ))
 
 (add-hook

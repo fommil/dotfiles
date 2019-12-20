@@ -15,7 +15,7 @@
 (find-file (expand-file-name "scratch.el" user-emacs-directory))
 
 (find-file "~/Projects/haskell-tng.el")
-(find-file "~/Projects/haskell-tng.el/haskell-tng-smie.el")
+(find-file "~/Projects/haskell-tng.el/haskell-tng-hsinspect.el")
 
 ;; flycheck is CPU intensive so only for desktops
 ;; (add-hook 'haskell-mode-hook
