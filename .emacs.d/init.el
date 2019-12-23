@@ -614,6 +614,8 @@ Inspired by `org-combine-plists'."
   ;; C-c C-u errors, C-c C-w copy, C-c C-q exit
   :init (bind-key "C-c r" 're-builder emacs-lisp-mode-map))
 
+(use-package json-mode)
+
 (add-hook 'emacs-lisp-mode-hook
           (lambda ()
             (when
