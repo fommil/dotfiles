@@ -17,12 +17,10 @@ function maildate () {
 export -f maildate
 
 cd ~/Mail/archive
-git pull origin master &
-gitpid=$!
+git pull origin master
 
 /usr/bin/mbsync gmail
 
-wait $gitpid
 find "$HOME/Mail/gmail"/{INBOX,"/[Gmail]/Sent Mail"}/{cur,new} -type f -print0 | \
     xargs -0 -l1 -I {} bash -c 'maildate "{}"'
 
