@@ -12,7 +12,7 @@
 
 BIN=`dirname $0`
 FOMMIL=`dirname $BIN`
-PROFILE="${FOMMIL}/Profiles/${HOSTNAME}"
+PROFILE="${FOMMIL}/Profiles/${HOSTNAME}-${USER}"
 
 function fommil-links {
   if [ ! -d "$1" ] ; then

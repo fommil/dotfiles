@@ -1,0 +1,13 @@
+alias update="sudo pacman -Syu ; update-emacs ; cabal v2-update ; xmonad --recompile"
+alias update-aggressive="yay -Syu --devel --aur ; update"
+alias keepers="sudo pacman -Qqet"
+alias cleanup='sudo pacman -Rsn $(pacman -Qdtq | tr "\n" " ")'
+
+alias fpmortals='mount /mnt/sony ; /bin/mv Downloads/fpmortals.pdf /mnt/sony/Books/Halliday\,\ Sam/Functional\ Programming\ for\ Mortals\ with\ Scalaz\ -\ Sam\ Halliday.pdf  ; umount /mnt/sony'
+
+# TODO allow per directory
+alias s3push='s3cmd --reduced-redundancy --no-check-md5 --no-guess-mime-type sync /home/s3/fommil/ s3://fommil/'
+alias s3pull='s3cmd --reduced-redundancy --no-check-md5 --no-guess-mime-type sync s3://fommil/ /home/s3/fommil/'
+# TODO rsync pull
+
+

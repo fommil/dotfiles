@@ -1,0 +1,4 @@
+Xft.dpi: 96
+URxvt*font: xft:Hack:size=14
+URxvt*boldFont: xft:Hack:size=14
+Xcursor.size: 24

@@ -1,6 +1,6 @@
 [user]
     name = Sam Halliday
-    email = sam.halliday@gmail.com
+    email = sam.halliday@symbiont.io
     # git config user.name REPO_SPECIFIC_NAME
     # git config user.email REPO_SPECIFIC_EMAIL
     # git config core.sshCommand "ssh -i ~/.ssh/id_rsa_REPO_SPECIFIC_KEY"
@@ -64,4 +64,4 @@
 [protocol]
 	version = 2
 [github]
-	user = fommil
+	user = symbiont-sam-halliday

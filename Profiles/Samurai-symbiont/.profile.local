@@ -1,0 +1,35 @@
+#!/bin/sh
+
+# ~/.cache should be a symbolic link to here
+mkdir -m 0770 /tmp/$USER-cache 2>/dev/null
+ln -s $HOME/.spotify/cache /tmp/$USER-cache/spotify 2>/dev/null
+ln -s $HOME/.stackage /tmp/$USER-cache/stackage 2>/dev/null
+
+# https://imagemagick.org/discourse-server/viewtopic.php?t=34893
+export MAGICK_OCL_DEVICE=OFF
+
+# until tasty-1.2.1 is everywhere
+# https://github.com/feuerbach/tasty/pull/233
+export TASTY_COLOR=always
+# HEDGEHOG_COLOR=true
+
+# curl -fsSL https://raw.githubusercontent.com/cask/cask/master/go | python
+export PATH="$HOME/.cask/bin:$PATH"
+
+export PATH="$HOME/go/bin:$PATH"
+
+# curl -L https://raw.githubusercontent.com/pyenv/pyenv-installer/master/bin/pyenv-installer | bash
+export PATH=$HOME/.pyenv/bin:$PATH
+eval "$(pyenv init -)"
+#eval "$(virtualenv init -)"
+
+export MAKEFLAGS="-j$(nproc)"
+# gcc -march=native -v -Q --help=target
+export CFLAGS="-march=native -O3"
+export CXXFLAGS="$CFLAGS"
+
+export EMACS_SOURCE=$HOME/Projects/emacs
+# when building emacs25-git use this to use my local repo
+# source=("$pkgname::git+file:///home/fommil/Projects/emacs#branch=emacs-25")
+
+export PRINTER=HP_LaserJet_P2035

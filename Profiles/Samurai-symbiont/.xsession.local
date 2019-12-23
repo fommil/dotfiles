@@ -1,0 +1,12 @@
+#!/bin/bash
+
+# summer
+#redshift -l 56.291000:-3.722257 -b 1.0:0.7 &
+# winter
+redshift -l 56.291000:-3.722257 -b 0.9:0.6 &
+
+update-desktop-database ~/.local/share/applications
+
+# note that firefox needs
+#   browser.ctrlTab.recentlyUsedOrder=false
+# in about:config
