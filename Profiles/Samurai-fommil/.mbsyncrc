@@ -1,0 +1,30 @@
+# based on https://wiki.archlinux.org/index.php/Isync
+# and https://el-tramo.be/blog/gmail-mbsync/
+
+SyncState *
+Create Slave
+Expunge Both
+
+IMAPAccount gmail
+Host imap.gmail.com
+SSLType IMAPS
+CertificateFile /etc/ssl/certs/ca-certificates.crt
+PipelineDepth 64
+User sam.halliday@gmail.com
+# TODO use keepassxc-cli if it ever gets a cache
+PassCmd "gpg -q --for-your-eyes-only --no-tty -d ~/.mailpass.gpg"
+Timeout 0
+
+IMAPStore gmail-remote
+Account gmail
+
+MaildirStore gmail-local
+Subfolders Verbatim
+Path ~/Mail/gmail/
+Inbox ~/Mail/gmail/INBOX
+
+Channel gmail
+Master :gmail-remote:
+Slave :gmail-local:
+Patterns "[Gmail]/Sent Mail" INBOX
+CopyArrivalDate yes

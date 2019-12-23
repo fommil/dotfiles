@@ -23,7 +23,7 @@ gitpid=$!
 /usr/bin/mbsync gmail
 
 wait $gitpid
-find "$HOME/Mail/gmail/[Gmail]/All Mail/"{cur,new} -type f -print0 | \
+find "$HOME/Mail/gmail"/{INBOX,"/[Gmail]/Sent Mail"}/{cur,new} -type f -print0 | \
     xargs -0 -l1 -I {} bash -c 'maildate "{}"'
 
 cd ~/Mail/archive
@@ -32,3 +32,6 @@ if ! git diff HEAD --quiet ; then
   git commit -m "sync"
   git push
 fi
+
+# deletes files from Google
+/usr/bin/mbsync gmail
