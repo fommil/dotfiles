@@ -12,7 +12,7 @@ CertificateFile /etc/ssl/certs/ca-certificates.crt
 PipelineDepth 64
 User sam.halliday@gmail.com
 # TODO use keepassxc-cli if it ever gets a cache
-PassCmd "gpg -q --for-your-eyes-only --no-tty -d ~/.mailpass.gpg"
+PassCmd "gpg -q -d ~/.mailpass.gpg"
 Timeout 0
 
 IMAPStore gmail-remote
