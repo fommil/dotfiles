@@ -1,4 +1,4 @@
 #!/bin/bash
 
-emacs -batch -u $USER -f package-utils-upgrade-all
+emacs -batch -u $USER -f package-utils-upgrade-all-and-quit
 ctags -Re -f ~/.emacs.d/TAGS ~/.emacs.d/
