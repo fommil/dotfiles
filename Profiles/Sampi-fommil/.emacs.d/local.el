@@ -8,6 +8,8 @@
 (add-to-list 'default-frame-alist
              '(font . "Hack-20"))
 
+(package-ensure-compiled)
+
 (dark-theme)
 ;;(light-theme)
 

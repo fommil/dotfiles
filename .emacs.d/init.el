@@ -15,6 +15,7 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; User Site Local
 (load (expand-file-name "local-preinit.el" user-emacs-directory) 'no-error)
+(setq package-check-signature nil)
 (unless (boundp 'package--initialized)
   ;; don't set gnu/org/melpa if the site-local or local-preinit have
   ;; done so (e.g. firewalled corporate environments)
@@ -290,6 +291,27 @@ Inspired by `org-combine-plists'."
   (interactive)
   (let ((inhibit-read-only t))
     (ansi-color-apply-on-region (point-min) (point-max))))
+
+(defun package-ensure-compiled (&optional alt)
+  "Checks that all registered packages are compiled."
+  (interactive "P")
+  (seq-do
+   (lambda (dir)
+     (byte-recompile-directory dir 0))
+   (seq-filter
+    (lambda (dir)
+      (and
+       (string-prefix-p
+        (expand-file-name package-user-dir)
+        (expand-file-name dir))
+       (file-writable-p dir)
+       (or
+        alt
+        (not
+         (directory-files
+          dir t
+          (rx bos (+ any) ".elc" eos))))))
+    load-path)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; This section is for global modes that should be loaded in order to
