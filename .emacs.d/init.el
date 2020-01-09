@@ -27,7 +27,9 @@
                       ("melpa" . "http://melpa.org/packages/"))
    package-archive-priorities '(("melpa-stable" . 1))))
 (package-initialize)
-(when (not package-archive-contents)
+(unless (or
+         (require 'use-package nil 'no-error)
+         package-archive-contents)
   (package-refresh-contents)
   (package-install 'use-package))
 (require 'use-package)
