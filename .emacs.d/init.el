@@ -89,8 +89,8 @@
 ;; http://stackoverflow.com/a/3024055/1041691
 (add-hook 'mouse-leave-buffer-hook
           (lambda () (when (and (>= (recursion-depth) 1)
-                           (active-minibuffer-window))
-                  (abort-recursive-edit))))
+                                (active-minibuffer-window))
+                       (abort-recursive-edit))))
 
 ;; *scratch* is immortal
 (add-hook 'kill-buffer-query-functions
@@ -617,7 +617,7 @@ Inspired by `org-combine-plists'."
   (interactive)
   (if-let (default-directory
             (locate-dominating-file default-directory "Cask"))
-    (call-interactively 'compile)
+      (call-interactively 'compile)
     (error "This is not a Cask project")))
 
 (use-package flycheck-cask)
