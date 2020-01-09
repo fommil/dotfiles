@@ -293,7 +293,7 @@ Inspired by `org-combine-plists'."
     (ansi-color-apply-on-region (point-min) (point-max))))
 
 (defun package-ensure-compiled (&optional alt)
-  "Checks that all registered packages are compiled."
+  "Checks that all registered packages in ~/.emacs.d are compiled."
   (interactive "P")
   (seq-do
    (lambda (dir)
@@ -302,7 +302,7 @@ Inspired by `org-combine-plists'."
     (lambda (dir)
       (and
        (string-prefix-p
-        (expand-file-name package-user-dir)
+        (expand-file-name user-emacs-directory)
         (expand-file-name dir))
        (file-writable-p dir)
        (or
