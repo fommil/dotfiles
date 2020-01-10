@@ -8,6 +8,8 @@
 (add-to-list 'default-frame-alist
              '(font . "Hack-18"))
 
+(package-ensure-compiled)
+
 (when (not window-system)
   (add-to-list 'default-frame-alist
                '(cursor-type . box)))
