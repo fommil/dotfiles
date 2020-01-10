@@ -3,5 +3,3 @@
 TAGS
 cabal.project.local
 .ghc.flags
-*.elc
-.emacs.d/elpa/archives
