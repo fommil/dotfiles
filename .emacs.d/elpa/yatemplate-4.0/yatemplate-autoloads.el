@@ -6,14 +6,6 @@
                          (or (file-name-directory #$) (car load-path))))
 
 
-;;;### (autoloads nil "test-yatemplate" "test-yatemplate.el" (0 0
-;;;;;;  0 0))
-;;; Generated autoloads from test-yatemplate.el
-
-(if (fboundp 'register-definition-prefixes) (register-definition-prefixes "test-yatemplate" '("touch" "yatemplate")))
-
-;;;***
-
 ;;;### (autoloads nil "yatemplate" "yatemplate.el" (0 0 0 0))
 ;;; Generated autoloads from yatemplate.el
 
@@ -34,6 +26,11 @@ has special meaning in regular expressions.")
 
 (custom-autoload 'yatemplate-separator "yatemplate" t)
 
+(defvar yatemplate-ignored-files-regexp "README.md$" "\
+Regular expression matching files that do not contain `yatemplate-separator', but will generate no warning.")
+
+(custom-autoload 'yatemplate-ignored-files-regexp "yatemplate" t)
+
 (put 'yatemplate-owner 'safe-local-variable #'stringp)
 
 (put 'yatemplate-license 'safe-local-variable #'stringp)
@@ -44,10 +41,6 @@ Fill `auto-insert-alist'.
 \(fn)" nil nil)
 
 (if (fboundp 'register-definition-prefixes) (register-definition-prefixes "yatemplate" '("yatemplate-")))
-
-;;;***
-
-;;;### (autoloads nil nil ("yatemplate-pkg.el") (0 0 0 0))
 
 ;;;***
 
