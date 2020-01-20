@@ -1,4 +1,4 @@
-(define-package "dash" "2.16.0" "A modern list library for Emacs" 'nil :keywords
+(define-package "dash" "2.17.0" "A modern list library for Emacs" 'nil :keywords
   '("lists")
   :authors
   '(("Magnar Sveen" . "magnars@gmail.com"))
