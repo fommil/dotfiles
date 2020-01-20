@@ -6,7 +6,9 @@
 ;;; Code:
 
 (add-to-list 'default-frame-alist
-             '(font . "Hack-18"))
+             '(font . "JetBrainsMono-18"))
+
+(package-ensure-compiled)
 
 ;; I'll usually want access to these..
 (find-file (expand-file-name "scratch.el" user-emacs-directory))

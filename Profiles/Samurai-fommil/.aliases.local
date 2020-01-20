@@ -8,6 +8,9 @@ alias fpmortals='mount /mnt/sony ; /bin/mv Downloads/fpmortals.pdf /mnt/sony/Boo
 # TODO allow per directory
 alias s3push='s3cmd --reduced-redundancy --no-check-md5 --no-guess-mime-type sync /home/s3/fommil/ s3://fommil/'
 alias s3pull='s3cmd --reduced-redundancy --no-check-md5 --no-guess-mime-type sync s3://fommil/ /home/s3/fommil/'
+
+alias s3passwd-push='s3cmd --reduced-redundancy --no-guess-mime-type sync /home/s3/fommil/Passwords.kdbx s3://fommil/Passwords.kdbx'
+alias s3passwd-pull='s3cmd --reduced-redundancy --no-guess-mime-type sync s3://fommil/Passwords.kdbx /home/s3/fommil/Passwords.kdbx'
 # TODO rsync pull
 
 
