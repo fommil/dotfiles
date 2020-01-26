@@ -1,6 +1,6 @@
 ;;; graphviz-dot-mode.el --- Mode for the dot-language used by graphviz (att).
 
-;; Copyright (C) 2002 - 2019 Pieter Pareit <pieter.pareit@gmail.com>
+;; Copyright (C) 2002 - 2020 Pieter Pareit <pieter.pareit@gmail.com>
 
 ;; This program is free software; you can redistribute it and/or
 ;; modify it under the terms of the GNU General Public License as
@@ -23,9 +23,9 @@
 ;; Maintainer: Pieter Pareit <pieter.pareit@gmail.com>
 ;; Homepage: https://ppareit.github.io/graphviz-dot-mode/
 ;; Created: 28 Oct 2002
-;; Last modified: 29 September 2019
-;; Version: 0.4.1
-;; Package-Version: 0.4.1
+;; Last modified: 25 Januari 2020
+;; Version: 0.4.2
+;; Package-Requires: ((emacs "25.0"))
 ;; Keywords: mode dot dot-language dotlanguage graphviz graphs att
 
 ;;; Commentary:
@@ -46,13 +46,13 @@
 ;; viewing an generated image with C-c p.
 ;;
 ;;; Todo:
-;; * electric indentation is fundamentally broken, because
-;;   {...} are also used for record nodes. You could argue, I suppose, that
-;;   many diagrams don't need those, but it would be worth having a note (and
-;;   it makes sense that the default is now for electric indentation to be
-;;   off).
 ;;
 ;;; History:
+;; Version 0.4.2 Pieter Pareit
+;; 25/01/2020: * Fix issues
+;;             * Improve font-locking
+;;             * Improve completion by implementing company mode
+;;             * Rewrote basic documentation
 ;; Version 0.4.1 Pieter Pareit
 ;; 28/09/2019: * Maintenance, checking documentation, fixing flycheck errors.
 ;;             * Solve next-error for gaphviz
@@ -131,7 +131,7 @@
 ;; 06/11/2002: added an missing attribute, for font-locking to work.
 ;;             fixed the regex generating, so that it only recognizes
 ;;             whole words
-;; 05/11/2002: there can now be extra white space chars after an '{'.
+;; 05/11/2002: there can now be extra whitespace chars after an '{'.
 ;; 04/11/2002: Why I use max-specpdl-size is now documented, and old value
 ;;             gets restored.
 ;; Version 0.1 initial release
@@ -175,7 +175,7 @@
   :type 'list
   :group 'graphviz)
 
-(defcustom graphviz-dot-view-command "doted %s"
+(defcustom graphviz-dot-view-command "dotty %s"
   "*External program to run on the buffer.
 You can use `%s' in this string, and it will be substituted by the buffer name."
   :type 'string
@@ -191,41 +191,16 @@ You can use `%s' in this string, and it will be substituted by the buffer name."
   :type 'boolean
   :group 'graphviz)
 
-(defcustom graphviz-dot-auto-indent-on-newline t
-  "*If not nil, `electric-graphviz-dot-terminate-line' is executed if a line is terminated."
-  :type 'boolean
-  :group 'graphviz)
-
 (defcustom graphviz-dot-indent-width tab-width
   "*Indentation width in Graphviz Dot mode buffers."
   :type 'integer
   :group 'graphviz)
 
-(defcustom graphviz-dot-auto-indent-on-braces nil
-  "*If not nil, `electric-graphviz-dot-open-brace' and `electric-graphviz-dot-close-brace' are executed when { or } are typed."
-  :type 'boolean
-  :group 'graphviz)
-
-(defcustom graphviz-dot-auto-indent-on-semi t
-  "*If not nil, `electric-graphviz-dot-semi' is executed when semicolon is typed."
-  :type 'boolean
-  :group 'graphviz)
-
 (defcustom graphviz-dot-preview-extension "png"
   "*The extension to use for the compilation and preview commands.
-The format for the compilation command is `dot -T<extension> file.dot> file.<extension>'."
+The default format for the compilation command is `dot -T png
+file.dot -o file.png'."
   :type 'string
-  :group 'graphviz)
-
-(defcustom graphviz-dot-toggle-completions nil
-  "*Non-nil means that repeated use of \\\<graphviz-dot-mode-map>\\[graphviz-dot-complete-word] will toggle the possible completions in the minibuffer.
-Normally, when there is more than one possible completion, a buffer will display all completions."
-  :type 'boolean
-  :group 'graphviz)
-
-(defcustom graphviz-dot-delete-completions nil
-  "*Non-nil means that the completion buffer is automatically deleted when a key is pressed."
-  :type 'boolean
   :group 'graphviz)
 
 (defcustom graphviz-dot-auto-preview-on-save nil
@@ -264,6 +239,135 @@ not immediately visible."
   :type '(repeat (string :tag "Keyword"))
   :group 'graphviz)
 
+(defvar graphviz-attributes-type-arrow
+  '("arrowhead" "arrowtail")
+  "The attributes that are of type `arrow'.
+See https://graphviz.gitlab.io/_pages/doc/info/attrs.html for
+more information about possible attributes.")
+
+(defvar graphviz-values-type-arrow
+  '("box" "lbox" "rbox" "obox" "olbox" "orbox"
+    "crow" "lcrow" "rcrow"
+    "diamond" "ldiamond" "rdiamond" "odiamond" "oldiamond" "ordiamond"
+    "dot" "odot"
+    "inv" "linv" "rinv" "oinv" "olinv" "orinv"
+    "none"
+    "normal" "lnormal" "rnormal" "onormal" "olnormal" "ornormal"
+    "tee" "ltee" "rtee"
+    "vee" "lvee" "rvee"
+    "curve" "lcurve" "rcurve" "ocurve" "olcurve" "orcurve")
+  "The possible values that an attribute of type `arrow' can have.
+See https://graphviz.gitlab.io/_pages/doc/info/arrows.html for
+more information about the arrow shape.")
+
+(defvar graphviz-attributes-type-shape
+  '("shape")
+  "The attributes that are of type `shape'.
+See https://graphviz.gitlab.io/_pages/doc/info/attrs.html for
+more information about possible attributes.")
+
+(defvar graphviz-values-type-shape
+  '("box" "polygon" "ellipse" "oval" "circle" "point" "egg" "triangle" "plaintext"
+    "plain" "diamond" "trapezium" "parallelogram" "house" "pentagon" "hexagon"
+    "septagon" "octagon" "doublecircle" "doubleoctagon" "tripleoctagon"
+    "invtriangle" "invtrapezium" "invhouse" "Mdiamond" "Msquare" "Mcircle" "rect"
+    "rectangle" "square" "star" "none" "underline" "cylinder" "note" "tab" "folder"
+    "box3d" "component" "promoter" "cds" "terminator" "utr" "primersite"
+    "restrictionsite" "fivepoverhang" "threepoverhang" "noverhang" "assembly"
+    "signature" "insulator" "ribosite" "rnastab" "proteasesite" "proteinstab"
+    "rpromoter" "rarrow" "larrow" "lpromoter")
+  "The possible values that an attribute of type `shape' can have.
+See https://graphviz.gitlab.io/_pages/doc/info/shape.html for
+more information about the node shapes.")
+
+(defvar graphviz-attributes-type-style
+  '("style")
+  "The attributes that are of type `style'.
+See https://graphviz.gitlab.io/_pages/doc/info/attrs.html for
+more information about possible attributes.")
+
+(defvar graphviz-values-type-style
+  '("dashed" "dotted" "solid" "invis" "bold" "tapered" "filled" "striped"
+    "wedged" "diagonals" "rounded" "filled" "striped" "rounded" "radial")
+  "The possible values that an attribute of type `style' can have.
+See https://graphviz.gitlab.io/_pages/doc/info/attrs.html#k:style for
+more information about possible styles.")
+
+(defvar graphviz-attributes-type-dir
+  '("dir")
+  "The attributes that are of type `bool'.
+See https://graphviz.gitlab.io/_pages/doc/info/attrs.html for
+more information about possible attributes.")
+
+(defvar graphviz-values-type-dir
+  '("forward" "back" "both" "none")
+  "The possible values that an attribute of type `dir' can have.
+See https://graphviz.gitlab.io/_pages/doc/info/attrs.html#k:dirType for
+more information about the direction that edges can have.")
+
+(defvar graphviz-attributes-type-outputmode
+  '("outputorder")
+  "The attributes that are of type `outputMode'.
+See https://graphviz.gitlab.io/_pages/doc/info/attrs.html for
+more information about possible attributes.")
+
+(defvar graphviz-values-type-outputmode
+  '("breadthfirst" "nodesfirst" "edgesfirst")
+  "The possible values that an attribute of type `outputMode' can have.
+See https://graphviz.gitlab.io/_pages/doc/info/attrs.html#k:outputMode for
+more information.")
+
+(defvar graphviz-attributes-type-packmode
+  '("packmode")
+  "The attributes that are of type `packMode'.
+See https://graphviz.gitlab.io/_pages/doc/info/attrs.html for
+more information about possible attributes.")
+
+(defvar graphviz-values-type-packmode
+  '("node" "clust" "array")
+  "The possible values that an attribute of type `packMode' can have.
+See https://graphviz.gitlab.io/_pages/doc/info/attrs.html#k:packMode for
+more information.")
+
+(defvar graphviz-attributes-type-pagedir
+  '("pagedir")
+  "The attributes that are of type `pagedir'.
+See https://graphviz.gitlab.io/_pages/doc/info/attrs.html for
+more information about possible attributes.")
+
+(defvar graphviz-values-type-pagedir
+  '("BL" "BR" "TL" "TR" "RB" "RT" "LB" "LT")
+  "The possible values that an attribute of type `pagedir' can have.
+See https://graphviz.gitlab.io/_pages/doc/info/attrs.html#k:pagedir for
+more information.")
+
+(defvar graphviz-attributes-type-bool
+  '("center" "compound" "concentrate" "constraint" "decorate"
+    "diredgeconstraints" "fixedsize" "forcelabels" "headclip" "imagescale"
+    "labelfloat" "landscape" "mosek" "newrank" "nojustify" "normalize"
+    "notranslate" "overlap" "overlap_shrink" "pack" "pin" "quadtree" "regular"
+    "remincross" "root" "splines" "tailclip" "truecolor")
+  "The attributes that are of type `bool'.
+See https://graphviz.gitlab.io/_pages/doc/info/attrs.html for
+more information about possible attributes.")
+
+(defvar graphviz-values-type-bool
+  '("true" "false" "yes" "no" "1" "0")
+  "The possible values that an attribute of type `bool' can have.")
+
+(defvar graphviz-attributes-type-portpos
+  '("headport" "tailport")
+  "The attributes that are of type `portPos'.
+See https://graphviz.gitlab.io/_pages/doc/info/attrs.html for
+more information about possible attributes.")
+
+(defvar graphviz-values-type-portpos
+  '("n" "ne" "e" "se" "s" "sw" "w" "nw" "c" "_")
+  "The possible values that an attribute of type `portPos' can have.
+The can also be used on the edge as a compass point.  See
+https://graphviz.gitlab.io/_pages/doc/info/attrs.html#k:portPos
+for more information.")
+
 (defcustom graphviz-dot-value-keywords
   '("true" "false" "normal" "inv" "dot" "invdot" "odot" "invodot"
     "none" "tee" "empty" "invempty" "diamond" "odiamond" "box" "obox"
@@ -284,153 +388,138 @@ not immediately visible."
   :group 'graphviz)
 
 ;;; Font-locking:
-(defvar graphviz-dot-colors-list
-  '(aliceblue antiquewhite antiquewhite1 antiquewhite2
-        antiquewhite3 antiquewhite4 aquamarine aquamarine1
-        aquamarine2 aquamarine3 aquamarine4 azure azure1
-        azure2 azure3 azure4 beige bisque bisque1 bisque2
-        bisque3 bisque4 black blanchedalmond blue blue1
-        blue2 blue3 blue4 blueviolet brown brown1 brown2
-        brown3 brown4 burlywood burlywood1 burlywood2
-        burlywood3 burlywood4 cadetblue cadetblue1
-        cadetblue2 cadetblue3 cadetblue4 chartreuse
-        chartreuse1 chartreuse2 chartreuse3 chartreuse4
-        chocolate chocolate1 chocolate2 chocolate3 chocolate4
-        coral coral1 coral2 coral3 coral4 cornflowerblue
-        cornsilk cornsilk1 cornsilk2 cornsilk3 cornsilk4
-        crimson cyan cyan1 cyan2 cyan3 cyan4 darkgoldenrod
-        darkgoldenrod1 darkgoldenrod2 darkgoldenrod3
-        darkgoldenrod4 darkgreen darkkhaki darkolivegreen
-        darkolivegreen1 darkolivegreen2 darkolivegreen3
-        darkolivegreen4 darkorange darkorange1 darkorange2
-        darkorange3 darkorange4 darkorchid darkorchid1
-        darkorchid2 darkorchid3 darkorchid4 darksalmon
-        darkseagreen darkseagreen1 darkseagreen2
-        darkseagreen3 darkseagreen4 darkslateblue
-        darkslategray darkslategray1 darkslategray2
-        darkslategray3  darkslategray4 darkslategrey
-        darkturquoise darkviolet deeppink deeppink1
-        deeppink2 deeppink3 deeppink4 deepskyblue
-        deepskyblue1 deepskyblue2 deepskyblue3 deepskyblue4
-        dimgray dimgrey  dodgerblue dodgerblue1 dodgerblue2
-        dodgerblue3  dodgerblue4 firebrick firebrick1
-        firebrick2 firebrick3 firebrick4 floralwhite
-        forestgreen gainsboro ghostwhite gold gold1 gold2
-        gold3 gold4 goldenrod goldenrod1 goldenrod2
-        goldenrod3 goldenrod4 gray gray0 gray1 gray10 gray100
-        gray11 gray12 gray13 gray14 gray15 gray16 gray17
-        gray18 gray19 gray2 gray20 gray21 gray22 gray23
-        gray24 gray25 gray26 gray27 gray28 gray29 gray3
-        gray30 gray31 gray32 gray33 gray34 gray35 gray36
-        gray37 gray38 gray39 gray4 gray40 gray41 gray42
-        gray43 gray44 gray45 gray46 gray47 gray48 gray49
-        gray5 gray50 gray51 gray52 gray53 gray54 gray55
-        gray56 gray57 gray58 gray59 gray6 gray60 gray61
-        gray62 gray63 gray64 gray65 gray66 gray67 gray68
-        gray69 gray7 gray70 gray71 gray72 gray73 gray74
-        gray75 gray76 gray77 gray78 gray79 gray8 gray80
-        gray81 gray82 gray83 gray84 gray85 gray86 gray87
-        gray88 gray89 gray9 gray90 gray91 gray92 gray93
-        gray94 gray95 gray96 gray97 gray98 gray99 green
-        green1 green2 green3 green4 greenyellow grey grey0
-        grey1 grey10 grey100 grey11 grey12 grey13 grey14
-        grey15 grey16 grey17 grey18 grey19 grey2 grey20
-        grey21 grey22 grey23 grey24 grey25 grey26 grey27
-        grey28 grey29 grey3 grey30 grey31 grey32 grey33
-        grey34 grey35 grey36 grey37 grey38 grey39 grey4
-        grey40 grey41 grey42 grey43 grey44 grey45 grey46
-        grey47 grey48 grey49 grey5 grey50 grey51 grey52
-        grey53 grey54 grey55 grey56 grey57 grey58 grey59
-        grey6 grey60 grey61 grey62 grey63 grey64 grey65
-        grey66 grey67 grey68 grey69 grey7 grey70 grey71
-        grey72 grey73 grey74 grey75 grey76 grey77 grey78
-        grey79 grey8 grey80 grey81 grey82 grey83 grey84
-        grey85 grey86 grey87 grey88 grey89 grey9 grey90
-        grey91 grey92 grey93 grey94 grey95 grey96 grey97
-        grey98 grey99 honeydew honeydew1 honeydew2 honeydew3
-        honeydew4 hotpink hotpink1 hotpink2 hotpink3 hotpink4
-        indianred indianred1 indianred2 indianred3 indianred4
-        indigo ivory ivory1 ivory2 ivory3 ivory4 khaki khaki1
-        khaki2 khaki3 khaki4 lavender lavenderblush
-        lavenderblush1 lavenderblush2 lavenderblush3
-        lavenderblush4 lawngreen lemonchiffon lemonchiffon1
-        lemonchiffon2 lemonchiffon3 lemonchiffon4 lightblue
-        lightblue1 lightblue2 lightblue3 lightblue4
-        lightcoral lightcyan lightcyan1 lightcyan2 lightcyan3
-        lightcyan4 lightgoldenrod lightgoldenrod1
-        lightgoldenrod2 lightgoldenrod3 lightgoldenrod4
-        lightgoldenrodyellow lightgray lightgrey lightpink
-        lightpink1 lightpink2 lightpink3 lightpink4
-        lightsalmon lightsalmon1 lightsalmon2 lightsalmon3
-        lightsalmon4 lightseagreen lightskyblue lightskyblue1
-        lightskyblue2 lightskyblue3 lightskyblue4
-        lightslateblue lightslategray lightslategrey
-        lightsteelblue lightsteelblue1 lightsteelblue2
-        lightsteelblue3 lightsteelblue4 lightyellow
-        lightyellow1 lightyellow2 lightyellow3 lightyellow4
-        limegreen linen magenta magenta1 magenta2 magenta3
-        magenta4 maroon maroon1 maroon2 maroon3 maroon4
-        mediumaquamarine mediumblue  mediumorchid
-        mediumorchid1 mediumorchid2 mediumorchid3
-        mediumorchid4 mediumpurple mediumpurple1
-        mediumpurple2 mediumpurple3 mediumpurple4
-        mediumseagreen mediumslateblue mediumspringgreen
-        mediumturquoise mediumvioletred midnightblue
-        mintcream mistyrose mistyrose1 mistyrose2 mistyrose3
-        mistyrose4 moccasin navajowhite navajowhite1
-        navajowhite2 navajowhite3 navajowhite4 navy navyblue
-        oldlace olivedrab olivedrap olivedrab1 olivedrab2
-        olivedrap3 oragne palegoldenrod palegreen palegreen1
-        palegreen2 palegreen3 palegreen4 paleturquoise
-        paleturquoise1 paleturquoise2 paleturquoise3
-        paleturquoise4 palevioletred palevioletred1
-        palevioletred2 palevioletred3 palevioletred4
-        papayawhip peachpuff peachpuff1 peachpuff2
-        peachpuff3 peachpuff4 peru pink pink1 pink2 pink3
-        pink4 plum plum1 plum2 plum3 plum4 powderblue
-        purple purple1 purple2 purple3 purple4 red red1 red2
-        red3 red4 rosybrown rosybrown1 rosybrown2 rosybrown3
-        rosybrown4 royalblue royalblue1 royalblue2 royalblue3
-        royalblue4 saddlebrown salmon salmon1 salmon2 salmon3
-        salmon4 sandybrown seagreen seagreen1 seagreen2
-        seagreen3 seagreen4 seashell seashell1 seashell2
-        seashell3 seashell4 sienna sienna1 sienna2 sienna3
-        sienna4 skyblue skyblue1 skyblue2 skyblue3 skyblue4
-        slateblue slateblue1 slateblue2 slateblue3 slateblue4
-        slategray slategray1 slategray2 slategray3 slategray4
-        slategrey snow snow1 snow2 snow3 snow4 springgreen
-        springgreen1 springgreen2 springgreen3 springgreen4
-        steelblue steelblue1 steelblue2 steelblue3 steelblue4
-        tan tan1 tan2 tan3 tan4 thistle thistle1 thistle2
-        thistle3 thistle4 tomato tomato1 tomato2 tomato3
-        tomato4 transparent turquoise turquoise1 turquoise2
-        turquoise3 turquoise4 violet violetred violetred1
-        violetred2 violetred3 violetred4 wheat wheat1 wheat2
-        wheat3 wheat4 white whitesmoke yellow yellow1 yellow2
-        yellow3 yellow4 yellowgreen)
-  "Possible color constants in the dot language.")
-
-
 (defvar graphviz-dot-color-keywords
-  (mapcar 'symbol-name graphviz-dot-colors-list))
+  '("aliceblue" "antiquewhite" "antiquewhite1" "antiquewhite2"
+    "antiquewhite3" "antiquewhite4" "aquamarine" "aquamarine1"
+    "aquamarine2" "aquamarine3" "aquamarine4" "azure" "azure1"
+    "azure2" "azure3" "azure4" "beige" "bisque" "bisque1" "bisque2"
+    "bisque3" "bisque4" "black" "blanchedalmond" "blue" "blue1"
+    "blue2" "blue3" "blue4" "blueviolet" "brown" "brown1" "brown2"
+    "brown3" "brown4" "burlywood" "burlywood1" "burlywood2"
+    "burlywood3" "burlywood4" "cadetblue" "cadetblue1"
+    "cadetblue2" "cadetblue3" "cadetblue4" "chartreuse"
+    "chartreuse1" "chartreuse2" "chartreuse3" "chartreuse4"
+    "chocolate" "chocolate1" "chocolate2" "chocolate3" "chocolate4"
+    "coral" "coral1" "coral2" "coral3" "coral4" "cornflowerblue"
+    "cornsilk" "cornsilk1" "cornsilk2" "cornsilk3" "cornsilk4"
+    "crimson" "cyan" "cyan1" "cyan2" "cyan3" "cyan4" "darkgoldenrod"
+    "darkgoldenrod1" "darkgoldenrod2" "darkgoldenrod3"
+    "darkgoldenrod4" "darkgreen" "darkkhaki" "darkolivegreen"
+    "darkolivegreen1" "darkolivegreen2" "darkolivegreen3"
+    "darkolivegreen4" "darkorange" "darkorange1" "darkorange2"
+    "darkorange3" "darkorange4" "darkorchid" "darkorchid1"
+    "darkorchid2" "darkorchid3" "darkorchid4" "darksalmon"
+    "darkseagreen" "darkseagreen1" "darkseagreen2"
+    "darkseagreen3" "darkseagreen4" "darkslateblue"
+    "darkslategray" "darkslategray1" "darkslategray2"
+    "darkslategray3"  "darkslategray4" "darkslategrey"
+    "darkturquoise" "darkviolet" "deeppink" "deeppink1"
+    "deeppink2" "deeppink3" "deeppink4" "deepskyblue"
+    "deepskyblue1" "deepskyblue2" "deepskyblue3" "deepskyblue4"
+    "dimgray" "dimgrey"  "dodgerblue" "dodgerblue1" "dodgerblue2"
+    "dodgerblue3"  "dodgerblue4" "firebrick" "firebrick1"
+    "firebrick2" "firebrick3" "firebrick4" "floralwhite"
+    "forestgreen" "gainsboro" "ghostwhite" "gold" "gold1" "gold2"
+    "gold3" "gold4" "goldenrod" "goldenrod1" "goldenrod2"
+    "goldenrod3" "goldenrod4" "gray" "gray0" "gray1" "gray10" "gray100"
+    "gray11" "gray12" "gray13" "gray14" "gray15" "gray16" "gray17"
+    "gray18" "gray19" "gray2" "gray20" "gray21" "gray22" "gray23"
+    "gray24" "gray25" "gray26" "gray27" "gray28" "gray29" "gray3"
+    "gray30" "gray31" "gray32" "gray33" "gray34" "gray35" "gray36"
+    "gray37" "gray38" "gray39" "gray4" "gray40" "gray41" "gray42"
+    "gray43" "gray44" "gray45" "gray46" "gray47" "gray48" "gray49"
+    "gray5" "gray50" "gray51" "gray52" "gray53" "gray54" "gray55"
+    "gray56" "gray57" "gray58" "gray59" "gray6" "gray60" "gray61"
+    "gray62" "gray63" "gray64" "gray65" "gray66" "gray67" "gray68"
+    "gray69" "gray7" "gray70" "gray71" "gray72" "gray73" "gray74"
+    "gray75" "gray76" "gray77" "gray78" "gray79" "gray8" "gray80"
+    "gray81" "gray82" "gray83" "gray84" "gray85" "gray86" "gray87"
+    "gray88" "gray89" "gray9" "gray90" "gray91" "gray92" "gray93"
+    "gray94" "gray95" "gray96" "gray97" "gray98" "gray99" "green"
+    "green1" "green2" "green3" "green4" "greenyellow" "grey" "grey0"
+    "grey1" "grey10" "grey100" "grey11" "grey12" "grey13" "grey14"
+    "grey15" "grey16" "grey17" "grey18" "grey19" "grey2" "grey20"
+    "grey21" "grey22" "grey23" "grey24" "grey25" "grey26" "grey27"
+    "grey28" "grey29" "grey3" "grey30" "grey31" "grey32" "grey33"
+    "grey34" "grey35" "grey36" "grey37" "grey38" "grey39" "grey4"
+    "grey40" "grey41" "grey42" "grey43" "grey44" "grey45" "grey46"
+    "grey47" "grey48" "grey49" "grey5" "grey50" "grey51" "grey52"
+    "grey53" "grey54" "grey55" "grey56" "grey57" "grey58" "grey59"
+    "grey6" "grey60" "grey61" "grey62" "grey63" "grey64" "grey65"
+    "grey66" "grey67" "grey68" "grey69" "grey7" "grey70" "grey71"
+    "grey72" "grey73" "grey74" "grey75" "grey76" "grey77" "grey78"
+    "grey79" "grey8" "grey80" "grey81" "grey82" "grey83" "grey84"
+    "grey85" "grey86" "grey87" "grey88" "grey89" "grey9" "grey90"
+    "grey91" "grey92" "grey93" "grey94" "grey95" "grey96" "grey97"
+    "grey98" "grey99" "honeydew" "honeydew1" "honeydew2" "honeydew3"
+    "honeydew4" "hotpink" "hotpink1" "hotpink2" "hotpink3" "hotpink4"
+    "indianred" "indianred1" "indianred2" "indianred3" "indianred4"
+    "indigo" "ivory" "ivory1" "ivory2" "ivory3" "ivory4" "khaki" "khaki1"
+    "khaki2" "khaki3" "khaki4" "lavender" "lavenderblush"
+    "lavenderblush1" "lavenderblush2" "lavenderblush3"
+    "lavenderblush4" "lawngreen" "lemonchiffon" "lemonchiffon1"
+    "lemonchiffon2" "lemonchiffon3" "lemonchiffon4" "lightblue"
+    "lightblue1" "lightblue2" "lightblue3" "lightblue4"
+    "lightcoral" "lightcyan" "lightcyan1" "lightcyan2" "lightcyan3"
+    "lightcyan4" "lightgoldenrod" "lightgoldenrod1"
+    "lightgoldenrod2" "lightgoldenrod3" "lightgoldenrod4"
+    "lightgoldenrodyellow" "lightgray" "lightgrey" "lightpink"
+    "lightpink1" "lightpink2" "lightpink3" "lightpink4"
+    "lightsalmon" "lightsalmon1" "lightsalmon2" "lightsalmon3"
+    "lightsalmon4" "lightseagreen" "lightskyblue" "lightskyblue1"
+    "lightskyblue2" "lightskyblue3" "lightskyblue4"
+    "lightslateblue" "lightslategray" "lightslategrey"
+    "lightsteelblue" "lightsteelblue1" "lightsteelblue2"
+    "lightsteelblue3" "lightsteelblue4" "lightyellow"
+    "lightyellow1" "lightyellow2" "lightyellow3" "lightyellow4"
+    "limegreen" "linen" "magenta" "magenta1" "magenta2" "magenta3"
+    "magenta4" "maroon" "maroon1" "maroon2" "maroon3" "maroon4"
+    "mediumaquamarine" "mediumblue"  "mediumorchid"
+    "mediumorchid1" "mediumorchid2" "mediumorchid3"
+    "mediumorchid4" "mediumpurple" "mediumpurple1"
+    "mediumpurple2" "mediumpurple3" "mediumpurple4"
+    "mediumseagreen" "mediumslateblue" "mediumspringgreen"
+    "mediumturquoise" "mediumvioletred" "midnightblue"
+    "mintcream" "mistyrose" "mistyrose1" "mistyrose2" "mistyrose3"
+    "mistyrose4" "moccasin" "navajowhite" "navajowhite1"
+    "navajowhite2" "navajowhite3" "navajowhite4" "navy" "navyblue"
+    "oldlace" "olivedrab" "olivedrap" "olivedrab1" "olivedrab2"
+    "olivedrap3" "oragne" "palegoldenrod" "palegreen" "palegreen1"
+    "palegreen2" "palegreen3" "palegreen4" "paleturquoise"
+    "paleturquoise1" "paleturquoise2" "paleturquoise3"
+    "paleturquoise4" "palevioletred" "palevioletred1"
+    "palevioletred2" "palevioletred3" "palevioletred4"
+    "papayawhip" "peachpuff" "peachpuff1" "peachpuff2"
+    "peachpuff3" "peachpuff4" "peru" "pink" "pink1" "pink2" "pink3"
+    "pink4" "plum" "plum1" "plum2" "plum3" "plum4" "powderblue"
+    "purple" "purple1" "purple2" "purple3" "purple4" "red" "red1" "red2"
+    "red3" "red4" "rosybrown" "rosybrown1" "rosybrown2" "rosybrown3"
+    "rosybrown4" "royalblue" "royalblue1" "royalblue2" "royalblue3"
+    "royalblue4" "saddlebrown" "salmon" "salmon1" "salmon2" "salmon3"
+    "salmon4" "sandybrown" "seagreen" "seagreen1" "seagreen2"
+    "seagreen3" "seagreen4" "seashell" "seashell1" "seashell2"
+    "seashell3" "seashell4" "sienna" "sienna1" "sienna2" "sienna3"
+    "sienna4" "skyblue" "skyblue1" "skyblue2" "skyblue3" "skyblue4"
+    "slateblue" "slateblue1" "slateblue2" "slateblue3" "slateblue4"
+    "slategray" "slategray1" "slategray2" "slategray3" "slategray4"
+    "slategrey" "snow" "snow1" "snow2" "snow3" "snow4" "springgreen"
+    "springgreen1" "springgreen2" "springgreen3" "springgreen4"
+    "steelblue" "steelblue1" "steelblue2" "steelblue3" "steelblue4"
+    "tan" "tan1" "tan2" "tan3" "tan4" "thistle" "thistle1" "thistle2"
+    "thistle3" "thistle4" "tomato" "tomato1" "tomato2" "tomato3"
+    "tomato4" "transparent" "turquoise" "turquoise1" "turquoise2"
+    "turquoise3" "turquoise4" "violet" "violetred" "violetred1"
+    "violetred2" "violetred3" "violetred4" "wheat" "wheat1" "wheat2"
+    "wheat3" "wheat4" "white" "whitesmoke" "yellow" "yellow1" "yellow2"
+    "yellow3" "yellow4" "yellowgreen")
+  "Possible color constants in the dot language.
+The list of constant is available at http://www.research.att.com/~erg/graphviz\
+/info/colors.html")
 
-(defvar graphviz-attr-keywords
-  (mapcar #'(lambda (elm) (cons elm 0)) graphviz-dot-attr-keywords))
-
-(defvar graphviz-value-keywords
-  (mapcar #'(lambda (elm) (cons elm 0)) graphviz-dot-value-keywords))
-
-(defvar graphviz-color-keywords
-  (mapcar #'(lambda (elm) (cons elm 0)) graphviz-dot-color-keywords))
 
 ;;; Key map
 (defvar graphviz-dot-mode-map
   (let ((map (make-sparse-keymap)))
-    (define-key map "\r"       'electric-graphviz-dot-terminate-line)
-    (define-key map "{"        'electric-graphviz-dot-open-brace)
-    (define-key map "}"        'electric-graphviz-dot-close-brace)
-    (define-key map ";"        'electric-graphviz-dot-semi)
-    (define-key map "\C-c\M-t" 'graphviz-dot-complete-word)
     (define-key map "\C-\M-q"  'graphviz-dot-indent-graph)
     (define-key map "\C-c\C-p" 'graphviz-dot-preview)
     (define-key map "\C-c\C-c" 'compile)
@@ -448,10 +537,10 @@ not immediately visible."
     (modify-syntax-entry ?_  "_"      st)
     (modify-syntax-entry ?-  "_"      st)
     (modify-syntax-entry ?>  "."      st)
-    (modify-syntax-entry ?\[  "(]"     st)
-    (modify-syntax-entry ?\]  ")["     st)
+    (modify-syntax-entry ?\[ "(]"     st)
+    (modify-syntax-entry ?\] ")["     st)
     (modify-syntax-entry ?\" "\""     st)
-    (setq graphviz-dot-mode-syntax-table st))
+    st)
   "Syntax table for `graphviz-dot-mode'.")
 
 (defvar graphviz-dot-syntax-propertize-function
@@ -459,8 +548,13 @@ not immediately visible."
    ("^#" (0 "< b"))))
 
 (defvar graphviz-dot-font-lock-keywords
-  `(("\\(:?di\\|sub\\)?graph \\(\\sw+\\)"
-     (2 font-lock-function-name-face))
+  ;; See https://graphviz.gitlab.io/_pages/doc/info/lang.html.
+  `(;; Match ID, first case
+    ("\\(?:di\\|sub\\)?graph\\(?:[[:space:]]+\\)\\([a-zA-Z_]+[a-zA-Z0-9_]*\\)"
+     (1 font-lock-function-name-face))
+    ;; Match ID, second case
+    ("\\(?:di\\|sub\\)?graph\\(?:[[:space:]]+\\)\\(-?[0-9]*\\(\\.[0-9]*\\)?\\)"
+     (1 font-lock-function-name-face))
     (,(regexp-opt graphviz-dot-value-keywords 'words)
      . font-lock-reference-face)
     ;; to build the font-locking for the colors,
@@ -474,19 +568,16 @@ not immediately visible."
     (,(concat
        (regexp-opt graphviz-dot-attr-keywords 'words)
        "[ \\t\\n]*=")
-     ;; RR - ugly, really, but I dont know why xemacs does not work
+     ;; RR - ugly, really, but I don't know why xemacs does not work
      ;; if I change the next car to "1"...
      (0 font-lock-variable-name-face))
-    ;; See the 'graph' nonterminal in
-    ;; https://graphviz.gitlab.io/_pages/doc/info/lang.html.
-    ("\\(?:\\_<\\(strict\\)[[:space:]]+\\)?\\(\\(?:di\\)?graph\\)\\_>"
-     (1 'font-lock-keyword-face) (2 'font-lock-keyword-face))
-    ;; See the 'attr_stmt' nonterminal in
-    ;; https://graphviz.gitlab.io/_pages/doc/info/lang.html.
+    ;; The 'graph' nonterminal
+    ("\\(\\_<\\(?:strict\\)?[[:space:]]*\\(?:\\(?:di\\)?graph\\)\\_>\\)"
+     (1 'font-lock-keyword-face))
+    ;; The 'attr_stmt'
     ("\\_<\\(edge\\|graph\\|node\\)\\_>[[:space:]]*\\["
      1 'font-lock-keyword-face)
-    ;; See the 'subgraph' nonterminal in
-    ;; https://graphviz.gitlab.io/_pages/doc/info/lang.html.
+    ;; The 'subgraph' nonterminal
     ("\\_<subgraph\\_>" . 'font-lock-keyword-face))
   "Keyword highlighting specification for `graphviz-dot-mode'.")
 
@@ -496,7 +587,11 @@ not immediately visible."
           "." graphviz-dot-preview-extension))
 
 (defun graphviz-compile-command (f-name)
-  "Shell command to compile F-NAME."
+  "Shell command to compile F-NAME.
+By default this is `dot -T png file.dot -o file.png', the used
+program to compile can be changed by setting
+`graphviz-dot-dot-program', the output format and extension can
+be changed with `graphviz-dot-preview-extension'."
   (when f-name
     (setq compile-command
           (concat graphviz-dot-dot-program
@@ -520,43 +615,20 @@ TAB indents for graph lines.
 \\[graphviz-dot-preview]\t- Previews graph in a buffer.
 \\[graphviz-dot-view]\t- Views graph in an external viewer.
 \\[graphviz-dot-indent-line]\t- Indents current line of code.
-\\[graphviz-dot-complete-word]\t- Completes the current word.
-\\[electric-graphviz-dot-terminate-line]\t- Electric newline.
-\\[electric-graphviz-dot-open-brace]\t- Electric open braces.
-\\[electric-graphviz-dot-close-brace]\t- Electric close braces.
-\\[electric-graphviz-dot-semi]\t- Electric semi colons.
 
 Variables specific to this mode:
 
   `graphviz-dot-dot-program'                   (default `dot')
-       Location of the dot program.
-  `graphviz-dot-view-command'                  (default `doted %s')
+       Program used to compile the graphs.
+  `graphviz-dot-preview-extension'             (default `png')
+       File type to use for output.
+  `graphviz-dot-view-command'                  (default `dotty %s')
        Command to run when `graphviz-dot-view' is executed.
   `graphviz-dot-view-edit-command'             (default nil)
        If the user should be asked to edit the view command.
   `graphviz-dot-save-before-view'              (default t)
-       Automatically save current buffer berore `graphviz-dot-view'.
-  `graphviz-dot-preview-extension'             (default `png')
-       File type to use for `graphviz-dot-preview'.
-  `graphviz-dot-auto-indent-on-newline'        (default t)
-       Whether to run `electric-graphviz-dot-terminate-line' when
-       newline is entered.
-  `graphviz-dot-auto-indent-on-braces'         (default t)
-       Whether to run `electric-graphviz-dot-open-brace' and
-       `electric-graphviz-dot-close-brace' when braces are
-       entered.
-  `graphviz-dot-auto-indent-on-semi'           (default t)
-       Whether to run `electric-graphviz-dot-semi' when semi colon
-       is typed.
-  `graphviz-dot-toggle-completions'            (default nil)
-       If completions should be displayed in the buffer instead of a
-       completion buffer when \\[graphviz-dot-complete-word] is
-       pressed repeatedly.
-
-This mode can be customized by running \\[graphviz-dot-customize].
-
-Turning on Graphviz Dot mode calls the value of the variable
-`graphviz-dot-mode-hook' with no args, if that value is non-nil."
+       Automatically save current buffer berore `graphviz-dot-view'."
+  :group 'graphviz
   (setq-local font-lock-defaults '(graphviz-dot-font-lock-keywords))
   (setq-local comment-start "//")
   (setq-local comment-start-skip "/\\*+ *\\|//+ *")
@@ -593,9 +665,6 @@ Turning on Graphviz Dot mode calls the value of the variable
 	 "-"
 	 ["Customize..."       graphviz-dot-customize        t]
 	 )))
-
-;;;; Compilation
-
 
 ;;;;
 ;;;; Indentation
@@ -690,61 +759,6 @@ then indent this and each subgraph in it."
             ;; as long as we are not completed or at end of buffer
             (and (> bracket-count 0) (not (eobp))))))))
 
-;;;;
-;;;; Electric indentation
-;;;;
-(defun graphviz-dot-comment-or-string-p ()
-  "Return t if point is in a comment or in a string."
-  (let ((state (parse-partial-sexp (point-min) (point))))
-     (or (nth 4 state) (nth 3 state))))
-
-(defun graphviz-dot-newline-and-indent ()
-  "Move to a new line and set point at correct indenting."
-  (save-excursion
-    (beginning-of-line)
-    (skip-chars-forward " \t")
-    (graphviz-dot-indent-line))
-  (delete-horizontal-space)
-  (newline)
-  (graphviz-dot-indent-line))
-
-(defun electric-graphviz-dot-terminate-line ()
-  "Terminate line and indent next line."
-  (interactive)
-  (if graphviz-dot-auto-indent-on-newline
-      (graphviz-dot-newline-and-indent)
-    (newline)))
-
-(defun electric-graphviz-dot-open-brace ()
-  "Terminate line and indent next line."
-  (interactive)
-  (insert "{")
-  (if (and graphviz-dot-auto-indent-on-braces
-           (not (graphviz-dot-comment-or-string-p)))
-      (graphviz-dot-newline-and-indent)))
-
-(defun electric-graphviz-dot-close-brace ()
-  "Terminate line and indent next line."
-  (interactive)
-  (insert "}")
-  (if (and graphviz-dot-auto-indent-on-braces
-           (not (graphviz-dot-comment-or-string-p)))
-      (progn
-        (save-excursion
-          (beginning-of-line)
-          (skip-chars-forward " \t")
-          (graphviz-dot-indent-line))
-        (newline)
-        (graphviz-dot-indent-line))))
-
-(defun electric-graphviz-dot-semi ()
-  "Terminate line and indent next line."
-  (interactive)
-  (insert ";")
-  (if (and graphviz-dot-auto-indent-on-semi
-           (not (graphviz-dot-comment-or-string-p)))
-      (graphviz-dot-newline-and-indent)))
-
 ;;;###autoload
 (defun graphviz-dot-preview ()
   "Compile the graph and preview it in an other buffer."
@@ -811,110 +825,6 @@ saved before the command is executed."
     (start-process-shell-command (downcase mode-name) nil cmd)
     (message (format "Executing `%s'..." cmd))))
 
-;;;;
-;;;; Completion
-;;;;
-(defvar graphviz-dot-str nil)
-(defvar graphviz-dot-all nil)
-(defvar graphviz-dot-pred nil)
-(defvar graphviz-dot-buffer-to-use nil)
-(defvar graphviz-dot-flag nil)
-
-(defun graphviz-dot-get-state ()
-  "Return the syntax state of the current point."
-  (let ((state (parse-partial-sexp (point-min) (point))))
-    (cond
-     ((nth 4 state) 'comment)
-     ((nth 3 state) 'string)
-     ((not (nth 1 state)) 'out)
-     (t (save-excursion
-          (skip-chars-backward "^[,=\\[]{};")
-          (backward-char)
-          (cond
-           ((looking-at "[\\[,]{};") 'attribute)
-           ((looking-at "=") (progn
-                               (backward-word 1)
-                               (if (looking-at "[a-zA-Z]*color")
-                                   'color
-                                 'value)))
-           (t 'other)))))))
-
-(defun graphviz-dot-get-keywords ()
-  "Return possible completions for a word."
-  (let ((state (graphviz-dot-get-state)))
-    (cond
-     ((equal state 'comment)   ())
-     ((equal state 'string)    ())
-     ((equal state 'out)       graphviz-attr-keywords)
-     ((equal state 'value)     graphviz-value-keywords)
-     ((equal state 'color)     graphviz-color-keywords)
-     ((equal state 'attribute) graphviz-attr-keywords)
-     (t                        graphviz-attr-keywords))))
-
-(defvar graphviz-dot-last-word-numb 0)
-(defvar graphviz-dot-last-word-shown nil)
-(defvar graphviz-dot-last-completions nil)
-
-(defun graphviz-dot-complete-word ()
-  "Complete word at current point."
-  (interactive)
-  (let* ((b (save-excursion (skip-chars-backward "a-zA-Z0-9_") (point)))
-         (e (save-excursion (skip-chars-forward "a-zA-Z0-9_") (point)))
-         (graphviz-dot-str (buffer-substring b e))
-         (allcomp (if (and graphviz-dot-toggle-completions
-                           (string= graphviz-dot-last-word-shown
-                                    graphviz-dot-str))
-                      graphviz-dot-last-completions
-                    (all-completions graphviz-dot-str
-                                     (graphviz-dot-get-keywords))))
-         (match (if graphviz-dot-toggle-completions
-                    "" (try-completion
-                        graphviz-dot-str (mapcar #'(lambda (elm)
-                                                     (cons elm 0)) allcomp)))))
-    ;; Delete old string
-    (delete-region b e)
-
-    ;; Toggle-completions inserts whole labels
-    (if graphviz-dot-toggle-completions
-        (progn
-          ;; Update entry number in list
-          (setq graphviz-dot-last-completions allcomp
-                graphviz-dot-last-word-numb
-                (if (>= graphviz-dot-last-word-numb (1- (length allcomp)))
-                    0
-                  (1+ graphviz-dot-last-word-numb)))
-          (setq graphviz-dot-last-word-shown
-                (elt allcomp graphviz-dot-last-word-numb))
-          ;; Display next match or same string if no match was found
-          (if (not (null allcomp))
-              (insert "" graphviz-dot-last-word-shown)
-            (insert "" graphviz-dot-str)
-            (message "(No match)")))
-      ;; The other form of completion does not necessarily do that.
-
-      ;; Insert match if found, or the original string if no match
-      (if (or (null match) (equal match 't))
-          (progn (insert "" graphviz-dot-str)
-                 (message "(No match)"))
-        (insert "" match))
-      ;; Give message about current status of completion
-      (cond ((equal match 't)
-             (if (not (null (cdr allcomp)))
-                 (message "(Complete but not unique)")
-               (message "(Sole completion)")))
-            ;; Display buffer if the current completion didn't help
-            ;; on completing the label.
-            ((and (not (null (cdr allcomp))) (= (length graphviz-dot-str)
-                                                (length match)))
-             (with-output-to-temp-buffer "*Completions*"
-               (display-completion-list allcomp))
-             ;; Wait for a keypress. Then delete *Completion*  window
-             (momentary-string-display "" (point))
-             (if graphviz-dot-delete-completions
-                 (delete-window
-                  (get-buffer-window (get-buffer "*Completions*"))))
-             )))))
-
 (defun graphviz-dot-set-layout ()
   "Change the value of `graphviz-dot-dot-program'."
   (interactive)
@@ -926,10 +836,10 @@ saved before the command is executed."
 ;;;###autoload
 (add-to-list 'auto-mode-alist '("\\.gv\\'" . graphviz-dot-mode))
 
-(defvar org-src-lang-modes)  ; defined in org-src.el
-
-(eval-after-load 'org-mode
-    '(add-to-list 'org-src-lang-modes  '("dot" . graphviz-dot)))
+;; Support org-mode, when adding a code block for dot, use this mode
+(with-eval-after-load 'org-src
+  (defvar org-src-lang-modes)
+  (add-to-list 'org-src-lang-modes  '("dot" . graphviz-dot)))
 
 (provide 'graphviz-dot-mode)
 ;;; graphviz-dot-mode.el ends here
