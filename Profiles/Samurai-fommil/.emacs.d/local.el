@@ -6,7 +6,7 @@
 ;;; Code:
 
 (add-to-list 'default-frame-alist
-             '(font . "JetBrainsMono-18"))
+             '(font . "Hack-18"))
 
 (package-ensure-compiled)
 

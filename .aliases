@@ -41,7 +41,7 @@ alias markdown="hsmarkdown"
 alias open="xdg-open"
 alias volume="pavucontrol"
 
-alias git-up='for A in ~/Projects/* ; do cd $A ; echo $A ; git up ; done'
+alias git-up='for A in ~/Projects/* ; do cd $A ; echo $A ; git up ; git prune ; git gc ; done'
 
 alias is-up='until ping -c1 www.google.com >/dev/null 2>&1; do :; done'
 # https://stackoverflow.com/a/16751081
