@@ -4,11 +4,7 @@
 
 ;; Author: Toby Cubitt <toby-undo-tree@dr-qubit.org>
 ;; Maintainer: Toby Cubitt <toby-undo-tree@dr-qubit.org>
-<<<<<<< HEAD:.emacs.d/elpa/undo-tree-0.7.3/undo-tree.el
-;; Version: 0.7.3
-=======
 ;; Version: 0.7.4
->>>>>>> upgrade melpa:.emacs.d/elpa/undo-tree-0.7.4/undo-tree.el
 ;; Keywords: convenience, files, undo, redo, history, tree
 ;; URL: http://www.dr-qubit.org/emacs.php
 ;; Repository: http://www.dr-qubit.org/git/undo-tree.git
@@ -1430,11 +1426,7 @@ in visualizer."
        (undo-tree-region-data-redo-end r))))
 
 
-<<<<<<< HEAD:.emacs.d/elpa/undo-tree-0.7.3/undo-tree.el
-(gv-define-setter undo-tree-node-undo-beginning (node val)
-=======
 (gv-define-setter undo-tree-node-undo-beginning (val node)
->>>>>>> upgrade melpa:.emacs.d/elpa/undo-tree-0.7.4/undo-tree.el
   `(let ((r (plist-get (undo-tree-node-meta-data ,node) :region)))
      (unless (undo-tree-region-data-p r)
        (setf (undo-tree-node-meta-data ,node)
@@ -1442,11 +1434,7 @@ in visualizer."
 			(setq r (undo-tree-make-region-data)))))
      (setf (undo-tree-region-data-undo-beginning r) ,val)))
 
-<<<<<<< HEAD:.emacs.d/elpa/undo-tree-0.7.3/undo-tree.el
-(gv-define-setter undo-tree-node-undo-end (node val)
-=======
 (gv-define-setter undo-tree-node-undo-end (val node)
->>>>>>> upgrade melpa:.emacs.d/elpa/undo-tree-0.7.4/undo-tree.el
   `(let ((r (plist-get (undo-tree-node-meta-data ,node) :region)))
      (unless (undo-tree-region-data-p r)
        (setf (undo-tree-node-meta-data ,node)
@@ -1454,11 +1442,7 @@ in visualizer."
 			(setq r (undo-tree-make-region-data)))))
      (setf (undo-tree-region-data-undo-end r) ,val)))
 
-<<<<<<< HEAD:.emacs.d/elpa/undo-tree-0.7.3/undo-tree.el
-(gv-define-setter undo-tree-node-redo-beginning (node val)
-=======
 (gv-define-setter undo-tree-node-redo-beginning (val node)
->>>>>>> upgrade melpa:.emacs.d/elpa/undo-tree-0.7.4/undo-tree.el
   `(let ((r (plist-get (undo-tree-node-meta-data ,node) :region)))
      (unless (undo-tree-region-data-p r)
        (setf (undo-tree-node-meta-data ,node)
@@ -1466,11 +1450,7 @@ in visualizer."
 			(setq r (undo-tree-make-region-data)))))
      (setf (undo-tree-region-data-redo-beginning r) ,val)))
 
-<<<<<<< HEAD:.emacs.d/elpa/undo-tree-0.7.3/undo-tree.el
-(gv-define-setter undo-tree-node-redo-end (node val)
-=======
 (gv-define-setter undo-tree-node-redo-end (val node)
->>>>>>> upgrade melpa:.emacs.d/elpa/undo-tree-0.7.4/undo-tree.el
   `(let ((r (plist-get (undo-tree-node-meta-data ,node) :region)))
      (unless (undo-tree-region-data-p r)
        (setf (undo-tree-node-meta-data ,node)
@@ -1523,11 +1503,7 @@ in visualizer."
        (undo-tree-visualizer-data-marker v))))
 
 
-<<<<<<< HEAD:.emacs.d/elpa/undo-tree-0.7.3/undo-tree.el
-(gv-define-setter undo-tree-node-lwidth (node val)
-=======
 (gv-define-setter undo-tree-node-lwidth (val node)
->>>>>>> upgrade melpa:.emacs.d/elpa/undo-tree-0.7.4/undo-tree.el
   `(let ((v (plist-get (undo-tree-node-meta-data ,node) :visualizer)))
      (unless (undo-tree-visualizer-data-p v)
        (setf (undo-tree-node-meta-data ,node)
@@ -1535,11 +1511,7 @@ in visualizer."
 			(setq v (undo-tree-make-visualizer-data)))))
      (setf (undo-tree-visualizer-data-lwidth v) ,val)))
 
-<<<<<<< HEAD:.emacs.d/elpa/undo-tree-0.7.3/undo-tree.el
-(gv-define-setter undo-tree-node-cwidth (node val)
-=======
 (gv-define-setter undo-tree-node-cwidth (val node)
->>>>>>> upgrade melpa:.emacs.d/elpa/undo-tree-0.7.4/undo-tree.el
   `(let ((v (plist-get (undo-tree-node-meta-data ,node) :visualizer)))
      (unless (undo-tree-visualizer-data-p v)
        (setf (undo-tree-node-meta-data ,node)
@@ -1547,11 +1519,7 @@ in visualizer."
 			(setq v (undo-tree-make-visualizer-data)))))
      (setf (undo-tree-visualizer-data-cwidth v) ,val)))
 
-<<<<<<< HEAD:.emacs.d/elpa/undo-tree-0.7.3/undo-tree.el
-(gv-define-setter undo-tree-node-rwidth (node val)
-=======
 (gv-define-setter undo-tree-node-rwidth (val node)
->>>>>>> upgrade melpa:.emacs.d/elpa/undo-tree-0.7.4/undo-tree.el
   `(let ((v (plist-get (undo-tree-node-meta-data ,node) :visualizer)))
      (unless (undo-tree-visualizer-data-p v)
        (setf (undo-tree-node-meta-data ,node)
@@ -1559,11 +1527,7 @@ in visualizer."
 			(setq v (undo-tree-make-visualizer-data)))))
      (setf (undo-tree-visualizer-data-rwidth v) ,val)))
 
-<<<<<<< HEAD:.emacs.d/elpa/undo-tree-0.7.3/undo-tree.el
-(gv-define-setter undo-tree-node-marker (node val)
-=======
 (gv-define-setter undo-tree-node-marker (val node)
->>>>>>> upgrade melpa:.emacs.d/elpa/undo-tree-0.7.4/undo-tree.el
   `(let ((v (plist-get (undo-tree-node-meta-data ,node) :visualizer)))
      (unless (undo-tree-visualizer-data-p v)
        (setf (undo-tree-node-meta-data ,node)
@@ -1592,11 +1556,7 @@ in visualizer."
 (defmacro undo-tree-node-register (node)
   `(plist-get (undo-tree-node-meta-data ,node) :register))
 
-<<<<<<< HEAD:.emacs.d/elpa/undo-tree-0.7.3/undo-tree.el
-(gv-define-setter undo-tree-node-register (node val)
-=======
 (gv-define-setter undo-tree-node-register (val node)
->>>>>>> upgrade melpa:.emacs.d/elpa/undo-tree-0.7.4/undo-tree.el
   `(setf (undo-tree-node-meta-data ,node)
 	 (plist-put (undo-tree-node-meta-data ,node) :register ,val)))
 
@@ -4688,13 +4648,10 @@ specifies `saved', and a negative prefix argument specifies
 
 ;;;; ChangeLog:
 
-<<<<<<< HEAD:.emacs.d/elpa/undo-tree-0.7.3/undo-tree.el
-=======
 ;; 2020-01-28  Toby S. Cubitt  <tsc25@cantab.net>
 ;; 
 ;; 	Undo-tree bug-fix release.
 ;; 
->>>>>>> upgrade melpa:.emacs.d/elpa/undo-tree-0.7.4/undo-tree.el
 ;; 2020-01-26  Toby S. Cubitt  <tsc25@cantab.net>
 ;; 
 ;; 	Undo-tree point release.
