@@ -48,7 +48,7 @@ See `yas-minor-mode' for more information on Yas minor mode.
 \(fn &optional ARG)" t nil)
 (autoload 'snippet-mode "yasnippet" "A mode for editing yasnippets" t nil)
 
-(if (fboundp 'register-definition-prefixes) (register-definition-prefixes "yasnippet" '("yas" "help-snippet-def" "snippet-mode-map" "last-buffer-undo-list")))
+(if (fboundp 'register-definition-prefixes) (register-definition-prefixes "yasnippet" '("yas" "help-snippet-def" "snippet-mode-map")))
 
 ;;;***
 
