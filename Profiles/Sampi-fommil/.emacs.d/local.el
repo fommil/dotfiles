@@ -5,11 +5,8 @@
 ;;
 ;;; Code:
 
-;; (add-to-list 'default-frame-alist
-;;              '(font . "Hack-20"))
-
 (add-to-list 'default-frame-alist
-             '(font . "JetBrainsMono-20"))
+             '(font . "Hack-20"))
 
 (package-ensure-compiled)
 
