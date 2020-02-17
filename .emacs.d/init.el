@@ -315,6 +315,11 @@ Inspired by `org-combine-plists'."
           (rx bos (+ any) ".elc" eos))))))
     load-path)))
 
+(defun shrug ()
+  "Insert ASCII shrug dude."
+  (interactive)
+  (insert "¯\\_(ツ)_/¯"))
+
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; This section is for global modes that should be loaded in order to
 ;; make them immediately available.
