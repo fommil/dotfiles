@@ -10,6 +10,8 @@
 
 (package-ensure-compiled)
 
+(require 'sym-humanize)
+
 (when (not window-system)
   (add-to-list 'default-frame-alist
                '(cursor-type . box)))
