@@ -1,7 +1,5 @@
-(define-package "transient" "0.1.0" "Transient commands"
-  '((emacs "25.1")
-    (dash "2.15.0")
-    (lv "0.14.0"))
+(define-package "transient" "0.2.0" "Transient commands"
+  '((emacs "25.1"))
   :keywords
   '("bindings")
   :authors

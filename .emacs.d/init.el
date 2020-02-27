@@ -89,8 +89,8 @@
 ;; http://stackoverflow.com/a/3024055/1041691
 (add-hook 'mouse-leave-buffer-hook
           (lambda () (when (and (>= (recursion-depth) 1)
-                                (active-minibuffer-window))
-                       (abort-recursive-edit))))
+                           (active-minibuffer-window))
+                  (abort-recursive-edit))))
 
 ;; *scratch* is immortal
 (add-hook 'kill-buffer-query-functions
@@ -435,8 +435,7 @@ Inspired by `org-combine-plists'."
 
 (use-package git-timemachine
   :commands git-timemachine
-  :init (setq
-         git-timemachine-abbreviation-length 4))
+  :init (setq git-timemachine-abbreviation-length 4))
 
 (use-package ag
   :commands ag
