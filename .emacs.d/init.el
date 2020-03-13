@@ -131,7 +131,7 @@
 
 (use-package ibuffer
   :ensure nil
-  :bind ("C-x C-b". ibuffer))
+  :bind ("C-x C-b" . ibuffer))
 
 (use-package subword
   :ensure nil
@@ -204,6 +204,8 @@
      ((and (boundp 'smartparens-strict-mode)
            smartparens-strict-mode)
       (sp-backward-kill-word 1))
+     ((and (boundp 'paredit-mode) paredit-mode)
+      (paredit-backward-kill-word))
      (subword-mode
       (subword-backward-kill 1))
      (t
@@ -268,10 +270,6 @@ very minimal set."
       (if (and tags-file-name (<= 20000000 (size)))
           (list (push 'company-etags base))
         (list base)))))
-
-(defun sp-restrict-c (sym)
-  "Smartparens restriction on `SYM' for C-derived parenthesis."
-  (sp-restrict-to-pairs-interactive "{([" sym))
 
 (defun plist-merge (&rest plists)
   "Create a single property list from all PLISTS.
@@ -409,7 +407,6 @@ Inspired by `org-combine-plists'."
   :bind (("C-S-s" . vr/isearch-forward)
          ("s-S" . vr/query-replace)))
 
-;; TODO consider https://github.com/kostafey/popup-switcher
 (use-package popup-imenu
   :commands popup-imenu
   :bind ("M-i" . popup-imenu))
@@ -554,36 +551,14 @@ Inspired by `org-combine-plists'."
 (use-package smartparens
   :diminish smartparens-mode
   :commands
-  smartparens-strict-mode
   smartparens-mode
-  sp-restrict-to-pairs-interactive
   sp-local-pair
   :config
   (require 'smartparens-config)
-  (sp-use-smartparens-bindings)
-  (sp-pair "(" ")" :wrap "C-(") ;; how do people live without this?
-  (sp-pair "[" "]" :wrap "s-[") ;; C-[ sends ESC
-  (sp-pair "{" "}" :wrap "C-{")
-  ;;(sp-pair "<" ">" :wrap "C-<") ;; https://github.com/Fuco1/smartparens/issues/816
-
-  ;; nice whitespace / indentation when creating statements
-  (sp-local-pair '(c-mode java-mode) "(" nil :post-handlers '(("||\n[i]" "RET")))
-  (sp-local-pair '(c-mode java-mode) "{" nil :post-handlers '(("||\n[i]" "RET")))
-
-  ;; WORKAROUND https://github.com/Fuco1/smartparens/issues/543
-  (bind-key "C-<left>" nil smartparens-mode-map)
-  (bind-key "C-<right>" nil smartparens-mode-map)
-
-  (bind-key "s-{" 'sp-rewrap-sexp smartparens-mode-map)
-
-  (bind-key "s-<delete>" 'sp-kill-sexp smartparens-mode-map)
-  (bind-key "s-<backspace>" 'sp-backward-kill-sexp smartparens-mode-map)
-  (bind-key "s-<home>" 'sp-beginning-of-sexp smartparens-mode-map)
-  (bind-key "s-<end>" 'sp-end-of-sexp smartparens-mode-map)
-  (bind-key "s-<left>" 'sp-beginning-of-previous-sexp smartparens-mode-map)
-  (bind-key "s-<right>" 'sp-next-sexp smartparens-mode-map)
-  (bind-key "s-<up>" 'sp-backward-up-sexp smartparens-mode-map)
-  (bind-key "s-<down>" 'sp-down-sexp smartparens-mode-map))
+  :bind
+  (:map
+   smartparens-mode-map
+   ("s-{" . sp-rewrap-sexp)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; This section is for overriding common emacs keybindings with tweaks.
@@ -613,9 +588,7 @@ Inspired by `org-combine-plists'."
   (bind-key "RET" 'comment-indent-new-line emacs-lisp-mode-map)
   (bind-key "C-c c" 'emacs-lisp-cask-compile emacs-lisp-mode-map)
 
-  ;; barf / slurp need some experimentation
-  (bind-key "M-<left>" 'sp-forward-slurp-sexp emacs-lisp-mode-map)
-  (bind-key "M-<right>" 'sp-forward-barf-sexp emacs-lisp-mode-map))
+  (define-key emacs-lisp-mode-map (read-kbd-macro "DEL") nil))
 
 (defun emacs-lisp-cask-compile ()
   (interactive)
@@ -630,6 +603,10 @@ Inspired by `org-combine-plists'."
 (use-package eldoc
   :ensure nil
   :diminish eldoc-mode
+  :config
+  (eldoc-add-command
+   'paredit-backward-delete
+   'paredit-close-round)
   :commands eldoc-mode)
 (global-eldoc-mode -1)
 
@@ -643,6 +620,64 @@ Inspired by `org-combine-plists'."
   :init (bind-key "C-c r" 're-builder emacs-lisp-mode-map))
 
 (use-package json-mode)
+
+(defun paredit-unwrap ()
+  "Unwrap the s-expression at point."
+  (interactive)
+  (if (looking-at (rx (syntax open-parenthesis)))
+      (forward-char)
+    (re-search-forward (rx point (* space) (syntax open-parenthesis))))
+  (save-excursion
+    (paredit-splice-sexp)))
+
+;; makes `insert-parentheses' behave like `paredit-insert-pair'
+(advice-add
+ #'insert-parentheses
+ :filter-args
+ '(lambda (a) (if (equal a '(nil)) '(1) a)))
+
+(use-package paredit
+  :config
+  ;; paredit aggressively creates hardcoded bindings, and many of those bindings
+  ;; are exceptionally irritating. The only way to undo it is to rerun the
+  ;; initialisation logic and unset every binding (or to unbind just the
+  ;; annoying things, but being explicit about what is in scope is best).
+  (paredit-do-commands (spec keys _fn _examples) nil
+    (dolist (key keys)
+      (define-key paredit-mode-map (read-kbd-macro key) nil)))
+  :bind
+  (:map
+   paredit-mode
+   ;; The following bindings are the subset of paredit that are useful and not
+   ;; already covered by additions to stock emacs.
+   ;;
+   ;; Some reminders of stock commands:
+   ;;
+   ;; - `C-M-k' already does `kill-sexp' (negative prefix works for backward)
+   ;; - `C-M-{f,b,u,d,p,n}' are already bound to s-exp navigation
+   ;; - `M-(' already bound to `insert-parentheses'
+   ("(" . paredit-open-round)
+   (")" . paredit-close-round)
+   ("[" . paredit-open-square)
+   ("]" . paredit-close-square)
+   (";" . paredit-semicolon)
+
+   ;; splice means to remove outer parens
+   ("DEL" . paredit-backward-delete)
+   ("M-<delete>" . paredit-unwrap)
+   ("M-s" . paredit-splice-sexp)
+   ("M-<up>" . paredit-splice-sexp-killing-backward)
+   ("M-r" . paredit-raise-sexp) ;; like `M-<up>' but kills both sides
+   ("M-<down>" . paredit-splice-sexp-killing-forward)
+
+   ;; questionable bindings, might be axed
+   ("M-;" . paredit-comment-dwim)
+   ("\"" . paredit-doublequote)
+   ("\\" . paredit-backslash)
+   ("M-d" . paredit-forward-kill-word)
+   ("M-DEL" . paredit-backward-kill-word)
+   ("M-S" . paredit-split-sexp)
+   ("M-J" . paredit-join-sexps)))
 
 (add-hook 'emacs-lisp-mode-hook
           (lambda ()
@@ -670,7 +705,9 @@ Inspired by `org-combine-plists'."
             (flycheck-mode 1)
             (yas-minor-mode 1)
             (company-mode 1)
-            (smartparens-strict-mode 1)
+            (paredit-mode 1)
+            ;; paredit default bindings are fucking horrid
+            ;;(setq paredit-mode-map nil)
             (rainbow-delimiters-mode 1)))
 
 ;;..............................................................................
