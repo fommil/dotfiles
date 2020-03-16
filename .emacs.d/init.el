@@ -558,6 +558,7 @@ Inspired by `org-combine-plists'."
   :bind
   (:map
    smartparens-mode-map
+   ("M-<delete>" . sp-unwrap-sexp)
    ("s-{" . sp-rewrap-sexp)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -624,10 +625,10 @@ Inspired by `org-combine-plists'."
 (defun paredit-unwrap ()
   "Unwrap the s-expression at point."
   (interactive)
-  (if (looking-at (rx (syntax open-parenthesis)))
-      (forward-char)
-    (re-search-forward (rx point (* space) (syntax open-parenthesis))))
   (save-excursion
+    (if (looking-at (rx (syntax open-parenthesis)))
+        (forward-char)
+      (re-search-forward (rx point (* space) (syntax open-parenthesis))))
     (paredit-splice-sexp)))
 
 ;; makes `insert-parentheses' behave like `paredit-insert-pair'
@@ -647,7 +648,7 @@ Inspired by `org-combine-plists'."
       (define-key paredit-mode-map (read-kbd-macro key) nil)))
   :bind
   (:map
-   paredit-mode
+   paredit-mode-map
    ;; The following bindings are the subset of paredit that are useful and not
    ;; already covered by additions to stock emacs.
    ;;
