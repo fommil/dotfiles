@@ -4,8 +4,8 @@
 
 ;; Author: David Leatherman <leathekd@gmail.com>
 ;; URL: http://www.github.com/leathekd/erc-hl-nicks
-;; Package-Version: 1.3.3
-;; Version: 1.3.3
+;; Package-Version: 1.3.4
+;; Version: 1.3.4
 
 ;; This file is not part of GNU Emacs.
 
@@ -17,13 +17,23 @@
 
 ;; History
 
+;; 1.3.4
+;;
+;; - Pull request #13 - `erc-hl-nicks-refresh-colors' to refresh faces
+;;   Thanks thblt!
+
 ;; 1.3.3
 ;;
 ;; - Pull request #9 - switch from cl to cl-lib
+;;   Thanks jgkamat!
 
 ;; 1.3.2
 ;;
+;; - Pull request #6 - handle when `word-at-point' is nil
+;;   Thanks alezost!
+;;
 ;; - Pull request #7 - remove the list membership check on autoload
+;;   Thanks albertodonato!
 
 ;; 1.3.1
 ;;
@@ -344,6 +354,13 @@
                 (when (erc-hl-nicks-highlight-p word trimmed bounds)
                   (erc-button-add-face (car bounds) (cdr bounds)
                                        (erc-hl-nicks-make-face trimmed)))))))))))
+
+(defun erc-hl-nicks-refresh-colors ()
+  "Recompute color for all nicks."
+  (interactive)
+  (save-excursion
+    (dolist (nick (hash-table-keys erc-hl-nicks-face-table))
+      (set-face-foreground (gethash nick erc-hl-nicks-face-table) (erc-hl-nicks-color-for-nick nick)))))
 
 (defun erc-hl-nicks-fix-hook-order (&rest _)
   (remove-hook 'erc-insert-modify-hook 'erc-hl-nicks)
