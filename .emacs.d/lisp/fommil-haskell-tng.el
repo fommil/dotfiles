@@ -19,7 +19,8 @@
   :mode ((rx ".hs" eos) . haskell-tng-mode)
 
   :init
-  (setq haskell-tng-compile-always-ask nil)
+  (setq haskell-tng-compile-always-ask nil
+        haskell-tng-hsinspect-auto 10)
 
   :config
   (require 'haskell-tng-hsinspect)

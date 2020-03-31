@@ -27,11 +27,9 @@ set -e
 
 # TODO rewrite this as a Haskell app and publish on Hackage
 
-SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
-
 if [ -z "$DOCKER_CABAL_IMAGE" ] ; then
     if [ -f Dockerfile ] ; then
-        DOCKER_CABAL_IMAGE=$(docker build -q "$SCRIPT_DIR")
+        DOCKER_CABAL_IMAGE=$(docker build -q .)
     else
         echo "cabal-docker must be called with a DOCKER_CABAL_IMAGE"
         exit 1

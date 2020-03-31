@@ -10,14 +10,16 @@
 
 (package-ensure-compiled)
 
-(require 'sym-humanize)
-
 (when (not window-system)
   (add-to-list 'default-frame-alist
                '(cursor-type . box)))
 ;; (add-to-list 'default-frame-alist
 ;;              '(font . "Hack-24"))
 
+
+(add-hook
+ 'sql-mode-hook
+ #'flycheck-mode)
 
 (find-file (expand-file-name "scratch.el" user-emacs-directory))
 
