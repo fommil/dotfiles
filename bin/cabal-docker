@@ -8,7 +8,7 @@ set -e
 # This script should be called exactly as if cabal were being called, with a
 # prefix specifying the docker image to use. e.g.
 #
-#   DOCKER_CABAL_IMAGE=haskell:8.4.3 cabal-docker new-build all
+#   DOCKER_CABAL_IMAGE=haskell:8.4.3 cabal-docker build all
 #
 # The cabal package list is shared between host and container, but global cabal
 # configuration is not. The version of cabal on the host and container must
@@ -21,7 +21,7 @@ set -e
 # Obtaining binaries from v2-build is a bit tedious. There are two methods:
 #
 #   1. cabal-plan list-bin[s]
-#   2. cabal new-exec which -- name-of-executable
+#   2. cabal exec which -- name-of-executable
 #
 # and then `cp -L` that (in the container) to a location that the host can see.
 
