@@ -15,15 +15,8 @@ set -e
 # match or there may be incompatibilities.
 #
 # The project's source dependencies and `docker-bin` directory is shared between
-# the host and container. This allows the flag --symlink-bindir=`docker-bin` to
-# work as expected (except the files will be binaries, not symlinks).
-#
-# Obtaining binaries from v2-build is a bit tedious. There are two methods:
-#
-#   1. cabal-plan list-bin[s]
-#   2. cabal exec which -- name-of-executable
-#
-# and then `cp -L` that (in the container) to a location that the host can see.
+# the host and container. This allows the flag --install-dir=bin to work as
+# expected.
 
 # TODO rewrite this as a Haskell app and publish on Hackage
 
