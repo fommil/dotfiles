@@ -13,3 +13,5 @@ build-summary: /home/symbiont/.cabal/logs/build.log
 remote-build-reporting: anonymous
 jobs: $ncpus
 write-ghc-environment-files: never
+install-method: copy
+overwrite-policy: always
