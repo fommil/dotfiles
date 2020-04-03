@@ -3,7 +3,5 @@
 set -e
 
 cd ~/.xmonad
-cabal v2-build
-XMONAD_EXE=$(cabal v2-exec -- which xmonad-x86_64-linux)
-# cabal 2.4 allows customising the output directory to something easier with --symlink-bindir=
-/bin/cp -f ${XMONAD_EXE} ${1:-.}
+
+cabal install --installdir=. --install-method=copy --overwrite-policy=always
