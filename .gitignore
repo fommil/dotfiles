@@ -3,3 +3,4 @@
 TAGS
 cabal.project.local
 .ghc.flags
+.ghc.path
