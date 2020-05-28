@@ -682,12 +682,6 @@ Inspired by `org-combine-plists'."
 
 (add-hook 'emacs-lisp-mode-hook
           (lambda ()
-            (when
-                (string-prefix-p
-                 (expand-file-name "elpa" user-emacs-directory)
-                 (expand-file-name default-directory))
-              (read-only-mode 1))
-
             (setq show-trailing-whitespace t)
 
             ;; TODO prefer projectile to compile / test
