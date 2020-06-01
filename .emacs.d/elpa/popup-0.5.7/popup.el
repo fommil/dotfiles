@@ -4,9 +4,10 @@
 
 ;; Author: Tomohiro Matsuyama <m2ym.pub@gmail.com>
 ;; Keywords: lisp
-;; Package-Version: 0.5.3
-;; Version: 0.5.3
-;; Package-Requires: ((cl-lib "0.3"))
+;; Package-Version: 0.5.7
+;; Package-Commit: c76d516629c6f063e68742b94b376fc9506536c8
+;; Version: 0.5.7
+;; Package-Requires: ((emacs "26.1") (cl-lib "0.5"))
 
 ;; This program is free software; you can redistribute it and/or modify
 ;; it under the terms of the GNU General Public License as published by
@@ -23,7 +24,7 @@
 
 ;;; Commentary:
 
-;; popup.el is a visual popup user interface library for Emacs. This
+;; popup.el is a visual popup user interface library for Emacs.  This
 ;; provides a basic API and common UI widgets such as popup tooltips
 ;; and popup menus.
 ;; See README.markdown for more information.
@@ -31,16 +32,17 @@
 ;;; Code:
 
 (require 'cl-lib)
+(require 'display-line-numbers)
 
-(defconst popup-version "0.5.3")
+(defconst popup-version "0.5.7")
 
 
 
 ;;; Utilities
 
 (defun popup-calculate-max-width (max-width)
-  "Determines whether the width desired is
-character or window proportion based, And returns the result."
+  "Determines whether the width with MAX-WIDTH desired is character or window \
+proportion based, And return the result."
   (cl-typecase max-width
     (integer max-width)
     (float (* (ceiling (/ (round (* max-width (window-width))) 10.0)) 10))))
@@ -62,7 +64,7 @@ If there is a problem, please set it nil.")
      (when it ,@body)))
 
 (defun popup-x-to-string (x)
-  "Convert any object to string effeciently.
+  "Convert any object to string efficiently.
 This is faster than `prin1-to-string' in many cases."
   (cl-typecase x
     (string x)
@@ -151,6 +153,8 @@ untouched."
 
 (defun popup-vertical-motion (column direction)
   "A portable version of `vertical-motion'."
+  (when display-line-numbers-mode
+    (setq column (- column (line-number-display-width 'columns))))
   (if (>= emacs-major-version 23)
       (vertical-motion (cons column direction))
     (vertical-motion direction)
@@ -180,7 +184,7 @@ buffer."
   :prefix "popup-")
 
 (defface popup-face
-  '((t (:background "lightgray" :foreground "black")))
+  '((t (:inherit default :background "lightgray" :foreground "black")))
   "Face for popup."
   :group 'popup)
 
@@ -437,7 +441,7 @@ usual."
   "Return a proper direction when displaying a popup on this
 window. HEIGHT is the a height of the popup, and ROW is a line
 number at the point."
-  (let* ((remaining-rows (- (max 1 (- (window-height)
+  (let* ((remaining-rows (- (max 1 (- (window-text-height)
                                       (if mode-line-format 1 0)
                                       (if header-line-format 1 0)))
                             (count-lines (window-start) (point))))
@@ -869,7 +873,7 @@ Pages up through POPUP."
 ;;; Popup Incremental Search
 
 (defface popup-isearch-match
-  '((t (:background "sky blue")))
+  '((t (:inherit default :background "sky blue")))
   "Popup isearch match face."
   :group 'popup)
 
@@ -877,16 +881,23 @@ Pages up through POPUP."
 
 (defvar popup-isearch-keymap
   (let ((map (make-sparse-keymap)))
-    ;(define-key map "\r"        'popup-isearch-done)
+    ;;(define-key map "\r"        'popup-isearch-done)
     (define-key map "\C-g"      'popup-isearch-cancel)
     (define-key map "\C-b"      'popup-isearch-close)
     (define-key map [left]      'popup-isearch-close)
     (define-key map "\C-h"      'popup-isearch-delete)
     (define-key map (kbd "DEL") 'popup-isearch-delete)
+    (define-key map (kbd "C-y") 'popup-isearch-yank)
     map))
 
 (defvar popup-menu-show-quick-help-function 'popup-menu-show-quick-help
   "Function used for showing quick help by `popup-menu*'.")
+
+(defcustom popup-isearch-regexp-builder-function #'regexp-quote
+  "Function used to construct a regexp from a pattern. You may for instance
+  provide a function that replaces spaces by '.+' if you like helm or ivy style
+  of completion."
+  :type 'function)
 
 (defsubst popup-isearch-char-p (char)
   (and (integerp char)
@@ -894,7 +905,7 @@ Pages up through POPUP."
        (<= char 126)))
 
 (defun popup-isearch-filter-list (pattern list)
-  (cl-loop with regexp = (regexp-quote pattern)
+  (cl-loop with regexp = (funcall popup-isearch-regexp-builder-function pattern)
            for item in list
            do
            (unless (stringp item)
@@ -985,6 +996,9 @@ HELP-DELAY is a delay of displaying helps."
                ((eq binding 'popup-isearch-delete)
                 (if (> (length pattern) 0)
                     (setq pattern (substring pattern 0 (1- (length pattern))))))
+               ((eq binding 'popup-isearch-yank)
+                (popup-isearch-update popup filter (car kill-ring) callback)
+                (cl-return nil))
                (t
                 (setq unread-command-events
                       (append (listify-key-sequence key) unread-command-events))
@@ -1024,8 +1038,9 @@ HELP-DELAY is a delay of displaying helps."
                      prompt
                      &aux tip lines)
   "Show a tooltip of STRING at POINT. This function is
-synchronized unless NOWAIT specified. Almost arguments are same
-as `popup-create' except for TRUNCATE, NOWAIT, and PROMPT.
+synchronized unless NOWAIT specified. Almost all arguments are
+the same as in `popup-create', except for TRUNCATE, NOWAIT, and
+PROMPT.
 
 If TRUNCATE is non-nil, the tooltip can be truncated.
 
@@ -1094,7 +1109,7 @@ PROMPT is a prompt string when reading events during event loop."
   :group 'popup)
 
 (defface popup-menu-selection-face
-  '((t (:background "steelblue" :foreground "white")))
+  '((t (:inherit default :background "steelblue" :foreground "white")))
   "Face for popup menu selection."
   :group 'popup)
 
@@ -1244,7 +1259,7 @@ PROMPT is a prompt string when reading events during event loop."
         (popup-menu-show-help menu))
        ((eq binding 'popup-isearch)
         (popup-isearch menu
-                       :filter 'isearch-filter
+                       :filter isearch-filter
                        :cursor-color isearch-cursor-color
                        :keymap isearch-keymap
                        :callback isearch-callback
@@ -1320,8 +1335,8 @@ PROMPT is a prompt string when reading events during event loop."
                        initial-index
                        &aux menu event)
   "Show a popup menu of LIST at POINT. This function returns a
-value of the selected item. Almost arguments are same as
-`popup-create' except for KEYMAP, FALLBACK, HELP-DELAY, PROMPT,
+value of the selected item. Almost all arguments are the same as in
+`popup-create', except for KEYMAP, FALLBACK, HELP-DELAY, PROMPT,
 ISEARCH, ISEARCH-FILTER, ISEARCH-CURSOR-COLOR, ISEARCH-KEYMAP, and
 ISEARCH-CALLBACK.
 

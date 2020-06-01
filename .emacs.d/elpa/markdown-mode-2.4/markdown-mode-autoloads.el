@@ -14,16 +14,29 @@ Major mode for editing Markdown files.
 
 \(fn)" t nil)
 
-(add-to-list 'auto-mode-alist '("\\.markdown\\'" . markdown-mode) t)
-
-(add-to-list 'auto-mode-alist '("\\.md\\'" . markdown-mode) t)
+(add-to-list 'auto-mode-alist '("\\.\\(?:md\\|markdown\\|mkd\\|mdown\\|mkdn\\|mdwn\\)\\'" . markdown-mode))
 
 (autoload 'gfm-mode "markdown-mode" "\
 Major mode for editing GitHub Flavored Markdown files.
 
 \(fn)" t nil)
 
-(if (fboundp 'register-definition-prefixes) (register-definition-prefixes "markdown-mode" '("markdown" "gfm-")))
+(autoload 'markdown-view-mode "markdown-mode" "\
+Major mode for viewing Markdown content.
+
+\(fn)" t nil)
+
+(autoload 'gfm-view-mode "markdown-mode" "\
+Major mode for viewing GitHub Flavored Markdown content.
+
+\(fn)" t nil)
+
+(autoload 'markdown-live-preview-mode "markdown-mode" "\
+Toggle native previewing on save for a specific markdown file.
+
+\(fn &optional ARG)" t nil)
+
+(if (fboundp 'register-definition-prefixes) (register-definition-prefixes "markdown-mode" '("gfm-" "markdown" "defun-markdown-")))
 
 ;;;***
 
