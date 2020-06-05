@@ -21,7 +21,8 @@
 
 ;;; Code:
 
-(eval-when-compile (require 'cl))
+(eval-when-compile (require 'cl-lib))
+
 (require 'widget)
 (require 'wid-edit) ; For `widget-forward'.
 
@@ -31,7 +32,10 @@
 (declare-function notmuch-search "notmuch" (&optional query oldest-first target-thread target-line continuation))
 (declare-function notmuch-poll "notmuch" ())
 (declare-function notmuch-tree "notmuch-tree"
-                  (&optional query query-context target buffer-name open-target))
+		  (&optional query query-context target buffer-name open-target unthreaded))
+(declare-function notmuch-unthreaded
+		  (&optional query query-context target buffer-name open-target))
+
 
 (defun notmuch-saved-search-get (saved-search field)
   "Get FIELD from SAVED-SEARCH.
@@ -44,17 +48,19 @@ lists (NAME QUERY COUNT-QUERY)."
    ((keywordp (car saved-search))
     (plist-get saved-search field))
    ;; It is not a plist so it is an old-style entry.
-   ((consp (cdr saved-search)) ;; It is a list (NAME QUERY COUNT-QUERY)
-    (case field
-      (:name (first saved-search))
-      (:query (second saved-search))
-      (:count-query (third saved-search))
-      (t nil)))
-   (t  ;; It is a cons-cell (NAME . QUERY)
-    (case field
-      (:name (car saved-search))
-      (:query (cdr saved-search))
-      (t nil)))))
+   ((consp (cdr saved-search))
+    (pcase-let ((`(,name ,query ,count-query) saved-search))
+      (cl-case field
+	(:name name)
+	(:query query)
+	(:count-query count-query)
+	(t nil))))
+   (t
+    (pcase-let ((`(,name . ,query) saved-search))
+      (cl-case field
+	(:name name)
+	(:query query)
+	(t nil))))))
 
 (defun notmuch-hello-saved-search-to-plist (saved-search)
   "Return a copy of SAVED-SEARCH in plist form.
@@ -63,7 +69,7 @@ If saved search is a plist then just return a copy. In other
 cases, for backwards compatibility, convert to plist form and
 return that."
   (if (keywordp (car saved-search))
-      (copy-seq saved-search)
+      (copy-sequence saved-search)
     (let ((fields (list :name :query :count-query))
 	  plist-search)
       (dolist (field fields plist-search)
@@ -99,7 +105,8 @@ searches so they still work in customize."
 		     (group :format "%v" :inline t (const :format "" :search-type)
 			    (choice :tag " Search Type"
 				    (const :tag "Search mode" nil)
-				    (const :tag "Tree mode" tree))))))
+				    (const :tag "Tree mode" tree)
+				    (const :tag "Unthreaded mode" unthreaded))))))
 
 (defcustom notmuch-saved-searches
   `((:name "inbox" :query "tag:inbox" :key ,(kbd "i"))
@@ -122,10 +129,10 @@ a plist. Supported properties are
   :sort-order      Specify the sort order to be used for the search.
                    Possible values are 'oldest-first 'newest-first or
                    nil. Nil means use the default sort order.
-  :search-type     Specify whether to run the search in search-mode
-                   or tree mode. Set to 'tree to specify tree
-                   mode, set to nil (or anything except tree) to
-                   specify search mode.
+  :search-type     Specify whether to run the search in search-mode,
+                   tree mode or unthreaded mode. Set to 'tree to specify tree
+                   mode, 'unthreaded to specify unthreaded mode, and set to nil
+                   (or anything except tree and unthreaded) to specify search mode.
 
 Other accepted forms are a cons cell of the form (NAME . QUERY)
 or a list of the form (NAME QUERY COUNT-QUERY)."
@@ -392,10 +399,10 @@ afterwards.")
 			       notmuch-saved-searches)))
     ;; If an existing saved search with this name exists, remove it.
     (setq notmuch-saved-searches
-	  (loop for elem in notmuch-saved-searches
-		if (not (equal name
-			       (notmuch-saved-search-get elem :name)))
-		collect elem))
+	  (cl-loop for elem in notmuch-saved-searches
+		   if (not (equal name
+				  (notmuch-saved-search-get elem :name)))
+		   collect elem))
     ;; Add the new one.
     (customize-save-variable 'notmuch-saved-searches
 			     (add-to-list 'notmuch-saved-searches
@@ -413,37 +420,42 @@ afterwards.")
     (notmuch-hello-update)))
 
 (defun notmuch-hello-longest-label (searches-alist)
-  (or (loop for elem in searches-alist
-	    maximize (length (notmuch-saved-search-get elem :name)))
+  (or (cl-loop for elem in searches-alist
+	       maximize (length (notmuch-saved-search-get elem :name)))
       0))
 
 (defun notmuch-hello-reflect-generate-row (ncols nrows row list)
   (let ((len (length list)))
-    (loop for col from 0 to (- ncols 1)
-	  collect (let ((offset (+ (* nrows col) row)))
-		    (if (< offset len)
-			(nth offset list)
-		      ;; Don't forget to insert an empty slot in the
-		      ;; output matrix if there is no corresponding
-		      ;; value in the input matrix.
-		      nil)))))
+    (cl-loop for col from 0 to (- ncols 1)
+	     collect (let ((offset (+ (* nrows col) row)))
+		       (if (< offset len)
+			   (nth offset list)
+			 ;; Don't forget to insert an empty slot in the
+			 ;; output matrix if there is no corresponding
+			 ;; value in the input matrix.
+			 nil)))))
 
 (defun notmuch-hello-reflect (list ncols)
   "Reflect a `ncols' wide matrix represented by `list' along the
 diagonal."
   ;; Not very lispy...
   (let ((nrows (ceiling (length list) ncols)))
-    (loop for row from 0 to (- nrows 1)
-	  append (notmuch-hello-reflect-generate-row ncols nrows row list))))
+    (cl-loop for row from 0 to (- nrows 1)
+	     append (notmuch-hello-reflect-generate-row ncols nrows row list))))
 
 (defun notmuch-hello-widget-search (widget &rest ignore)
-  (if (widget-get widget :notmuch-search-type)
-      (notmuch-tree (widget-get widget
-				:notmuch-search-terms))
+  (cond
+   ((eq (widget-get widget :notmuch-search-type) 'tree)
+    (notmuch-tree (widget-get widget
+			      :notmuch-search-terms)))
+   ((eq (widget-get widget :notmuch-search-type) 'unthreaded)
+    (notmuch-unthreaded (widget-get widget
+				    :notmuch-search-terms)))
+   (t
     (notmuch-search (widget-get widget
 				:notmuch-search-terms)
 		    (widget-get widget
-				:notmuch-search-oldest-first))))
+				:notmuch-search-oldest-first)))))
 
 (defun notmuch-saved-search-count (search)
   (car (process-lines notmuch-command "count" search)))
@@ -575,11 +587,11 @@ with `notmuch-hello-query-counts'."
 		  (widget-insert (make-string column-indent ? )))
 	      (let* ((name (plist-get elem :name))
 		     (query (plist-get elem :query))
-		     (oldest-first (case (plist-get elem :sort-order)
+		     (oldest-first (cl-case (plist-get elem :sort-order)
 				     (newest-first nil)
 				     (oldest-first t)
 				     (otherwise notmuch-search-oldest-first)))
-		     (search-type (eq (plist-get elem :search-type) 'tree))
+		     (search-type (plist-get elem :search-type))
 		     (msg-count (plist-get elem :count)))
 		(widget-insert (format "%8s "
 				       (notmuch-hello-nice-number msg-count)))
@@ -803,48 +815,48 @@ Complete list of currently available key bindings:
 		   "clear")
     (widget-insert "\n\n")
     (let ((start (point)))
-      (loop for i from 1 to notmuch-hello-recent-searches-max
-	    for search in notmuch-search-history do
-	    (let ((widget-symbol (intern (format "notmuch-hello-search-%d" i))))
-	      (set widget-symbol
-		   (widget-create 'editable-field
-				  ;; Don't let the search boxes be
-				  ;; less than 8 characters wide.
-				  :size (max 8
-					     (- (window-width)
-						;; Leave some space
-						;; at the start and
-						;; end of the
-						;; boxes.
-						(* 2 notmuch-hello-indent)
-						;; 1 for the space
-						;; before the
-						;; `[save]' button. 6
-						;; for the `[save]'
-						;; button.
-						1 6
-						;; 1 for the space
-						;; before the `[del]'
-						;; button. 5 for the
-						;; `[del]' button.
-						1 5))
-				  :action (lambda (widget &rest ignore)
-					    (notmuch-hello-search (widget-value widget)))
-				  search))
-	      (widget-insert " ")
-	      (widget-create 'push-button
-			     :notify (lambda (widget &rest ignore)
-				       (notmuch-hello-add-saved-search widget))
-			     :notmuch-saved-search-widget widget-symbol
-			     "save")
-	      (widget-insert " ")
-	      (widget-create 'push-button
-			     :notify (lambda (widget &rest ignore)
-				       (when (y-or-n-p "Are you sure you want to delete this search? ")
-					 (notmuch-hello-delete-search-from-history widget)))
-			     :notmuch-saved-search-widget widget-symbol
-			     "del"))
-	    (widget-insert "\n"))
+      (cl-loop for i from 1 to notmuch-hello-recent-searches-max
+	       for search in notmuch-search-history do
+	       (let ((widget-symbol (intern (format "notmuch-hello-search-%d" i))))
+		 (set widget-symbol
+		      (widget-create 'editable-field
+				     ;; Don't let the search boxes be
+				     ;; less than 8 characters wide.
+				     :size (max 8
+						(- (window-width)
+						   ;; Leave some space
+						   ;; at the start and
+						   ;; end of the
+						   ;; boxes.
+						   (* 2 notmuch-hello-indent)
+						   ;; 1 for the space
+						   ;; before the
+						   ;; `[save]' button. 6
+						   ;; for the `[save]'
+						   ;; button.
+						   1 6
+						   ;; 1 for the space
+						   ;; before the `[del]'
+						   ;; button. 5 for the
+						   ;; `[del]' button.
+						   1 5))
+				     :action (lambda (widget &rest ignore)
+					       (notmuch-hello-search (widget-value widget)))
+				     search))
+		 (widget-insert " ")
+		 (widget-create 'push-button
+				:notify (lambda (widget &rest ignore)
+					  (notmuch-hello-add-saved-search widget))
+				:notmuch-saved-search-widget widget-symbol
+				"save")
+		 (widget-insert " ")
+		 (widget-create 'push-button
+				:notify (lambda (widget &rest ignore)
+					  (when (y-or-n-p "Are you sure you want to delete this search? ")
+					    (notmuch-hello-delete-search-from-history widget)))
+				:notmuch-saved-search-widget widget-symbol
+				"del"))
+	       (widget-insert "\n"))
       (indent-rigidly start (point) notmuch-hello-indent))
     nil))
 

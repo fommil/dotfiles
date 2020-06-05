@@ -5,6 +5,8 @@ require-sandbox: True
 --documentation: True
 --library-profiling: True
 
+optimization: 2
+
 remote-repo-cache: /home/symbiont/.cabal/packages
 world-file: /home/symbiont/.cabal/world
 extra-prog-path: /home/symbiont/.cabal/bin
