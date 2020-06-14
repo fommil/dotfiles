@@ -742,6 +742,24 @@ Inspired by `org-combine-plists'."
 (require 'fommil-python)
 (require 'fommil-manuscripts)
 
+(use-package scala-mode
+  :mode ((rx ".scala" eos) . scala-mode)
+  :config
+  (bind-key "C-c c" #'sbt-command scala-mode-map))
+(use-package sbt-mode
+  :commands sbt-command sbt-start
+  :config
+  (setq sbt:program-options '("-Dsbt.supershell=false")
+        sbt:prefer-nested-projects t))
+
+(add-hook 'scala-mode-hook
+          (lambda ()
+            (show-paren-mode t)
+            (smartparens-mode t)
+            (yas-minor-mode t)
+            (git-gutter-mode t)
+            (company-mode t)))
+
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; OS specific
 (pcase system-type
