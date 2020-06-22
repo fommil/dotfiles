@@ -5,7 +5,8 @@
 ;; Author: Jonas Bernoulli <jonas@bernoul.li>
 ;; Homepage: https://github.com/tarsius/hl-todo
 ;; Keywords: convenience
-;; Package-Version: 3.1.1
+;; Package-Version: 3.1.2
+;; Package-Commit: 3bba4591c54951d2abab113ec5e58a6319808ca9
 
 ;; Package-Requires: ((emacs "25"))
 

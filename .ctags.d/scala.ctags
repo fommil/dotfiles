@@ -1,7 +1,7 @@
 --langdef=scala
 --langmap=scala:.scala
 --regex-scala=/\bclass\s+(\w+)/\1/c,classes/
---regex-scala=/\bobject\s+(\w+)/\1/c,objects/
+--regex-scala=/\bobject\s+(\w+)/\1/o,objects/
 --regex-scala=/\btrait\s+(\w+)/\1/t,traits/
 --regex-scala=/\btype\s+(\w+)/\1/T,types/
 --regex-scala=/\bdef\s+(\w+)/\1/m,methods/
