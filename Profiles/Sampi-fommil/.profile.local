@@ -13,6 +13,11 @@ export MAKEFLAGS="-j$(nproc)"
 export CFLAGS="-march=native -O3"
 export CXXFLAGS="$CFLAGS"
 
+export YOURKIT_INSTALL=/opt/yourkit
+export YOURKIT_AGENT=$YOURKIT_INSTALL/bin/linux-x86-64/libyjpagent.so
+export IDEA_JDK=/usr/lib/jvm/java-8-openjdk/
+export YJP_JAVA_HOME=$IDEA_JDK
+
 # export EMACS_SOURCE=$HOME/Projects/emacs
 # when building emacs25-git use this to use my local repo
 # source=("$pkgname::git+file:///home/fommil/Projects/emacs#branch=emacs-25")

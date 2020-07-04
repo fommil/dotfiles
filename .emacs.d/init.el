@@ -754,11 +754,11 @@ Inspired by `org-combine-plists'."
 
 (add-hook 'scala-mode-hook
           (lambda ()
-            (show-paren-mode t)
-            (smartparens-mode t)
-            (yas-minor-mode t)
-            (git-gutter-mode t)
-            (company-mode t)))
+            (show-paren-mode 1)
+            (smartparens-mode 1)
+            (yas-minor-mode 1)
+            (git-gutter-mode 1)
+            (company-mode 1)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; OS specific
