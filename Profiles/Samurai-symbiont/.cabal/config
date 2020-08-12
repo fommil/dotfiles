@@ -1,7 +1,6 @@
 repository hackage.haskell.org
   url: http://hackage.haskell.org/
 
-require-sandbox: True
 --documentation: True
 --library-profiling: True
 

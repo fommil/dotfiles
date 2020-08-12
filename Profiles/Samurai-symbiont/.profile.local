@@ -35,3 +35,8 @@ export EMACS_SOURCE=$HOME/Projects/emacs
 export PRINTER=HP_LaserJet_P2035
 
 export PATH=$HOME/.gem/ruby/2.7.0/bin:$PATH
+
+export ASYNC_PROFILER_DIR=$HOME/Projects/async-profiler
+export FLAME_GRAPH_DIR=$HOME/Projects/FlameGraph
+export PATH="$HOME/.jenv/bin:$PATH"
+eval "$(jenv init -)"
