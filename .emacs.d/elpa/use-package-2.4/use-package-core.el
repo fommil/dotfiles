@@ -1029,10 +1029,10 @@ meaning:
   "Show current statistics gathered about use-package declarations."
   (setq tabulated-list-format
         ;; The sum of column width is 80 caracters:
-        #[("Package" 25 t)
-          ("Status" 13 t)
-          ("Last Event" 23 t)
-          ("Time" 10 t)])
+        [("Package" 25 t)
+         ("Status" 13 t)
+         ("Last Event" 23 t)
+         ("Time" 10 t)])
   (tabulated-list-init-header))
 
 (defun use-package-statistics-gather (keyword name after)
