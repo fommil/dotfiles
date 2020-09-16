@@ -1,10 +1,6 @@
 repository hackage.haskell.org
   url: http://hackage.haskell.org/
 
-require-sandbox: True
---documentation: True
---library-profiling: True
-
 optimization: 2
 
 remote-repo-cache: /home/fommil/.cabal/packages

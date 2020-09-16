@@ -26,3 +26,6 @@ export EMACS_SOURCE=$HOME/Projects/emacs
 # source=("$pkgname::git+file:///home/fommil/Projects/emacs#branch=emacs-25")
 
 export PRINTER=HP_LaserJet_P2035
+
+export ASYNC_PROFILER_DIR=$HOME/Projects/async-profiler
+export FLAME_GRAPH_DIR=$HOME/Projects/FlameGraph
