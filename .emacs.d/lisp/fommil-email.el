@@ -21,6 +21,7 @@
    message-citation-line-format "\n%N wrote:"
    message-citation-line-function #'message-insert-formatted-citation-line
    message-signature "Best regards,\nSam\n<#part sign=pgpmime>"
+   mml-secure-openpgp-sign-with-sender t
    epa-file-name-regexp (rx "." (| "gpg" "asc") eos)
    mm-text-html-renderer 'lynx
    notmuch-show-logo nil
