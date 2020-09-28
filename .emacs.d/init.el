@@ -14,6 +14,7 @@
 ;;; Code:
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; User Site Local
+(setq load-prefer-newer t)
 (load (expand-file-name "local-preinit.el" user-emacs-directory) 'no-error)
 (setq package-check-signature nil)
 (unless (boundp 'package--initialized)
@@ -43,7 +44,6 @@
  enable-local-variables t
  create-lockfiles nil
  make-backup-files nil
- load-prefer-newer t
  custom-file (expand-file-name "custom.el" user-emacs-directory)
  column-number-mode t
  scroll-error-top-bottom t
