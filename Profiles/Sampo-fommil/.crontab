@@ -1,4 +1,0 @@
-# m h  dom mon dow   command
-5,25,45 * * * * /usr/bin/notmuch new --quiet
-0 0 * * * /usr/bin/emacs -batch -u fommil -f package-utils-upgrade-all --kill >/dev/null
-

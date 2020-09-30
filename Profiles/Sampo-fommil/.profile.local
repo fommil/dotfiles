@@ -1,41 +1,23 @@
-#!/bin/bash
+#!/bin/sh
 
-export SCALA_HOME=/opt/scala-2.11.8
-export MAVEN_HOME=/opt/apache-maven-3.2.5
+# curl -fsSL https://raw.githubusercontent.com/cask/cask/master/go | python
+export PATH="$HOME/.cask/bin:$PATH"
 
-export PATH=/opt/visualvm_138/bin:$PATH
-export PATH=$SCALA_HOME/bin:$MAVEN_HOME/bin:$PATH
-export PRINTER=PeterPrinter
+# curl -L https://raw.githubusercontent.com/pyenv/pyenv-installer/master/bin/pyenv-installer | bash
+export PATH=$HOME/.pyenv/bin:$PATH
+eval "$(pyenv init -pyenv init -)"
+eval "$(pyenv virtualenv-init -)"
 
-## cd /opt && sudo apt-get source emacs24
-export EMACS_SOURCE=/opt/emacs24-24.5+1
-export EMACS_CLIENT="emacsclient -nw -s $HOME/.emacs.daemon -a ''"
-export EDITOR=$EMACS_CLIENT
-export PATH=$HOME/.cask/bin:$PATH
+export MAKEFLAGS="-j$(nproc)"
+# gcc -march=native -v -Q --help=target
+export CFLAGS="-march=native -O3"
+export CXXFLAGS="$CFLAGS"
 
-export GOPATH=$HOME/.go
-# alternative to grive
-# go get -u github.com/odeke-em/drive/cmd/drive
-# go get -u github.com/github/hub
-# GO15VENDOREXPERIMENT=1 go get github.com/drone/drone-cli/drone
-export PATH=$GOPATH/bin:$PATH
+export YOURKIT_INSTALL=/opt/yourkit
+export YOURKIT_AGENT=$YOURKIT_INSTALL/bin/linux-x86-64/libyjpagent.so
+export IDEA_JDK=/usr/lib/jvm/java-8-openjdk/
+export YJP_JAVA_HOME=$IDEA_JDK
 
-# cabal update
-# cabal install xmonad xmonad-contrib pandoc
-export PATH=$HOME/.cabal/bin:$PATH
-
-# git clone https://github.com/gcuisinier/jenv.git ~/.jenv
-export PATH=$HOME/.jenv/bin:$PATH
-eval "$(jenv init -)"
-
-# GnuPG passphrase caching. Oh, GPG, you so user-friendly...
-if test -f $HOME/.gpg-agent-info && \
-        kill -0 `cut -d: -f 2 $HOME/.gpg-agent-info` 2>/dev/null; then
-    export GPG_AGENT_INFO=`cat $HOME/.gpg-agent-info | cut -c 16-`
-else
-    eval `gpg-agent --daemon --no-grab --write-env-file $HOME/.gpg-agent-info`
-fi
-
-
-# emacs pre-test
-export PATH=$PATH:/opt/emacs-25/bin
+# export EMACS_SOURCE=$HOME/Projects/emacs
+# when building emacs25-git use this to use my local repo
+# source=("$pkgname::git+file:///home/fommil/Projects/emacs#branch=emacs-25")

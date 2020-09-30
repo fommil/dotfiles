@@ -1,6 +1,7 @@
+-- https://archives.haskell.org/projects.haskell.org/xmobar/
+-- cabal v2-install -w ghc-8.8.3 --overwrite-policy=always xmobar --flags="with_xft with_utf8 with_threaded"
 Config {
-         font = "-misc-fixed-*-*-*-*-10-*-*-*-*-*-*-*"
-        -- font = "xft:Envy Code R:size=8"
+         font = "xft:Hack:size=12"
        , borderColor = "black"
        , border = TopB
        , bgColor = "black"

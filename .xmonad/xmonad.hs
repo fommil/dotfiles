@@ -38,9 +38,8 @@ startup initial = do
                   setWMName "LG3D"
                   when initial $ do
                     spawnOnOnce "1" "urxvt"
---                    spawnOnOnce "2" "emacs"
                     spawnOnOnce "3" "firefox"
-                    spawnOnOnce "9" "deadbeef"
+                    spawnOnOnce "9" "deadbeef >/dev/null 2>&1"
 
 manageHook' :: ManageHook
 manageHook' = composeAll
@@ -72,8 +71,8 @@ keys' conf@(XConfig {XMonad.modMask = modMask}) = M.fromList $
     , ((modMask, xK_g     ), goToSelected def)
     , ((modMask .|. shiftMask, xK_q), io (exitWith ExitSuccess)) -- %! Quit xmonad
     , ((modMask .|. shiftMask, xK_r), spawn "xmonad --recompile && xmonad --restart") -- %! Restart xmonad
-    , ((0,      0x1008ff02), spawn "xbacklight -inc 1")
-    , ((0,      0x1008ff03), spawn "xbacklight -dec 1")
+    , ((0,      0x1008ff02), spawn "xbacklight -inc 5")
+    , ((0,      0x1008ff03), spawn "xbacklight -dec 5")
   ]
     ++
     -- workspaces

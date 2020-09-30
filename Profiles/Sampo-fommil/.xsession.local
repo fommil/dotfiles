@@ -1,29 +1,13 @@
 #!/bin/bash
 
-# disable annoying gtk3 accessibility daemon
-# https://mail.gnome.org/archives/desktop-devel-list/2012-June/msg00035.html
-export NO_AT_BRIDGE=1
+# TODO make this shared if the file exists
+feh --bg-center --no-fehbg ~/.bg.jpg
 
-# touchpad on a Dell XPS 13
-# `man synaptics` for descriptions 
-# use evtest to calibrate for your hands
-# especially PalmMinWidth, PalmMinZ, FingerLow and FingerHigh 
-#synclient PalmDetect=1
-synclient MaxSpeed=3
-synclient TapButton1=1
-synclient TapButton2=3
-synclient TapButton3=2
-synclient FingerLow=15
-synclient FingerHigh=25
-synclient VertScrollDelta=-111
-synclient HorizScrollDelta=-111
-synclient TapAndDragGesture=1
-synclient HorizTwoFingerScroll=1
-
-syndaemon -d -k -i 0.5
-
-feh --bg-center ~/.bg.jpg
-
-redshift -b 0.9:0.7 &
+# TODO use a redshift config file
+#redshift -b 0.9:0.7 &
+redshift -l 56.291000:-3.722257 -b 0.9:0.5 &
 
 xmobar &
+
+# top right corner stops screen lock
+xautolock -locker "i3lock -c000000" -time 15 -corners +--- &
