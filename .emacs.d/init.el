@@ -17,7 +17,7 @@
 (setq load-prefer-newer t)
 (load (expand-file-name "local-preinit.el" user-emacs-directory) 'no-error)
 (setq package-check-signature nil)
-(unless (boundp 'package--initialized)
+(unless (and (boundp 'package--initialized) package--initialized)
   ;; don't set gnu/org/melpa if the site-local or local-preinit have
   ;; done so (e.g. firewalled corporate environments)
   (require 'package)
@@ -417,6 +417,10 @@ Inspired by `org-combine-plists'."
   :init
   ;; always a column reserved, but no flickering
   (setq git-gutter:unchanged-sign ""))
+
+;; WORKAROUND (missing in 2.9.4) https://github.com/magit/with-editor/issues/82
+(use-package with-editor
+  :pin melpa)
 
 (use-package magit
   :commands magit-status magit-blame-addition

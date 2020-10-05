@@ -540,7 +540,7 @@ at run-time.
       server-window))
 
 (defun server-switch-buffer--with-editor-server-window-alist
-    (fn &optional next-buffer killed-one filepos)
+    (fn &optional next-buffer &rest args)
   "Honor `with-editor-server-window-alist' (which see)."
   (let ((server-window (with-current-buffer
                            (or next-buffer (current-buffer))
@@ -548,7 +548,7 @@ at run-time.
                            (setq with-editor-previous-winconf
                                  (current-window-configuration)))
                          (with-editor-server-window))))
-    (funcall fn next-buffer killed-one filepos)))
+    (apply fn next-buffer args)))
 
 (advice-add 'server-switch-buffer :around
             'server-switch-buffer--with-editor-server-window-alist)
@@ -582,7 +582,8 @@ the appropriate editor environment variable."
 
 (cl-defun make-process--with-editor-process-filter
     (fn &rest keys &key name buffer command coding noquery stop
-        connection-type filter sentinel stderr file-handler)
+        connection-type filter sentinel stderr file-handler
+        &allow-other-keys)
   "When called inside a `with-editor' form and the Emacsclient
 cannot be used, then give the process the filter function
 `with-editor-process-filter'.  To avoid overriding the filter
