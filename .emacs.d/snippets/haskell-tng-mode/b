@@ -1,0 +1,5 @@
+# -*- mode: snippet -*-
+# name: boilerplate
+# key: b
+# --
+{- BOILERPLATE $1 -}
