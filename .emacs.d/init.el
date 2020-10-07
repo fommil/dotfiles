@@ -14,7 +14,8 @@
 ;;; Code:
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; User Site Local
-(setq load-prefer-newer t)
+(setq load-prefer-newer t
+      comp-deferred-compilation t)
 (load (expand-file-name "local-preinit.el" user-emacs-directory) 'no-error)
 (setq package-check-signature nil)
 (unless (and (boundp 'package--initialized) package--initialized)

@@ -1,23 +1,14 @@
 #!/bin/sh
 
-# curl -fsSL https://raw.githubusercontent.com/cask/cask/master/go | python
-export PATH="$HOME/.cask/bin:$PATH"
-
-# curl -L https://raw.githubusercontent.com/pyenv/pyenv-installer/master/bin/pyenv-installer | bash
-export PATH=$HOME/.pyenv/bin:$PATH
+# pyenv installed via pacman
 eval "$(pyenv init -pyenv init -)"
 eval "$(pyenv virtualenv-init -)"
 
+# also update /etc/makepkg.conf
 export MAKEFLAGS="-j$(nproc)"
-# gcc -march=native -v -Q --help=target
-export CFLAGS="-march=native -O3"
+export CFLAGS="-march=native -O3 -pipe -fno-plt"
 export CXXFLAGS="$CFLAGS"
 
-export YOURKIT_INSTALL=/opt/yourkit
-export YOURKIT_AGENT=$YOURKIT_INSTALL/bin/linux-x86-64/libyjpagent.so
-export IDEA_JDK=/usr/lib/jvm/java-8-openjdk/
-export YJP_JAVA_HOME=$IDEA_JDK
-
-# export EMACS_SOURCE=$HOME/Projects/emacs
-# when building emacs25-git use this to use my local repo
+export EMACS_SOURCE=$HOME/Projects/emacs
+# when building emacs-*-git use this
 # source=("$pkgname::git+file:///home/fommil/Projects/emacs#branch=emacs-25")

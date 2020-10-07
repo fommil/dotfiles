@@ -26,10 +26,12 @@
   (require 'haskell-tng-hsinspect)
   (require 'haskell-tng-extra)
   (require 'haskell-tng-extra-abbrev)
+  (require 'haskell-tng-extra-hideshow)
   (require 'haskell-tng-extra-company)
   (require 'haskell-tng-extra-projectile)
   (require 'haskell-tng-extra-smartparens)
   (require 'haskell-tng-extra-yasnippet)
+  (require 'haskell-tng-extra-cabal-mode)
 
   (define-abbrev
     haskell-tng-mode-abbrev-table
@@ -61,6 +63,7 @@
    ("C-c C-n i" . haskell-tng-goto-imports)
    ("C-c C-n m" . haskell-tng-current-module)
    ("C-c C-r f" . haskell-tng-format)
+   ("C-c C-r b" . haskell-tng-boilerplate)
    ("C-c C-r i" . haskell-tng-import-symbol-at-point)
    ("M-." . haskell-tng-jump-to-definition)
    ))
