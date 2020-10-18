@@ -100,7 +100,7 @@ function ffmpeg-mp4 {
 }
 
 function ffmpeg-mp4-scale {
-    SCALE="${2:-640}"
+    SCALE="${2:-1280}"
     ffmpeg -i "$1" -f mp4 -c:a libmp3lame -qscale:a 0 -c:v libx264 -vf scale="${SCALE}":-2 "${1%.*}-scale-${SCALE}.mp4"
 }
 
