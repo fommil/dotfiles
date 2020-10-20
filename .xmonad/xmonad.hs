@@ -7,6 +7,7 @@ import           XMonad.Actions.GridSelect
 import           XMonad.Actions.SpawnOn
 import           XMonad.Config
 import           XMonad.Hooks.DynamicLog
+import           XMonad.Hooks.EwmhDesktops
 import           XMonad.Hooks.SetWMName
 import           XMonad.Hooks.UrgencyHook
 import qualified XMonad.StackSet           as W
@@ -22,7 +23,7 @@ myFocusedBorderColor = "#000000"
 main = do
        args <- getArgs
        xmonad $ withUrgencyHook dzenUrgencyHook { args = ["-bg", "darkgreen", "-xs", "1"] }
-              $ def {
+              $ ewmh def {
               terminal = "urxvt"
             , startupHook = startup (null args)
             , normalBorderColor  = myNormalBorderColor
@@ -31,6 +32,7 @@ main = do
             , modMask = mod3Mask
             , keys = keys'
             , manageHook = manageSpawn <+> manageHook'
+            , handleEventHook = handleEventHook def <+> fullscreenEventHook
        }
 
 startup :: Bool -> X ()
