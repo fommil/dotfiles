@@ -11,12 +11,16 @@
 ;;; Generated autoloads from dockerfile-mode.el
 
 (autoload 'dockerfile-build-buffer "dockerfile-mode" "\
-Build an image based upon the buffer
+Build an image called IMAGE-NAME based upon the buffer.
 
-\(fn IMAGE-NAME)" t nil)
+If prefix arg NO-CACHE is set, don't cache the image.
+The build string will be of the format:
+`sudo docker build --no-cache --tag IMAGE-NAME --build-args arg1.. -f filename directory`
+
+\(fn IMAGE-NAME &optional NO-CACHE)" t nil)
 
 (autoload 'dockerfile-build-no-cache-buffer "dockerfile-mode" "\
-Build an image based upon the buffer without cache
+Build an image called IMAGE-NAME based upon the buffer without cache.
 
 \(fn IMAGE-NAME)" t nil)
 
@@ -26,9 +30,9 @@ A major mode to edit Dockerfiles.
 
 \(fn)" t nil)
 
-(add-to-list 'auto-mode-alist '("Dockerfile.*\\'" . dockerfile-mode))
+(add-to-list 'auto-mode-alist '("Dockerfile\\(?:\\..*\\)?\\'" . dockerfile-mode))
 
-(if (fboundp 'register-definition-prefixes) (register-definition-prefixes "dockerfile-mode" '("docker")))
+(if (fboundp 'register-definition-prefixes) (register-definition-prefixes "dockerfile-mode" '("dockerfile-")))
 
 ;;;***
 
