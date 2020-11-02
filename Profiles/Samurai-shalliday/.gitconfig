@@ -1,0 +1,65 @@
+[user]
+    name = Sam Halliday
+    email = sam.halliday@disneystreaming.com
+    # git config user.name REPO_SPECIFIC_NAME
+    # git config user.email REPO_SPECIFIC_EMAIL
+    # git config core.sshCommand "ssh -i ~/.ssh/id_rsa_REPO_SPECIFIC_KEY"
+[core]
+    excludesfile = ~/.gitignore
+    autocrlf = input
+    editor = emacs -nw
+[diff]
+    renames = copy
+[pull]
+# There is apparently no way to set these by default,
+# so don't forget to pass them explicitly for big merges.
+# -X rename-threshold=50% -X ignore-all-space
+    rebase = true
+[push]
+    default = simple
+[mergetool]
+    keepBackup = true
+[rebase]
+    autoStash = true
+[remote]
+# Setting pushdefault to origin, and not upstream, means that even if
+# pulls come from upstream, pushes still go to origin. This is a very
+# good workflow for github style projects.
+# You'll need to set the upstream, e.g.
+#   git branch --set-upstream-to=upstream/master
+    pushdefault = origin
+[alias]
+    l = log --pretty=format:'%h : %an, %ar : %s' --graph
+    pick = cherry-pick
+    up = fetch --all -p
+    undo = reset --soft 'HEAD^'
+    ignore = update-index --assume-unchanged
+    unignore = update-index --no-assume-unchanged
+    ignored = !git ls-files -v | grep "^[[:lower:]]"
+    spin = checkout -b
+    sith = push --force
+    keep = stash save --keep-index
+    nuke = clean -fdx -e cabal.project.local -e .dir-locals.el -e .projectile
+    clean-tags = !git tag -l | xargs git tag -d
+    clean-branches = !git branch | sed 's/*//' | xargs git branch -D
+    recent-branches = for-each-ref --sort=-committerdate --count=10 --format='%(refname:short)' refs/heads/
+    lie = rebase HEAD~1 --committer-date-is-author-date
+[color]
+    branch = auto
+    diff = auto
+    status = auto
+    interactive = auto
+    ui = auto
+[apply]
+    whitespace = warn
+[checkout]
+    defaultRemote=origin
+[magit]
+    # I am a happy supporter of magit! :-)
+ 	hideCampaign = true
+
+# for repos that use HTTPS, this stores passwords in a cache (1 hour)
+#git config credential.helper cache
+#git config credential.helper "cache --timeout=3600"
+[protocol]
+	version = 2

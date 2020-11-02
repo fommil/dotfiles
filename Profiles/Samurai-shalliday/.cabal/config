@@ -1,0 +1,15 @@
+repository hackage.haskell.org
+  url: http://hackage.haskell.org/
+
+-- optimization: 2
+
+remote-repo-cache: /home/shalliday/.cabal/packages
+world-file: /home/shalliday/.cabal/world
+extra-prog-path: /home/shalliday/.cabal/bin
+installdir: /home/shalliday/.cabal/bin
+build-summary: /home/shalliday/.cabal/logs/build.log
+remote-build-reporting: anonymous
+jobs: $ncpus
+write-ghc-environment-files: never
+install-method: copy
+overwrite-policy: always

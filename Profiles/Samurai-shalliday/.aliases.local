@@ -1,0 +1,6 @@
+alias update="sudo pacman -Syu --ignore igraph ; cabal v2-update ; xmonad --recompile"
+alias update-aggressive="yay -Syu --devel --aur ; update"
+alias keepers="sudo pacman -Qqet"
+alias cleanup='sudo pacman -Rsn $(pacman -Qdtq | tr "\n" " ")'
+
+

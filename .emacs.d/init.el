@@ -319,6 +319,11 @@ Inspired by `org-combine-plists'."
   (interactive)
   (insert "¯\\_(ツ)_/¯"))
 
+(defun table-flip ()
+  "Insert an ASCII table flip."
+  (interactive)
+  (insert "(╯°□°）╯︵ ┻━┻)"))
+
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; This section is for global modes that should be loaded in order to
 ;; make them immediately available.
