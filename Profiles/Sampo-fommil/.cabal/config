@@ -1,7 +1,7 @@
 repository hackage.haskell.org
   url: http://hackage.haskell.org/
 
-optimization: 2
+--optimization: 2
 
 remote-repo-cache: /home/fommil/.cabal/packages
 world-file: /home/fommil/.cabal/world
