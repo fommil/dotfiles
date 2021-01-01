@@ -62,16 +62,6 @@
 
 (use-package graphviz-dot-mode)
 
-(defun pandoc ()
-  "If a hidden .pandoc file exists for the file, run it."
-  ;; this effectively replaces pandoc-mode for me
-  (interactive)
-  (let ((command-file (concat (file-name-directory buffer-file-name)
-                              "." (file-name-nondirectory buffer-file-name)
-                              ".pandoc")))
-    (when (file-exists-p command-file)
-      (shell-command command-file))))
-
 (use-package ox-leanpub
   :commands org-leanpub-export-to-markdown
   :ensure nil)
