@@ -753,18 +753,10 @@ Inspired by `org-combine-plists'."
 (require 'fommil-manuscripts)
 
 (use-package scala-mode
-  :mode ((rx ".scala" eos) . scala-mode)
+  :mode ((rx (| ".scala" ".sbt") eos) . scala-mode)
   :config
-  (bind-key "C-c c" #'sbt-command scala-mode-map))
-(use-package sbt-mode
-  :commands sbt-command sbt-start
-  :config
-  (bind-key "C-c c" #'sbt-command sbt-mode-map)
-  (setq-default sbt:default-command "compile")
-  (setq sbt:program-options '("-Dsbt.supershell=false")
-        sbt:prefer-nested-projects t))
-(make-variable-buffer-local 'sbt:default-command)
-(put 'sbt:default-command 'safe-local-variable #'stringp)
+  (require 'scala-compile)
+  (bind-key "C-c c" #'scala-compile scala-mode-map))
 
 (add-hook 'scala-mode-hook
           (lambda ()

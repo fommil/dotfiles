@@ -15,6 +15,9 @@ export EMACS_SOURCE=$HOME/Projects/emacs
 
 export PRINTER=HP_LaserJet_P2035
 
+# the (jenv init -) thing doesn't work in emacs
+export PATH="$HOME/.jenv/shims:$HOME/.jenv/bin:$PATH"
+
 export YOURKIT_AGENT=/opt/YourKit-JavaProfiler-2020.7/bin/linux-x86-64/libyjpagent.so
 export ASYNC_PROFILER_DIR=$HOME/Projects/async-profiler
 export FLAME_GRAPH_DIR=$HOME/Projects/FlameGraph
