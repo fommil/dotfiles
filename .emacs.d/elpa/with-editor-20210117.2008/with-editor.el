@@ -1,6 +1,6 @@
 ;;; with-editor.el --- Use the Emacsclient as $EDITOR -*- lexical-binding: t -*-
 
-;; Copyright (C) 2014-2020  The Magit Project Contributors
+;; Copyright (C) 2014-2021  The Magit Project Contributors
 ;;
 ;; You should have received a copy of the AUTHORS.md file.  If not,
 ;; see https://github.com/magit/with-editor/blob/master/AUTHORS.md.
@@ -8,7 +8,7 @@
 ;; Author: Jonas Bernoulli <jonas@bernoul.li>
 ;; Maintainer: Jonas Bernoulli <jonas@bernoul.li>
 
-;; Package-Requires: ((emacs "24.4") (async "1.9"))
+;; Package-Requires: ((emacs "24.4"))
 ;; Keywords: tools
 ;; Homepage: https://github.com/magit/with-editor
 
@@ -87,22 +87,13 @@
 (require 'server)
 (require 'shell)
 
-(and (require 'async-bytecomp nil t)
-     (let ((pkgs (bound-and-true-p async-bytecomp-allowed-packages)))
-       (if (consp pkgs)
-           (cl-intersection '(all magit) pkgs)
-         (memq pkgs '(all t))))
-     (fboundp 'async-bytecomp-package-mode)
-     (async-bytecomp-package-mode 1))
-
 (eval-when-compile
   (progn (require 'dired nil t)
          (require 'eshell nil t)
          (require 'term nil t)
          (condition-case err
              (require 'vterm nil t)
-           (error (message "Error: %S" err)))
-         (require 'vterm nil t)
+           (error (message "Error(vterm): %S" err)))
          (require 'warnings nil t)))
 (declare-function dired-get-filename 'dired)
 (declare-function term-emulate-terminal 'term)
