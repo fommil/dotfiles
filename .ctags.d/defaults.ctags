@@ -2,4 +2,5 @@
 --exclude=.cask
 --exclude=flycheck_*
 --exclude=.git
+--exclude=*_pb2.py
 --languages=c,lisp,python

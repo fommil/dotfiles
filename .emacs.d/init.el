@@ -367,6 +367,9 @@ Inspired by `org-combine-plists'."
   ;; nice to have it on the modeline
   :init
   (put 'ag-ignore-list 'safe-local-variable #'listp)
+  (setq-default
+   ;; explicit -e here forces +Unknown lang parser
+   projectile-tags-command "ctags -R -f \"%s\" %s \"%s\"")
   (setq
    projectile-tags-backend 'xref
    projectile-use-git-grep t
