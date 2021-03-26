@@ -3,7 +3,7 @@
 ;; Copyright (C) 2012-2021 Free Software Foundation, Inc.
 
 ;; Author: Magnar Sveen <magnars@gmail.com>
-;; Version: 2.18.0
+;; Version: 2.18.1
 ;; Package-Requires: ((emacs "24"))
 ;; Keywords: extensions, lisp
 ;; Homepage: https://github.com/magnars/dash.el
@@ -685,12 +685,15 @@ Thus function FN should return a list."
 (defmacro --iterate (form init n)
   "Anaphoric version of `-iterate'."
   (declare (debug (form form form)))
-  (let ((res (make-symbol "result")))
-    `(let ((it ,init) ,res)
-       (dotimes (_ ,n)
-         (push it ,res)
-         (setq it ,form))
-       (nreverse ,res))))
+  (let ((res (make-symbol "result"))
+        (len (make-symbol "n")))
+    `(let ((,len ,n))
+       (when (> ,len 0)
+         (let* ((it ,init)
+                (,res (list it)))
+           (dotimes (_ (1- ,len))
+             (push (setq it ,form) ,res))
+           (nreverse ,res))))))
 
 (defun -iterate (fun init n)
   "Return a list of iterated applications of FUN to INIT.
@@ -724,7 +727,9 @@ See also: `-flatten-n'"
 
 See also: `-flatten'"
   (declare (pure t) (side-effect-free t))
-  (-last-item (--iterate (--mapcat (-list it) it) list (1+ num))))
+  (dotimes (_ num)
+    (setq list (apply #'append (mapcar #'-list list))))
+  list)
 
 (defun -concat (&rest lists)
   "Return a new list with the concatenation of the elements in the supplied LISTS."
