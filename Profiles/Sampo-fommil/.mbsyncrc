@@ -2,7 +2,7 @@
 # and https://el-tramo.be/blog/gmail-mbsync/
 
 SyncState *
-Create Slave
+Create Near
 Expunge Both
 
 IMAPAccount gmail
@@ -24,7 +24,7 @@ Path ~/Mail/gmail/
 Inbox ~/Mail/gmail/INBOX
 
 Channel gmail
-Master :gmail-remote:
-Slave :gmail-local:
+Far :gmail-remote:
+Near :gmail-local:
 Patterns "[Gmail]/Sent Mail" INBOX
 CopyArrivalDate yes
