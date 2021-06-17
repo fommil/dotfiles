@@ -3,4 +3,4 @@
 --exclude=flycheck_*
 --exclude=.git
 --exclude=*_pb2.py
---languages=c,emacslisp,python,haskell
+--languages=c,emacslisp,python
