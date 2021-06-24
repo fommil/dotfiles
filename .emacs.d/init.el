@@ -491,7 +491,8 @@ Inspired by `org-combine-plists'."
   :diminish flycheck-mode
   :commands flycheck-mode
   :init
-  (setq flycheck-check-syntax-automatically '(mode-enabled save))
+  (setq flycheck-check-syntax-automatically '(mode-enabled save)
+        flycheck-standard-error-navigation nil)
   :config
   ;; disables the timed popup, use C-h .
   (defun flycheck-display-error-at-point-soon ()))
@@ -780,38 +781,45 @@ Inspired by `org-combine-plists'."
   ;; go get github.com/stamblerre/gocode@latest
   ;; go get honnef.co/go/tools/cmd/staticcheck@latest
   ;;
-  ;; Note: gocode needs an owner (fallback to gopls with lsp-mode)
+  ;; Note: gocode needs an owner (fallback to gopls with lsp-mode) maybe it
+  ;; would be possible to write a godef based company backend just for dot
+  ;; completions.
+  ;;
+  ;; TODO eldoc for godef (there is one for gocode)
   ;;
   ;; go get github.com/pquerna/ffjson@latest
   ;; https://yalantis.com/blog/speed-up-json-encoding-decoding/
   ;;
   ;; TODO is there something like hoogle for Go?
   :config
-  (setq gofmt-command "goimports"
-        gofmt-show-errors nil)
+  (setq
+   gofmt-command "goimports"
+   gofmt-show-errors nil
+   go-fontify-function-calls nil)
   :bind
   (("C-c e" . next-error)
    ("C-c C-r f" . gofmt)
    ("C-c C-i t" . godef-describe)
-   ("M-." . godef-jump)))
-(use-package company-go)
+   ("M-." . godef-jump))
+  :hook
+  ((go-mode . flycheck-mode)
+   (go-mode . company-mode)
+   ;(go-mode . smartparens-mode)
+   (go-mode . electric-pair-mode)))
+(use-package company-go
+  :config
+  (setq company-go-show-annotation t
+        company-go-insert-arguments nil))
 
 (add-hook
  'go-mode-hook
  (lambda ()
-   ;; (setq-local flycheck-checkers '(go-vet go-staticcheck))
-   ;; (flycheck-mode 1)
-
-   ;;(setq-local company-backends '(company-files company-go company-dabbrev-code))
-   ;; TODO company-go can be quite laggy, maybe need a filter on it so it only kicks
-   ;;      in for . completions.
-   (setq-local company-backends '(company-files company-dabbrev-code))
-   (company-mode 1)
-
-   ;; smartparens paren deletion is weird and deletes more than it should...
-   ;;(smartparens-mode 1)
+   (setq-local flycheck-checkers '(go-vet go-staticcheck))
+   (setq-local company-backends '(company-files company-go (company-dabbrev-code company-etags)))
    ))
 
+;; TODO fix smartparens or consider using electric-pair-mode instead
+;; smartparens paren deletion is weird and deletes more than it should...
 ;;(sp-local-pair 'go-mode "{" nil :post-handlers '(("||\n[i]" "RET") ("| " "SPC")))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
