@@ -782,8 +782,8 @@ Inspired by `org-combine-plists'."
   ;; go get honnef.co/go/tools/cmd/staticcheck@latest
   ;;
   ;; Note: gocode needs an owner (fallback to gopls with lsp-mode) maybe it
-  ;; would be possible to write a godef based company backend just for dot
-  ;; completions.
+  ;; would be possible to write a godef or gopls (non-lsp) based company backend
+  ;; just for dot completions.
   ;;
   ;; TODO eldoc for godef (there is one for gocode)
   ;;
@@ -804,8 +804,7 @@ Inspired by `org-combine-plists'."
   :hook
   ((go-mode . flycheck-mode)
    (go-mode . company-mode)
-   ;(go-mode . smartparens-mode)
-   (go-mode . electric-pair-mode)))
+   (go-mode . electric-pair-local-mode)))
 (use-package company-go
   :config
   (setq company-go-show-annotation t
@@ -817,10 +816,6 @@ Inspired by `org-combine-plists'."
    (setq-local flycheck-checkers '(go-vet go-staticcheck))
    (setq-local company-backends '(company-files company-go (company-dabbrev-code company-etags)))
    ))
-
-;; TODO fix smartparens or consider using electric-pair-mode instead
-;; smartparens paren deletion is weird and deletes more than it should...
-;;(sp-local-pair 'go-mode "{" nil :post-handlers '(("||\n[i]" "RET") ("| " "SPC")))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; OS specific
