@@ -179,9 +179,10 @@ triggers a completion immediately."
 ;;;###autoload
 (defun company-go (command &optional arg &rest ignored)
   (case command
-    (prefix (and ;; fommil: changed semantics to only work for . completions
+    (prefix (and ;; fommil: changed semantics to only work after .
                  (= 46 (char-before))
-                 (not (company-in-string-or-comment))))
+                 (not (company-in-string-or-comment))
+                 (company-go--prefix)))
     (candidates (company-go--candidates))
     (meta (get-text-property 0 'meta arg))
     (annotation

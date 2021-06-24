@@ -809,7 +809,7 @@ Inspired by `org-combine-plists'."
 (use-package company-go
   :config
   (setq company-go-show-annotation t
-        company-go-insert-arguments nil))
+        company-go-insert-arguments t))
 
 (add-hook
  'go-mode-hook
