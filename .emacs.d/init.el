@@ -781,11 +781,11 @@ Inspired by `org-combine-plists'."
   ;; go get github.com/stamblerre/gocode@latest
   ;; go get honnef.co/go/tools/cmd/staticcheck@latest
   ;;
-  ;; Note: gocode needs an owner (fallback to gopls with lsp-mode) maybe it
-  ;; would be possible to write a godef or gopls (non-lsp) based company backend
-  ;; just for dot completions.
-  ;;
-  ;; TODO eldoc for godef (there is one for gocode)
+  ;; Note: gocode and godef is unmaintained but it should be possible to write a
+  ;; gopls (non-lsp) based company/go-to-definition/eldoc backend. e.g. use the
+  ;; `gopls references ast.go:87:6' feature, lookup each of the entries, and
+  ;; retain the lines that are OOP methods.
+  ;; TODO gopls backends
   ;;
   ;; go get github.com/pquerna/ffjson@latest
   ;; https://yalantis.com/blog/speed-up-json-encoding-decoding/
