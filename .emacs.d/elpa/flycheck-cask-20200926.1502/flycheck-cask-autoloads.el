@@ -18,9 +18,7 @@ thereof, configure Flycheck to initialze Cask packages while
 syntax checking.
 
 Set `flycheck-emacs-lisp-initialize-packages' and
-`flycheck-emacs-lisp-package-user-dir' accordingly.
-
-\(fn)" nil nil)
+`flycheck-emacs-lisp-package-user-dir' accordingly." nil nil)
 
 (if (fboundp 'register-definition-prefixes) (register-definition-prefixes "flycheck-cask" '("flycheck-cask-")))
 

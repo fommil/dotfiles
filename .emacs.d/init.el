@@ -487,6 +487,7 @@ Inspired by `org-combine-plists'."
 
 ;; TODO show compile buffer output as flycheck squiggles
 (use-package flycheck
+  :pin melpa ;; for go-staticcheck
   :diminish flycheck-mode
   :commands flycheck-mode
   :init
@@ -611,7 +612,9 @@ Inspired by `org-combine-plists'."
       (call-interactively 'compile)
     (error "This is not a Cask project")))
 
-(use-package flycheck-cask)
+(use-package flycheck-cask
+  :pin melpa ;; to match unstable flycheck
+  )
 (add-hook 'flycheck-mode-hook #'flycheck-cask-setup)
 
 (use-package eldoc
@@ -768,6 +771,46 @@ Inspired by `org-combine-plists'."
             (yas-minor-mode 1)
             (git-gutter-mode 1)
             (company-mode 1)))
+
+(use-package go-mode
+  ;; Make sure to install dependencies:
+  ;;
+  ;; go get golang.org/x/tools/cmd/goimports@latest
+  ;; go get github.com/rogpeppe/godef@latest
+  ;; go get github.com/stamblerre/gocode@latest
+  ;; go get honnef.co/go/tools/cmd/staticcheck@latest
+  ;; go get github.com/kisielk/errcheck@latest
+  ;;
+  ;; Note: gocode needs an owner (fallback to gopls with lsp-mode)
+  ;;
+  ;; go get github.com/pquerna/ffjson@latest
+  ;; https://yalantis.com/blog/speed-up-json-encoding-decoding/
+  ;;
+  ;; TODO get godoc working from emacs
+  ;; go get golang.org/x/tools/cmd/godoc@latest
+  ;;
+  ;; TODO consider using guru / godoctor
+  ;; TODO is there something like hoogle for Go?
+  :config
+  (setq gofmt-command "goimports"
+        gofmt-show-errors nil)
+  :bind
+  (("C-c C-r f" . gofmt)
+   ("C-c C-i t" . godef-describe)
+   ("M-." . godef-jump)))
+(use-package company-go)
+
+(add-hook
+ 'go-mode-hook
+ (lambda ()
+   (setq-local flycheck-checkers '(go-golint go-vet go-staticcheck go-errcheck))
+   (flycheck-mode 1)
+
+   (setq-local company-backends '(company-files company-go company-dabbrev-code))
+   (company-mode 1)
+
+   ;; TODO better curly bracket support
+   (smartparens-mode 1)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; OS specific

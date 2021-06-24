@@ -4,10 +4,11 @@
 
 ;; Author: Sebastian Wiesner <swiesner@lunaryorn.com>
 ;; URL: https://github.com/flycheck/flycheck-cask
-;; Package-Version: 0.4
+;; Package-Version: 20200926.1502
+;; Package-Commit: 4b2ede6362ded4a45678dfbef1876faa42edbd58
 ;; Keywords: tools, convenience
-;; Version: 0.4
-;; Package-Requires: ((emacs "24.1") (flycheck "0.14") (dash "2.4.0"))
+;; Version: 0.5-cvs
+;; Package-Requires: ((emacs "24.3") (flycheck "0.14") (dash "2.4.0"))
 
 ;; This file is not part of GNU Emacs.
 
@@ -38,6 +39,7 @@
 
 (require 'flycheck)
 (require 'dash)
+(require 'package)
 
 (defgroup flycheck-cask nil
   "Cask support for Flycheck."
@@ -57,7 +59,9 @@ project to `flycheck-emacs-lisp-load-path'."
   "When non-nil, fall back to `package-user-dir'.
 
 When non-nil, fall back to packages from `package-user-dir' for
-non-Cask projects.")
+non-Cask projects."
+  :group 'flycheck-cask
+  :type 'directory)
 
 (defun flycheck-cask-package-dir (root-dir)
   "Get the package directory for ROOT-DIR."

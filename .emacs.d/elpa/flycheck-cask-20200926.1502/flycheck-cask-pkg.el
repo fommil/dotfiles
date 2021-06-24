@@ -1,0 +1,2 @@
+;;; Generated package description from flycheck-cask.el  -*- no-byte-compile: t -*-
+(define-package "flycheck-cask" "20200926.1502" "Cask support in Flycheck" '((emacs "24.3") (flycheck "0.14") (dash "2.4.0")) :commit "4b2ede6362ded4a45678dfbef1876faa42edbd58" :authors '(("Sebastian Wiesner" . "swiesner@lunaryorn.com")) :maintainer '("Sebastian Wiesner" . "swiesner@lunaryorn.com") :keywords '("tools" "convenience") :url "https://github.com/flycheck/flycheck-cask")

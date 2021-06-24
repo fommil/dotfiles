@@ -1,7 +1,6 @@
 #!/bin/sh
 
-eval "$(pyenv init -)"
-#eval "$(virtualenv init -)"
+export PATH="$HOME/.pyenv/shims:$HOME/.pyenv/bin:$PATH"
 
 export PATH="$HOME/.gem/ruby/2.7.0/bin:$PATH"
 
@@ -23,3 +22,6 @@ export ASYNC_PROFILER_DIR=$HOME/Projects/async-profiler
 export FLAME_GRAPH_DIR=$HOME/Projects/FlameGraph
 
 export BROWSER=firefox
+
+export GOPATH="$HOME/.go"
+export PATH="$GOPATH/bin:$PATH"
