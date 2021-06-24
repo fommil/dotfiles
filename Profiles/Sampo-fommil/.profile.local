@@ -16,3 +16,6 @@ export CXXFLAGS="$CFLAGS"
 export EMACS_SOURCE=$HOME/Projects/emacs
 # when building emacs-*-git use this
 # source=("$pkgname::git+file:///home/fommil/Projects/emacs#branch=emacs-25")
+
+export GOPATH=$PATH/.go
+export PATH="$GOPATH/bin:$PATH"
