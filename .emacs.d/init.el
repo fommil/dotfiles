@@ -779,17 +779,12 @@ Inspired by `org-combine-plists'."
   ;; go get github.com/rogpeppe/godef@latest
   ;; go get github.com/stamblerre/gocode@latest
   ;; go get honnef.co/go/tools/cmd/staticcheck@latest
-  ;; go get github.com/kisielk/errcheck@latest
   ;;
   ;; Note: gocode needs an owner (fallback to gopls with lsp-mode)
   ;;
   ;; go get github.com/pquerna/ffjson@latest
   ;; https://yalantis.com/blog/speed-up-json-encoding-decoding/
   ;;
-  ;; TODO get godoc working from emacs
-  ;; go get golang.org/x/tools/cmd/godoc@latest
-  ;;
-  ;; TODO consider using guru / godoctor
   ;; TODO is there something like hoogle for Go?
   :config
   (setq gofmt-command "goimports"
@@ -803,14 +798,13 @@ Inspired by `org-combine-plists'."
 (add-hook
  'go-mode-hook
  (lambda ()
-   (setq-local flycheck-checkers '(go-golint go-vet go-staticcheck go-errcheck))
+   (setq-local flycheck-checkers '(go-vet go-staticcheck))
    (flycheck-mode 1)
-
    (setq-local company-backends '(company-files company-go company-dabbrev-code))
    (company-mode 1)
-
-   ;; TODO better curly bracket support
    (smartparens-mode 1)))
+
+(sp-local-pair 'go-mode "{" nil :post-handlers '(("||\n[i]" "RET") ("| " "SPC")))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; OS specific
