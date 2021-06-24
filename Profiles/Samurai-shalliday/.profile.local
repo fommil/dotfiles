@@ -25,3 +25,6 @@ export BROWSER=firefox
 
 export GOPATH="$HOME/.go"
 export PATH="$GOPATH/bin:$PATH"
+
+# disable anonymous data collection from AWS SAM
+export SAM_CLI_TELEMETRY=0

@@ -790,7 +790,8 @@ Inspired by `org-combine-plists'."
   (setq gofmt-command "goimports"
         gofmt-show-errors nil)
   :bind
-  (("C-c C-r f" . gofmt)
+  (("C-c e" . next-error)
+   ("C-c C-r f" . gofmt)
    ("C-c C-i t" . godef-describe)
    ("M-." . godef-jump)))
 (use-package company-go)
@@ -798,13 +799,20 @@ Inspired by `org-combine-plists'."
 (add-hook
  'go-mode-hook
  (lambda ()
-   (setq-local flycheck-checkers '(go-vet go-staticcheck))
-   (flycheck-mode 1)
-   (setq-local company-backends '(company-files company-go company-dabbrev-code))
-   (company-mode 1)
-   (smartparens-mode 1)))
+   ;; (setq-local flycheck-checkers '(go-vet go-staticcheck))
+   ;; (flycheck-mode 1)
 
-(sp-local-pair 'go-mode "{" nil :post-handlers '(("||\n[i]" "RET") ("| " "SPC")))
+   ;;(setq-local company-backends '(company-files company-go company-dabbrev-code))
+   ;; TODO company-go can be quite laggy, maybe need a filter on it so it only kicks
+   ;;      in for . completions.
+   (setq-local company-backends '(company-files company-dabbrev-code))
+   (company-mode 1)
+
+   ;; smartparens paren deletion is weird and deletes more than it should...
+   ;;(smartparens-mode 1)
+   ))
+
+;;(sp-local-pair 'go-mode "{" nil :post-handlers '(("||\n[i]" "RET") ("| " "SPC")))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; OS specific
