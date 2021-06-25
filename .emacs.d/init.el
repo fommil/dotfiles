@@ -798,8 +798,11 @@ Inspired by `org-combine-plists'."
   ;; Note: gocode and godef is unmaintained but it should be possible to write a
   ;; gopls (non-lsp) based company/go-to-definition/eldoc backend. e.g. use the
   ;; `gopls references ast.go:87:6' feature, lookup each of the entries, and
-  ;; retain the lines that are OOP methods.
-  ;; TODO gopls backends
+  ;; retain the lines that are OOP methods. We could also use grep on the local
+  ;; mod dir (assuming it has been tided) to fuzzy find type methods (which
+  ;; could be cross referenced with gopls references or fqn of types confirmed).
+  ;; We could also use the `go doc` tool to list contents of a package, again
+  ;; needing package name lookup. TODO gopls backends
   ;;
   ;; go get github.com/pquerna/ffjson@latest
   ;; https://yalantis.com/blog/speed-up-json-encoding-decoding/
