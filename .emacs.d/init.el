@@ -773,6 +773,20 @@ Inspired by `org-combine-plists'."
             (git-gutter-mode 1)
             (company-mode 1)))
 
+
+(defun go-insert-opening-block ()
+  "workaround electric-pair broken newline semantics"
+  (interactive)
+  (cond
+   ((looking-back (rx space) 1)
+    (insert "{\n\n}")
+    (indent-for-tab-command)
+    (forward-line -1)
+    (indent-for-tab-command))
+   (t
+    (insert "{}")
+    (backward-char))))
+
 (use-package go-mode
   ;; Make sure to install dependencies:
   ;;
@@ -800,7 +814,8 @@ Inspired by `org-combine-plists'."
   (("C-c e" . next-error)
    ("C-c C-r f" . gofmt)
    ("C-c C-i t" . godef-describe)
-   ("M-." . godef-jump))
+   ("M-." . godef-jump)
+   ("{" . go-insert-opening-block))
   :hook
   ((go-mode . flycheck-mode)
    (go-mode . company-mode)
@@ -813,9 +828,11 @@ Inspired by `org-combine-plists'."
 (add-hook
  'go-mode-hook
  (lambda ()
-   (setq-local flycheck-checkers '(go-vet go-staticcheck))
+   (setq-local flycheck-checker 'go-staticcheck)
+
    (setq-local company-backends '(company-files company-go (company-dabbrev-code company-etags)))
-   ))
+
+   (setq-local electric-pair-open-newline-between-pairs nil)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; OS specific
