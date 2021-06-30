@@ -830,7 +830,8 @@ Inspired by `org-combine-plists'."
    ("M-." . godef-jump)
    ("{" . go-insert-opening-block))
   :hook
-  ((go-mode . flycheck-mode)
+  ((go-mode . git-gutter-mode)
+   (go-mode . flycheck-mode)
    (go-mode . company-mode)
    (go-mode . electric-pair-local-mode)))
 (use-package company-go
