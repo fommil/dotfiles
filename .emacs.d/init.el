@@ -775,9 +775,19 @@ Inspired by `org-combine-plists'."
 
 
 (defun go-insert-opening-block ()
-  "workaround electric-pair broken newline semantics"
+  "workaround electric-pair / smartparens broken newline semantics"
   (interactive)
   (cond
+   ((use-region-p)
+    (goto-char (region-end))
+    (insert "\n}")
+    (goto-char (region-beginning))
+    (insert "{\n")
+    (pop-mark)
+    (forward-line 1)
+    (indent-for-tab-command)
+    (forward-line -1)
+    (indent-for-tab-command))
    ((looking-back (rx space) 1)
     (insert "{\n\n}")
     (indent-for-tab-command)

@@ -180,7 +180,8 @@ triggers a completion immediately."
 (defun company-go (command &optional arg &rest ignored)
   (case command
     (prefix (and ;; fommil: changed semantics to only work after .
-                 (= 46 (char-before))
+                 (or (= 46 (char-before))
+                     (looking-back (rx "." (+ word)) 10))
                  (not (company-in-string-or-comment))
                  (company-go--prefix)))
     (candidates (company-go--candidates))
