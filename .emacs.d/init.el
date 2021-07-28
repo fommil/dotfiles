@@ -818,17 +818,23 @@ Inspired by `org-combine-plists'."
   ;; https://yalantis.com/blog/speed-up-json-encoding-decoding/
   ;;
   ;; TODO is there something like hoogle for Go?
+  ;; TODO can https://github.com/haya14busa/gosum be ressurected?
+  ;; TODO collapse trivial error handling code blocks
+  ;; TODO snippets for trivial error handling
   :config
   (setq
    gofmt-command "goimports"
    gofmt-show-errors nil
    go-fontify-function-calls nil)
   :bind
-  (("C-c e" . next-error)
+  (:map
+   go-mode-map
+   ("C-c e" . next-error)
    ("C-c C-r f" . gofmt)
    ("C-c C-i t" . godef-describe)
    ("M-." . godef-jump)
-   ("{" . go-insert-opening-block))
+   ("{" . go-insert-opening-block)
+   ("M-<delete>" . paredit-unwrap))
   :hook
   ((go-mode . git-gutter-mode)
    (go-mode . flycheck-mode)
