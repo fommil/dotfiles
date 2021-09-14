@@ -836,7 +836,8 @@ Inspired by `org-combine-plists'."
    ("{" . go-insert-opening-block)
    ("M-<delete>" . paredit-unwrap))
   :hook
-  ((go-mode . git-gutter-mode)
+  (;;(go-mode . abbrev-mode)
+   (go-mode . git-gutter-mode)
    (go-mode . flycheck-mode)
    (go-mode . company-mode)
    (go-mode . electric-pair-local-mode)))
@@ -844,6 +845,22 @@ Inspired by `org-combine-plists'."
   :config
   (setq company-go-show-annotation t
         company-go-insert-arguments t))
+
+;; (defun go--abbrev-expand-p ()
+;;   "abbrevs should not expand in strings and comments."
+;;   (not (nth 8 (syntax-ppss))))
+;;
+;; ;; this isn't great... bad trigger and bad indentation.
+;; (define-skeleton go--skeleton-if-error
+;;   "if err != nil... boilerplate"
+;;   nil "if err != nil {\n" > _ "\n" > "}")
+;; (define-abbrev
+;;   go-mode-abbrev-table
+;;   "iferr" "" #'go--skeleton-if-error
+;;   :system t
+;;   :case-fixed t
+;;   :enable-function #'go--abbrev-expand-p)
+
 
 (add-hook
  'go-mode-hook
