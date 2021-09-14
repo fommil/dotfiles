@@ -28,12 +28,15 @@
 (require 'notmuch-mua)
 
 (declare-function notmuch-search "notmuch"
-		  (&optional query oldest-first target-thread target-line continuation))
-(declare-function notmuch-poll "notmuch" ())
+		  (&optional query oldest-first target-thread target-line
+			     no-display))
+(declare-function notmuch-poll "notmuch-lib" ())
 (declare-function notmuch-tree "notmuch-tree"
-		  (&optional query query-context target buffer-name open-target unthreaded))
-(declare-function notmuch-unthreaded
-		  (&optional query query-context target buffer-name open-target))
+		  (&optional query query-context target buffer-name
+			     open-target unthreaded parent-buffer oldest-first))
+(declare-function notmuch-unthreaded "notmuch-tree"
+		  (&optional query query-context target buffer-name
+			     open-target))
 
 
 ;;; Options
@@ -481,7 +484,9 @@ diagonal."
 (defun notmuch-hello-widget-search (widget &rest _ignore)
   (cl-case (widget-get widget :notmuch-search-type)
    (tree
-    (notmuch-tree (widget-get widget :notmuch-search-terms)))
+    (notmuch-tree (widget-get widget :notmuch-search-terms)
+		  nil nil nil nil nil nil
+		  (widget-get widget :notmuch-search-oldest-first)))
    (unthreaded
     (notmuch-unthreaded (widget-get widget :notmuch-search-terms)))
    (t

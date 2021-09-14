@@ -62,6 +62,11 @@ fast way to jump to a saved search from anywhere in Notmuch."
       (error "To use notmuch-jump, %s"
 	     "please customize shortcut keys in notmuch-saved-searches."))))
 
+(defface notmuch-jump-key
+  '((t :inherit minibuffer-prompt))
+  "Default face used for keys in `notmuch-jump' and related."
+  :group 'notmuch-faces)
+
 (defvar notmuch-jump--action nil)
 
 ;;;###autoload
@@ -123,7 +128,7 @@ buffer."
     ;; Format each action
     (mapcar (pcase-lambda (`(,key ,desc))
 	      (setq key (format-kbd-macro key))
-	      (concat (propertize key 'face 'minibuffer-prompt)
+	      (concat (propertize key 'face 'notmuch-jump-key)
 		      (make-string (- key-width (length key)) ? )
 		      " " desc))
 	    action-map)))

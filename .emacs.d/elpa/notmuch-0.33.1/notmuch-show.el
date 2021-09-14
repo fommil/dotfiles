@@ -39,25 +39,27 @@
 (require 'notmuch-print)
 (require 'notmuch-draft)
 
-(declare-function notmuch-call-notmuch-process "notmuch" (&rest args))
+(declare-function notmuch-call-notmuch-process "notmuch-lib" (&rest args))
 (declare-function notmuch-search-next-thread "notmuch" nil)
 (declare-function notmuch-search-previous-thread "notmuch" nil)
-(declare-function notmuch-search-show-thread "notmuch" nil)
+(declare-function notmuch-search-show-thread "notmuch")
 (declare-function notmuch-foreach-mime-part "notmuch" (function mm-handle))
 (declare-function notmuch-count-attachments "notmuch" (mm-handle))
 (declare-function notmuch-save-attachments "notmuch" (mm-handle &optional queryp))
 (declare-function notmuch-tree "notmuch-tree"
 		  (&optional query query-context target buffer-name
-			     open-target unthreaded))
+			     open-target unthreaded parent-buffer))
 (declare-function notmuch-tree-get-message-properties "notmuch-tree" nil)
-(declare-function notmuch-unthreaded
-		  (&optional query query-context target buffer-name open-target))
+(declare-function notmuch-unthreaded "notmuch-tree"
+		  (&optional query query-context target buffer-name
+			     open-target))
 (declare-function notmuch-read-query "notmuch" (prompt))
 (declare-function notmuch-draft-resume "notmuch-draft" (id))
 
 (defvar shr-blocked-images)
 (defvar gnus-blocked-images)
 (defvar shr-content-function)
+(defvar w3m-ignored-image-url-regexp)
 
 ;;; Options
 
@@ -178,6 +180,8 @@ indentation."
 
 (defvar-local notmuch-show-indent-content t)
 
+(defvar-local notmuch-show-single-message nil)
+
 (defvar notmuch-show-attachment-debug nil
   "If t log stdout and stderr from attachment handlers.
 
@@ -189,10 +193,10 @@ each attachment handler is logged in buffers with names beginning
 ;;; Options
 
 (defcustom notmuch-show-stash-mlarchive-link-alist
-  '(("Gmane" . "https://mid.gmane.org/")
-    ("MARC" . "https://marc.info/?i=")
+  '(("MARC" . "https://marc.info/?i=")
     ("Mail Archive, The" . "https://mid.mail-archive.com/")
-    ("LKML" . "https://lkml.kernel.org/r/")
+    ("Lore" . "https://lore.kernel.org/r/")
+    ("Notmuch" . "https://nmbug.notmuchmail.org/nmweb/show/")
     ;; FIXME: can these services be searched by `Message-Id' ?
     ;; ("MarkMail" . "http://markmail.org/")
     ;; ("Nabble" . "http://nabble.com/")
@@ -217,7 +221,7 @@ return the ML archive reference URI."
 			     (function :tag "Function returning the URL")))
   :group 'notmuch-show)
 
-(defcustom notmuch-show-stash-mlarchive-link-default "Gmane"
+(defcustom notmuch-show-stash-mlarchive-link-default "MARC"
   "Default Mailing List Archive to use when stashing links.
 
 This is used when `notmuch-show-stash-mlarchive-link' isn't
@@ -820,7 +824,8 @@ will return nil if the CID is unknown or cannot be retrieved."
     (let ((mm-inline-text-html-with-w3m-keymap nil)
 	  ;; FIXME: If we block an image, offer a button to load external
 	  ;; images.
-	  (gnus-blocked-images notmuch-show-text/html-blocked-images))
+	  (gnus-blocked-images notmuch-show-text/html-blocked-images)
+	  (w3m-ignored-image-url-regexp notmuch-show-text/html-blocked-images))
       (notmuch-show-insert-part-*/* msg part content-type nth depth button))))
 
 ;;; Functions used by notmuch-show--insert-part-text/html-shr
@@ -1314,9 +1319,10 @@ Apply the previously saved STATE if supplied, otherwise show the
 first relevant message.
 
 If no messages match the query return NIL."
-  (let* ((cli-args (cons "--exclude=false"
-			 (and notmuch-show-elide-non-matching-messages
-			      (list "--entire-thread=false"))))
+  (let* ((cli-args (list "--exclude=false"))
+	 (cli-args (if notmuch-show-elide-non-matching-messages (cons "--entire-thread=false" cli-args) cli-args))
+	 ;; "part 0 is the whole message (headers and body)" notmuch-show(1)
+	 (cli-args (if notmuch-show-single-message (cons "--part=0" cli-args) cli-args))
 	 (queries (notmuch-show--build-queries
 		   notmuch-show-thread-id notmuch-show-query-context))
 	 (forest nil)
@@ -1327,6 +1333,8 @@ If no messages match the query return NIL."
     (while (and (not forest) queries)
       (setq forest (notmuch-query-get-threads
 		    (append cli-args (list "'") (car queries) (list "'"))))
+      (when (and forest notmuch-show-single-message)
+	(setq forest (list (list (list forest)))))
       (setq queries (cdr queries)))
     (when forest
       (notmuch-show-insert-forest forest)
