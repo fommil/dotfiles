@@ -6,10 +6,6 @@ alias keepers-detail='for p in $(pacman -Qqe) ; do desc=$(pacman -Qi $p | grep "
 alias keepers-optional='comm -23 <(expac -l"\n" "%o" | sort -u) <(expac -l"\n" "%n\n%S" | sort -u)'
 alias cleanup='sudo pacman -Rsn $(pacman -Qdtq | tr "\n" " ")'
 
-# TODO allow per directory
-#
-# TODO use the access logs (or self managed logs) to minimise the work involved in syncing.
-#      This may involve writing a tool to do it.
-alias s3push='s3cmd --reduced-redundancy --no-check-md5 --no-guess-mime-type sync /home/s3/fommil/ s3://fommil/'
-alias s3pull='s3cmd --no-check-md5 sync s3://fommil/ /home/s3/fommil/'
-# TODO rsync pull
+alias s3push='aws s3 sync --storage-class REDUCED_REDUNDANCY --size-only --no-guess-mime-type /home/s3/fommil/ s3://fommil/'
+alias s3pull='aws s3 sync --size-only s3://fommil/ /home/s3/fommil/'
+
