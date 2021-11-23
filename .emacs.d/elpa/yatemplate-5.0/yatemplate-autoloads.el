@@ -36,9 +36,7 @@ Regular expression matching files that do not contain `yatemplate-separator', bu
 (put 'yatemplate-license 'safe-local-variable #'stringp)
 
 (autoload 'yatemplate-fill-alist "yatemplate" "\
-Fill `auto-insert-alist'.
-
-\(fn)" nil nil)
+Fill `auto-insert-alist'." nil nil)
 
 (if (fboundp 'register-definition-prefixes) (register-definition-prefixes "yatemplate" '("yatemplate-")))
 

@@ -4,7 +4,8 @@
 
 ;; Author: Wieland Hoffmann <themineo+yatemplate@gmail.com>
 ;; URL: https://github.com/mineo/yatemplate
-;; Package-Version: 4.0
+;; Package-Version: 5.0
+;; Package-Commit: 275745ce1482edc08efb0b7807bc86d832bcc734
 ;; Version: 1.0
 ;; Package-Requires: ((yasnippet "0.8.1") (emacs "24.3"))
 ;; Keywords: files, convenience
@@ -72,7 +73,8 @@
 (defcustom yatemplate-dir
   (locate-user-emacs-file "templates")
   "The directory containing file templates."
-  :group 'yatemplate)
+  :group 'yatemplate
+  :type 'directory)
 
 ;;;###autoload
 (defcustom yatemplate-separator
@@ -85,12 +87,14 @@ the ordering and regular expression parts.
 Note that this will be used as the SEPARATORS argument of
 `split-string', so be careful when setting this to a value that
 has special meaning in regular expressions."
-  :group 'yatemplate)
+  :group 'yatemplate
+  :type 'string)
 
 ;;;###autoload
 (defcustom yatemplate-ignored-files-regexp "README.md$"
   "Regular expression matching files that do not contain `yatemplate-separator', but will generate no warning."
-  :group 'yatemplate)
+  :group 'yatemplate
+  :type 'regexp)
 
 (defvar-local yatemplate-owner user-full-name
   "The copyright owner for the buffer.
@@ -143,7 +147,8 @@ Particularly useful when combined with `.dir-locals.el'.")
         (cl-remove-if
          (lambda (pair)
            (ignore-errors (eq 'yatemplate-expand-yas-buffer (aref (cdr pair) 1))))
-         auto-insert-alist)))
+         auto-insert-alist))
+  nil)
 
 ;;; Hooks
 (defun yatemplate--find-file-hook ()
@@ -168,6 +173,12 @@ Particularly useful when combined with `.dir-locals.el'.")
   (remove-hook 'find-file-hook 'yatemplate--find-file-hook)
   (remove-hook 'after-save-hook 'yatemplate--after-save-hook)
   (yatemplate-remove-old-yatemplates-from-alist))
+
+(defun yatemplate-reload-all ()
+  "Reload all templates."
+  (interactive)
+  (yatemplate-remove-old-yatemplates-from-alist)
+  (yatemplate-fill-alist))
 
 (provide 'yatemplate)
 ;;; yatemplate.el ends here

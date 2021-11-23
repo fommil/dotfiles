@@ -1,6 +1,6 @@
-(define-package "transient" "0.3.6" "Transient commands"
+(define-package "transient" "0.3.7" "Transient commands"
   '((emacs "25.1"))
-  :commit "51e833e5152e9fdcdc1dbbf34ad2d4905bde1f69" :authors
+  :commit "74cba5a418ff1b1661494fc2970c330ecdbb4b22" :authors
   '(("Jonas Bernoulli" . "jonas@bernoul.li"))
   :maintainer
   '("Jonas Bernoulli" . "jonas@bernoul.li")
