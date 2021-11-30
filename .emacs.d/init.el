@@ -763,7 +763,13 @@ Inspired by `org-combine-plists'."
   :mode ((rx (| ".scala" ".sbt") eos) . scala-mode)
   :config
   (require 'scala-compile)
-  (bind-key "C-c c" #'scala-compile scala-mode-map))
+  (require 'ensime-tng)
+  :bind
+  (:map scala-mode-map
+        ("C-c c" . scala-compile)
+        ("C-c C-i t" . ensime-tng-type-at-point)
+        ("C-c C-i s" . ensime-tng-symbol-at-point)
+        ("C-c C-r i" . ensime-tng-import-symbol-at-point)))
 
 (add-hook 'scala-mode-hook
           (lambda ()
@@ -773,6 +779,7 @@ Inspired by `org-combine-plists'."
             (git-gutter-mode 1)
             (company-mode 1)))
 
+(use-package javap-mode)
 
 (defun go-insert-opening-block ()
   "workaround electric-pair / smartparens broken newline semantics"

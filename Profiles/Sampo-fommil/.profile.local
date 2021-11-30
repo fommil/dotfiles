@@ -5,8 +5,7 @@ eval "$(pyenv init -pyenv init -)"
 eval "$(pyenv virtualenv-init -)"
 
 # jenv installed manually https://www.jenv.be/
-export PATH="$HOME/.jenv/bin:$PATH"
-eval "$(jenv init -)"
+export PATH="$HOME/.jenv/shims:$HOME/.jenv/bin:$PATH"
 
 # also update /etc/makepkg.conf
 export MAKEFLAGS="-j$(nproc)"
