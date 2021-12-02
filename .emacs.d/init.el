@@ -374,6 +374,7 @@ Inspired by `org-combine-plists'."
    projectile-tags-backend 'xref
    projectile-use-git-grep t
    projectile-globally-ignored-directories '(".git")
+   projectile-indexing-method 'hybrid
    projectile-globally-ignored-files '("TAGS" "*.min.js"))
   :config
   (add-hook 'projectile-grep-finished-hook
