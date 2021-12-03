@@ -770,15 +770,15 @@ Inspired by `org-combine-plists'."
         ("C-c c" . scala-compile)
         ("C-c C-i t" . ensime-tng-type-at-point)
         ("C-c C-i s" . ensime-tng-symbol-at-point)
-        ("C-c C-r i" . ensime-tng-import-symbol-at-point)))
+        ("C-c C-r i" . ensime-tng-import-symbol-at-point)
+        ("M-." . ensime-tng-jump-to-definition)))
 
 (add-hook 'scala-mode-hook
           (lambda ()
             (show-paren-mode 1)
             (smartparens-mode 1)
             (yas-minor-mode 1)
-            (git-gutter-mode 1)
-            (company-mode 1)))
+            (git-gutter-mode 1)))
 
 (use-package javap-mode)
 
