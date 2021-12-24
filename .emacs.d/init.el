@@ -768,16 +768,16 @@ Inspired by `org-combine-plists'."
   (:map scala-mode-map
         ("C-c c" . scala-compile)))
 
-(use-package ensime-tng-mode
+(use-package ensime-mode
   :ensure nil
   :load-path "~/Projects/ensime-tng/lisp"
-  :commands ensime-tng-mode
+  :commands ensime-mode
   :bind
-  (:map ensime-tng-mode-map
-        ("M-." . ensime-tng-jump-to-definition)
-        ("C-c C-i t" . ensime-tng-type-at-point)
-        ("C-c C-i s" . ensime-tng-symbol-at-point)
-        ("C-c C-r i" . ensime-tng-import-symbol-at-point)))
+  (:map ensime-mode-map
+        ("M-." . ensime-jump-to-definition)
+        ("C-c C-i t" . ensime-type-at-point)
+        ("C-c C-i s" . ensime-symbol-at-point)
+        ("C-c C-r i" . ensime-import-symbol-at-point)))
 
 (add-hook 'scala-mode-hook
           (lambda ()
@@ -785,7 +785,7 @@ Inspired by `org-combine-plists'."
             (smartparens-mode 1)
             (yas-minor-mode 1)
             (git-gutter-mode 1)
-            (ensime-tng-mode 1)))
+            (ensime-mode 1)))
 
 (use-package javap-mode)
 
