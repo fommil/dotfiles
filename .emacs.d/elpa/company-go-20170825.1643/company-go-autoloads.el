@@ -12,7 +12,7 @@
 (autoload 'company-go "company-go" "\
 
 
-\(fn COMMAND &optional ARG &rest IGNORED)" nil nil)
+\(fn COMMAND &optional ARG &rest IGNORED)" t nil)
 
 (if (fboundp 'register-definition-prefixes) (register-definition-prefixes "company-go" '("company-go-")))
 
