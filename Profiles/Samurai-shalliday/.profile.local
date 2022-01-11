@@ -12,7 +12,7 @@ export EMACS_SOURCE=$HOME/Projects/emacs
 # when building emacs25-git use this to use my local repo
 # source=("$pkgname::git+file:///home/fommil/Projects/emacs#branch=emacs-25")
 
-export PRINTER=HP_LaserJet_P2035
+export PRINTER=HP_Color
 
 # the (jenv init -) thing doesn't work in emacs
 export PATH="$HOME/.jenv/shims:$HOME/.jenv/bin:$PATH"
