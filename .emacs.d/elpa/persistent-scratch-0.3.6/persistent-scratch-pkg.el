@@ -1,0 +1,2 @@
+;;; Generated package description from persistent-scratch.el  -*- no-byte-compile: t -*-
+(define-package "persistent-scratch" "0.3.6" "Preserve the scratch buffer across Emacs sessions" '((emacs "24")) :commit "4e159967801b75d07303221c4e5a2b89039c6a11" :authors '(("Fanael Linithien" . "fanael4@gmail.com")) :maintainer '("Fanael Linithien" . "fanael4@gmail.com") :url "https://github.com/Fanael/persistent-scratch")

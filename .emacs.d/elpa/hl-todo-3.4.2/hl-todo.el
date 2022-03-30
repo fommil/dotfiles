@@ -1,12 +1,12 @@
 ;;; hl-todo.el --- highlight TODO and similar keywords  -*- lexical-binding: t -*-
 
-;; Copyright (C) 2013-2021  Jonas Bernoulli
+;; Copyright (C) 2013-2022  Jonas Bernoulli
 
 ;; Author: Jonas Bernoulli <jonas@bernoul.li>
 ;; Homepage: https://github.com/tarsius/hl-todo
 ;; Keywords: convenience
-;; Package-Version: 3.3.0
-;; Package-Commit: 57378bd4511887a815725a7850e1ff2c6e9fda16
+;; Package-Version: 3.4.2
+;; Package-Commit: e52285965b5ee89c18080661d4f80270143ae8dc
 
 ;; Package-Requires: ((emacs "25"))
 
@@ -32,7 +32,7 @@
 ;; Highlight TODO and similar keywords in comments and strings.
 
 ;; You can either explicitly turn on `hl-todo-mode' in certain buffers
-;; or use the the global variant `global-hl-todo-mode', which enables
+;; or use the global variant `global-hl-todo-mode', which enables
 ;; the local mode based on each buffer's major-mode and the options
 ;; `hl-todo-include-modes' and `hl-todo-exclude-modes'.  By default
 ;; `hl-todo-mode' is enabled for all buffers whose major-mode derive
@@ -54,7 +54,7 @@
 
 ;;; Code:
 
-(require' cl-lib)
+(require 'cl-lib)
 
 (eval-when-compile
   (require 'subr-x))
@@ -132,9 +132,8 @@ Instead of a color (a string), each COLOR may alternatively be a
 face.
 
 The syntax class of the characters at either end has to be `w'
-\(which means word) in `hl-todo--syntax-table'.  That syntax
-table derives from `text-mode-syntax-table' but uses `w' as the
-class of \"?\".
+\(which means word) in `hl-todo--syntax-table' (which derives
+from `text-mode-syntax-table').
 
 This package, like most of Emacs, does not use POSIX regexp
 backtracking.  See info node `(elisp)POSIX Regexp' for why that
@@ -160,6 +159,12 @@ face controls the appearance of the respective keyword, except
 for either the foreground or the background color.  This option
 controls which of the two it is."
   :package-version '(hl-todo . "3.1.0")
+  :group 'hl-todo
+  :type 'boolean)
+
+(defcustom hl-todo-wrap-movement nil
+  "Whether movement commands wrap around when there are no more matches."
+  :package-version '(hl-todo . "3.4.0")
   :group 'hl-todo
   :type 'boolean)
 
@@ -236,10 +241,10 @@ including alphanumeric characters, cannot be used here."
 (defun hl-todo--get-face ()
   (let ((keyword (match-string 2)))
     (hl-todo--combine-face
-      (cdr (cl-find-if (lambda (elt)
-                         (string-match-p (format "\\`%s\\'" (car elt))
-                                         keyword))
-                       hl-todo-keyword-faces)))))
+     (cdr (cl-find-if (lambda (elt)
+                        (string-match-p (format "\\`%s\\'" (car elt))
+                                        keyword))
+                      hl-todo-keyword-faces)))))
 
 (defun hl-todo--combine-face (face)
   (if (stringp face)
@@ -261,11 +266,7 @@ including alphanumeric characters, cannot be used here."
       (hl-todo--setup)
     (font-lock-remove-keywords nil hl-todo--keywords))
   (when font-lock-mode
-    (save-excursion
-      (goto-char (point-min))
-      (while (hl-todo--search)
-        (save-excursion
-          (font-lock-fontify-region (match-beginning 0) (match-end 0) nil))))))
+    (jit-lock-mode 1)))
 
 ;;;###autoload
 (define-globalized-minor-mode global-hl-todo-mode
@@ -292,8 +293,17 @@ A negative argument means move backward that many keywords."
                           (looking-at (hl-todo--regexp)))
                     (goto-char (match-end 0)))
                   (or (hl-todo--search)
-                      (user-error "No more matches"))))
-      (cl-decf arg))))
+                      (if hl-todo-wrap-movement
+                          nil
+                        (user-error "No more matches")))))
+      (cl-decf arg))
+    (when (> arg 0)
+      (let ((pos (save-excursion
+                   (goto-char (point-min))
+                   (let ((hl-todo-wrap-movement nil))
+                     (hl-todo-next arg))
+                   (point))))
+        (goto-char pos)))))
 
 ;;;###autoload
 (defun hl-todo-previous (arg)
@@ -309,9 +319,18 @@ A negative argument means move forward that many keywords."
                   (hl-todo--search (concat (hl-todo--regexp) "\\=") nil t)
                   (or (hl-todo--search nil nil t)
                       (progn (goto-char start)
-                             (user-error "No more matches")))))
+                             (if hl-todo-wrap-movement
+                                 nil
+                               (user-error "No more matches"))))))
       (goto-char (match-end 0))
-      (cl-decf arg))))
+      (cl-decf arg))
+    (when (> arg 0)
+      (let ((pos (save-excursion
+                   (goto-char (point-max))
+                   (let ((hl-todo-wrap-movement nil))
+                     (hl-todo-previous arg))
+                   (point))))
+        (goto-char pos)))))
 
 ;;;###autoload
 (defun hl-todo-occur ()
@@ -350,11 +369,12 @@ current line."
                     (format "%s %s " comment-start keyword))))
    (t
     (goto-char (line-beginning-position))
-    (insert (format "%s %s "
-                    (if (derived-mode-p 'lisp-mode 'emacs-lisp-mode)
-                        (format "%s%s" comment-start comment-start)
-                      comment-start)
-                    keyword))
+    (insert (cond ((derived-mode-p 'lisp-mode 'emacs-lisp-mode)
+                   (format "%s%s %s" comment-start comment-start keyword))
+                  ((string-suffix-p " " comment-start)
+                   (format "%s%s" comment-start keyword))
+                  (t
+                   (format "%s %s" comment-start keyword))))
     (unless (looking-at "[\s\t]*$")
       (save-excursion (insert "\n")))
     (indent-region (line-beginning-position) (line-end-position)))))

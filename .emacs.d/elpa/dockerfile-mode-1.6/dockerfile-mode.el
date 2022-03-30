@@ -2,8 +2,8 @@
 
 ;; Copyright (c) 2013 Spotify AB
 ;; Package-Requires: ((emacs "24"))
-;; Package-Version: 1.5
-;; Package-Commit: 628315e2e4ab2f269548126444234caa057b2c75
+;; Package-Version: 1.6
+;; Package-Commit: 11c43de04b128b7638cd98a1e80be2b661c18fbb
 ;; Homepage: https://github.com/spotify/dockerfile-mode
 ;; URL: https://github.com/spotify/dockerfile-mode
 ;; Version: 1.5
@@ -51,6 +51,16 @@
   :type 'boolean
   :group 'dockerfile)
 
+(defcustom dockerfile-build-force-rm nil
+  "Runs docker builder command with --force-rm switch."
+  :type 'boolean
+  :group 'dockerfile)
+
+(defcustom dockerfile-build-pull nil
+  "Runs docker builder command with --pull switch."
+  :type 'boolean
+  :group 'dockerfile)
+
 (defcustom dockerfile-build-args nil
   "List of --build-arg to pass to docker build.
 
@@ -65,6 +75,10 @@ Each element of the list will be passed as a separate
 This is the new buildsystem for docker, and in time it will replace the old one
 but for now it has to be explicitly enabled to work.
 It is supported from docker 18.09"
+  :type 'boolean)
+
+(defcustom dockerfile-enable-auto-indent t
+  "Toggles the auto indentation functionality."
   :type 'boolean)
 
 (defcustom dockerfile-indent-offset (or standard-indent 2)
@@ -136,16 +150,18 @@ It is supported from docker 18.09"
   "Indent lines in a Dockerfile.
 
 Lines beginning with a keyword are ignored, and any others are
-indented by one `dockerfile-indent-offset'."
-  (unless (member (get-text-property (point-at-bol) 'face)
-                  '(font-lock-comment-delimiter-face font-lock-keyword-face))
-    (save-excursion
-      (beginning-of-line)
-      (skip-chars-forward "[ \t]" (point-at-eol))
-      (unless (equal (point) (point-at-eol)) ; Ignore empty lines.
-        ;; Delete existing whitespace.
-        (delete-char (- (point-at-bol) (point)))
-        (indent-to dockerfile-indent-offset)))))
+indented by one `dockerfile-indent-offset'. Functionality toggled
+by `dockerfile-enable-auto-indent'."
+  (when dockerfile-enable-auto-indent
+    (unless (member (get-text-property (point-at-bol) 'face)
+             '(font-lock-comment-delimiter-face font-lock-keyword-face))
+     (save-excursion
+       (beginning-of-line)
+       (skip-chars-forward "[ \t]" (point-at-eol))
+       (unless (equal (point) (point-at-eol)) ; Ignore empty lines.
+         ;; Delete existing whitespace.
+         (delete-char (- (point-at-bol) (point)))
+         (indent-to dockerfile-indent-offset))))))
 
 (defun dockerfile-build-arg-string ()
   "Create a --build-arg string for each element in `dockerfile-build-args'."
@@ -191,11 +207,13 @@ The build string will be of the format:
   (save-buffer)
     (compilation-start
         (format
-            "%s%s%s build %s %s %s -f %s %s"
+            "%s%s%s build %s %s %s %s %s -f %s %s"
             (if dockerfile-use-buildkit "DOCKER_BUILDKIT=1 " "")
             (if dockerfile-use-sudo "sudo " "")
             dockerfile-mode-command
             (if no-cache "--no-cache" "")
+            (if dockerfile-build-force-rm "--force-rm " "")
+            (if dockerfile-build-pull "--pull " "")
             (dockerfile-tag-string image-name)
             (dockerfile-build-arg-string)
             (shell-quote-argument (dockerfile-standard-filename

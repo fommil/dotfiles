@@ -1,6 +1,6 @@
 ;;; ghub-graphql.el --- access Github API using GrapthQL  -*- lexical-binding: t -*-
 
-;; Copyright (C) 2016-2021  Jonas Bernoulli
+;; Copyright (C) 2016-2022  Jonas Bernoulli
 
 ;; Author: Jonas Bernoulli <jonas@bernoul.li>
 ;; Homepage: https://github.com/magit/ghub
@@ -43,9 +43,9 @@ string.  VARIABLES is a JSON-like alist.  The other arguments
 behave as for `ghub-request' (which see)."
   (cl-assert (stringp graphql))
   (cl-assert (not (stringp variables)))
-  (ghub-request "POST" "/graphql" nil :payload
-                (json-encode `(("query" . ,graphql)
-                               ,@(and variables `(("variables" ,@variables)))))
+  (ghub-request "POST" "/graphql" nil
+                :payload `(("query" . ,graphql)
+                           ,@(and variables `(("variables" ,@variables))))
                 :headers headers :silent silent
                 :username username :auth auth :host host
                 :callback callback :errorback errorback

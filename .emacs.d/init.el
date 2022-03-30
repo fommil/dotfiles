@@ -344,6 +344,7 @@ Inspired by `org-combine-plists'."
 
 (use-package undo-tree
   :diminish undo-tree-mode
+  :init (setq undo-tree-auto-save-history nil)
   :config (global-undo-tree-mode)
   :bind ("s-/" . undo-tree-visualize))
 
