@@ -1,4 +1,4 @@
-;;; erc-hl-nicks-autoloads.el --- automatically extracted autoloads
+;;; erc-hl-nicks-autoloads.el --- automatically extracted autoloads  -*- lexical-binding: t -*-
 ;;
 ;;; Code:
 
@@ -21,15 +21,13 @@ Manually handle the really wacked out nickname transformations.
 \(fn NICK &rest NICK-ALIASES)" nil nil)
 
 (autoload 'erc-hl-nicks "erc-hl-nicks" "\
-Retrieves a list of usernames from the server and highlights them
-
-\(fn)" nil nil)
+Retrieves a list of usernames from the server and highlights them" nil nil)
 
 (when (boundp 'erc-modules) (add-to-list 'erc-modules 'hl-nicks))
 
 (eval-after-load 'erc '(progn (unless (featurep 'erc-hl-nicks) (require 'erc-hl-nicks)) (add-to-list 'erc-modules 'hl-nicks t)))
 
-(if (fboundp 'register-definition-prefixes) (register-definition-prefixes "erc-hl-nicks" '("erc-hl-nicks-")))
+(register-definition-prefixes "erc-hl-nicks" '("erc-hl-nicks-"))
 
 ;;;***
 

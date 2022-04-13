@@ -1,4 +1,4 @@
-;;; ox-gfm-autoloads.el --- automatically extracted autoloads
+;;; ox-gfm-autoloads.el --- automatically extracted autoloads  -*- lexical-binding: t -*-
 ;;
 ;;; Code:
 
@@ -38,9 +38,7 @@ non-nil.
 Assume the current region has org-mode syntax, and convert it
 to Github Flavored Markdown.  This can be used in any buffer.
 For example, you can write an itemized list in org-mode syntax in
-a Markdown buffer and use this command to convert it.
-
-\(fn)" t nil)
+a Markdown buffer and use this command to convert it." t nil)
 
 (autoload 'org-gfm-export-to-markdown "ox-gfm" "\
 Export current buffer to a Github Flavored Markdown file.
@@ -74,7 +72,7 @@ Return output file name.
 
 \(fn PLIST FILENAME PUB-DIR)" nil nil)
 
-(if (fboundp 'register-definition-prefixes) (register-definition-prefixes "ox-gfm" '("org-gfm-" "gfm-table-" "width-cookies")))
+(register-definition-prefixes "ox-gfm" '("gfm-table-" "org-gfm-" "width-cookies"))
 
 ;;;***
 

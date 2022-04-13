@@ -1,4 +1,4 @@
-;;; paredit-autoloads.el --- automatically extracted autoloads
+;;; paredit-autoloads.el --- automatically extracted autoloads  -*- lexical-binding: t -*-
 ;;
 ;;; Code:
 
@@ -18,14 +18,26 @@ Paredit behaves badly if parentheses are unbalanced, so exercise
   fixing unbalanced parentheses instead.
 \\<paredit-mode-map>
 
+This is a minor mode.  If called interactively, toggle the
+`Paredit mode' mode.  If the prefix argument is positive, enable
+the mode, and if it is zero or negative, disable the mode.
+
+If called from Lisp, toggle the mode if ARG is `toggle'.  Enable
+the mode if ARG is nil, omitted, or is a positive number.
+Disable the mode if ARG is a negative number.
+
+To check whether the minor mode is enabled in the current buffer,
+evaluate `paredit-mode'.
+
+The mode's hook is called both when the mode is enabled and when
+it is disabled.
+
 \(fn &optional ARG)" t nil)
 
 (autoload 'enable-paredit-mode "paredit" "\
-Turn on pseudo-structural editing of Lisp code.
+Turn on pseudo-structural editing of Lisp code." t nil)
 
-\(fn)" t nil)
-
-(if (fboundp 'register-definition-prefixes) (register-definition-prefixes "paredit" '("paredit-" "?\\" "disable-paredit-mode")))
+(register-definition-prefixes "paredit" '("?\\" "disable-paredit-mode" "paredit-"))
 
 ;;;***
 

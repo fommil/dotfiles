@@ -1,4 +1,4 @@
-;;; popup-imenu-autoloads.el --- automatically extracted autoloads
+;;; popup-imenu-autoloads.el --- automatically extracted autoloads  -*- lexical-binding: t -*-
 ;;
 ;;; Code:
 
@@ -12,7 +12,7 @@
 (autoload 'popup-imenu "popup-imenu" "\
 Open the popup window with imenu items." t nil)
 
-(if (fboundp 'register-definition-prefixes) (register-definition-prefixes "popup-imenu" '("popup-imenu-")))
+(register-definition-prefixes "popup-imenu" '("popup-imenu-"))
 
 ;;;***
 

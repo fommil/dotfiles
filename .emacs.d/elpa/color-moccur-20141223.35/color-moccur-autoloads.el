@@ -1,4 +1,4 @@
-;;; color-moccur-autoloads.el --- automatically extracted autoloads
+;;; color-moccur-autoloads.el --- automatically extracted autoloads  -*- lexical-binding: t -*-
 ;;
 ;;; Code:
 
@@ -30,16 +30,14 @@ It serves as a menu to find any of the occurrences in this buffer.
 \(fn REGEXP ARG)" t nil)
 
 (autoload 'grep-buffers "color-moccur" "\
-*Run `grep` PROGRAM to match EXPRESSION (with optional OPTIONS) on all visited files.
-
-\(fn)" t nil)
+*Run `grep` PROGRAM to match EXPRESSION (with optional OPTIONS) on all visited files." t nil)
 
 (autoload 'search-buffers "color-moccur" "\
 *Search string of all buffers.
 
 \(fn REGEXP ARG)" t nil)
 
-(if (fboundp 'register-definition-prefixes) (register-definition-prefixes "color-moccur" '("string>" "search-buffers-" "moccur" "Buffer-menu-moccur" "dmoccur" "dired-do-moccur-by-m" "color-moccur-default-ime-status" "clean-dmoccur-buffers" "isearch-moccur" "buffer-menu-moccur" "kill-buffer-after-dired-do-moccur" "*moccur-buffer-name-")))
+(register-definition-prefixes "color-moccur" '("*moccur-buffer-name-" "Buffer-menu-moccur" "buffer-menu-moccur" "clean-dmoccur-buffers" "color-moccur-default-ime-status" "dired-do-moccur-by-m" "dmoccur" "isearch-moccur" "kill-buffer-after-dired-do-moccur" "moccur" "search-buffers-" "string>"))
 
 ;;;***
 

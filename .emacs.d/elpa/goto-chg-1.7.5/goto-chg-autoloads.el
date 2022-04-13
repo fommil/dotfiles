@@ -1,4 +1,4 @@
-;;; goto-chg-autoloads.el --- automatically extracted autoloads
+;;; goto-chg-autoloads.el --- automatically extracted autoloads  -*- lexical-binding: t -*-
 ;;
 ;;; Code:
 
@@ -42,7 +42,7 @@ See `goto-last-change' for use of prefix argument.
 
 \(fn ARG)" t nil)
 
-(if (fboundp 'register-definition-prefixes) (register-definition-prefixes "goto-chg" '("glc-")))
+(register-definition-prefixes "goto-chg" '("glc-"))
 
 ;;;***
 

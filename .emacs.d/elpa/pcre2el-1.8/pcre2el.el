@@ -8,6 +8,7 @@
 ;; Updated:			13 December 2015
 ;; Version:                     1.8
 ;; Package-Version: 1.8
+;; Package-Commit: 166a10472002010692dbc35f323ffb8110a294c5
 ;; Url:                         https://github.com/joddie/pcre2el
 ;; Package-Requires:            ((emacs "24") (cl-lib "0.3"))
 

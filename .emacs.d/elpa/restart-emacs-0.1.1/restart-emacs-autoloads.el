@@ -1,4 +1,4 @@
-;;; restart-emacs-autoloads.el --- automatically extracted autoloads
+;;; restart-emacs-autoloads.el --- automatically extracted autoloads  -*- lexical-binding: t -*-
 ;;
 ;;; Code:
 
@@ -26,7 +26,7 @@ with which Emacs should be restarted.
 
 \(fn &optional ARGS)" t nil)
 
-(if (fboundp 'register-definition-prefixes) (register-definition-prefixes "restart-emacs" '("restart-emacs--")))
+(register-definition-prefixes "restart-emacs" '("restart-emacs--"))
 
 ;;;***
 

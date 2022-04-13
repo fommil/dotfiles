@@ -7,6 +7,7 @@
 ;; Author of base darcula theme: Sam Halliday <Sam.Halliday@gmail.com>
 ;; Keywords: faces
 ;; Package-Version: 1.3
+;; Package-Commit: 1bbfff8e6742d18e9b77ed796f44da3b7bd10606
 
 ;; This program is free software; you can redistribute it and/or modify
 ;; it under the terms of the GNU General Public License as published by

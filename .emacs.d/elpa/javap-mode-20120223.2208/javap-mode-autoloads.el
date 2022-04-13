@@ -1,4 +1,4 @@
-;;; javap-mode-autoloads.el --- automatically extracted autoloads
+;;; javap-mode-autoloads.el --- automatically extracted autoloads  -*- lexical-binding: t -*-
 ;;
 ;;; Code:
 
@@ -14,7 +14,7 @@ A major mode for viewing javap files.
 
 \(fn)" t nil)
 
-(if (fboundp 'register-definition-prefixes) (register-definition-prefixes "javap-mode" '("javap-")))
+(register-definition-prefixes "javap-mode" '("javap-"))
 
 ;;;***
 

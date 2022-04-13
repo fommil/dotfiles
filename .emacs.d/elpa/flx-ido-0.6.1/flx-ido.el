@@ -8,6 +8,7 @@
 ;; Created: Sun Apr 21 20:38:36 2013 (+0800)
 ;; Version: 0.6.1
 ;; Package-Version: 0.6.1
+;; Package-Commit: 7fce6a4cdb65ac1b52e2b409ba548767581ce34c
 ;; URL: https://github.com/lewang/flx
 ;; Package-Requires: ((flx "0.1") (cl-lib "0.3"))
 

@@ -1,4 +1,4 @@
-;;; yatemplate-autoloads.el --- automatically extracted autoloads
+;;; yatemplate-autoloads.el --- automatically extracted autoloads  -*- lexical-binding: t -*-
 ;;
 ;;; Code:
 
@@ -38,7 +38,7 @@ Regular expression matching files that do not contain `yatemplate-separator', bu
 (autoload 'yatemplate-fill-alist "yatemplate" "\
 Fill `auto-insert-alist'." nil nil)
 
-(if (fboundp 'register-definition-prefixes) (register-definition-prefixes "yatemplate" '("yatemplate-")))
+(register-definition-prefixes "yatemplate" '("yatemplate-"))
 
 ;;;***
 

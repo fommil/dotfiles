@@ -3,6 +3,7 @@
 
 ;; Authors: Akihisa <akihisa@mail.ne.jp>
 ;; Version: 2.71
+;; Package-Commit: 4f1c59ffd1ccc2ab1a171cd6b721e8cb9e002fb7
 ;; Package-Version: 20141223.35
 ;; Package-X-Original-version: 2.71
 ;; Keywords: convenience

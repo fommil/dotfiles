@@ -1,4 +1,4 @@
-;;; visual-regexp-steroids-autoloads.el --- automatically extracted autoloads
+;;; visual-regexp-steroids-autoloads.el --- automatically extracted autoloads  -*- lexical-binding: t -*-
 ;;
 ;;; Code:
 
@@ -10,32 +10,19 @@
 ;;;;;;  (0 0 0 0))
 ;;; Generated autoloads from visual-regexp-steroids.el
 
-(autoload 'vr/select-replace "visual-regexp-steroids" "\
+(autoload 'vr/select-replace "visual-regexp-steroids" nil t nil)
 
+(autoload 'vr/select-query-replace "visual-regexp-steroids" nil t nil)
 
-\(fn)" t nil)
-
-(autoload 'vr/select-query-replace "visual-regexp-steroids" "\
-
-
-\(fn)" t nil)
-
-(autoload 'vr/select-mc-mark "visual-regexp-steroids" "\
-
-
-\(fn)" t nil)
+(autoload 'vr/select-mc-mark "visual-regexp-steroids" nil t nil)
 
 (autoload 'vr/isearch-forward "visual-regexp-steroids" "\
-Like isearch-forward, but using Python (or custom) regular expressions.
-
-\(fn)" t nil)
+Like isearch-forward, but using Python (or custom) regular expressions." t nil)
 
 (autoload 'vr/isearch-backward "visual-regexp-steroids" "\
-Like isearch-backward, but using Python (or custom) regular expressions.
+Like isearch-backward, but using Python (or custom) regular expressions." t nil)
 
-\(fn)" t nil)
-
-(if (fboundp 'register-definition-prefixes) (register-definition-prefixes "visual-regexp-steroids" '("vr/" "vr--")))
+(register-definition-prefixes "visual-regexp-steroids" '("vr--" "vr/"))
 
 ;;;***
 

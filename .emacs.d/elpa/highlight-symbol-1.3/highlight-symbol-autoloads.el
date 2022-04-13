@@ -1,4 +1,4 @@
-;;; highlight-symbol-autoloads.el --- automatically extracted autoloads
+;;; highlight-symbol-autoloads.el --- automatically extracted autoloads  -*- lexical-binding: t -*-
 ;;
 ;;; Code:
 
@@ -14,6 +14,21 @@
 Minor mode that highlights the symbol under point throughout the buffer.
 Highlighting takes place after `highlight-symbol-idle-delay'.
 
+This is a minor mode.  If called interactively, toggle the
+`Highlight-Symbol mode' mode.  If the prefix argument is
+positive, enable the mode, and if it is zero or negative, disable
+the mode.
+
+If called from Lisp, toggle the mode if ARG is `toggle'.  Enable
+the mode if ARG is nil, omitted, or is a positive number.
+Disable the mode if ARG is a negative number.
+
+To check whether the minor mode is enabled in the current buffer,
+evaluate `highlight-symbol-mode'.
+
+The mode's hook is called both when the mode is enabled and when
+it is disabled.
+
 \(fn &optional ARG)" t nil)
 
 (defalias 'highlight-symbol-at-point 'highlight-symbol)
@@ -26,14 +41,10 @@ element in of `highlight-symbol-faces'.
 \(fn &optional SYMBOL QUIET)" t nil)
 
 (autoload 'highlight-symbol-remove-all "highlight-symbol" "\
-Remove symbol highlighting in buffer.
-
-\(fn)" t nil)
+Remove symbol highlighting in buffer." t nil)
 
 (autoload 'highlight-symbol-list-all "highlight-symbol" "\
-List all symbols highlighted in the buffer.
-
-\(fn)" t nil)
+List all symbols highlighted in the buffer." t nil)
 
 (autoload 'highlight-symbol-count "highlight-symbol" "\
 Print the number of occurrences of symbol at point.
@@ -41,24 +52,16 @@ Print the number of occurrences of symbol at point.
 \(fn &optional SYMBOL)" t nil)
 
 (autoload 'highlight-symbol-next "highlight-symbol" "\
-Jump to the next location of the symbol at point within the buffer.
-
-\(fn)" t nil)
+Jump to the next location of the symbol at point within the buffer." t nil)
 
 (autoload 'highlight-symbol-prev "highlight-symbol" "\
-Jump to the previous location of the symbol at point within the buffer.
-
-\(fn)" t nil)
+Jump to the previous location of the symbol at point within the buffer." t nil)
 
 (autoload 'highlight-symbol-next-in-defun "highlight-symbol" "\
-Jump to the next location of the symbol at point within the defun.
-
-\(fn)" t nil)
+Jump to the next location of the symbol at point within the defun." t nil)
 
 (autoload 'highlight-symbol-prev-in-defun "highlight-symbol" "\
-Jump to the previous location of the symbol at point within the defun.
-
-\(fn)" t nil)
+Jump to the previous location of the symbol at point within the defun." t nil)
 
 (autoload 'highlight-symbol-nav-mode "highlight-symbol" "\
 Navigate occurrences of the symbol at point.
@@ -92,7 +95,7 @@ before if NLINES is negative.
 
 \(fn &optional NLINES)" t nil)
 
-(if (fboundp 'register-definition-prefixes) (register-definition-prefixes "highlight-symbol" '("highlight-symbol")))
+(register-definition-prefixes "highlight-symbol" '("highlight-symbol"))
 
 ;;;***
 

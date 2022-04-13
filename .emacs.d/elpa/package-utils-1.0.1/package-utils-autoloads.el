@@ -1,4 +1,4 @@
-;;; package-utils-autoloads.el --- automatically extracted autoloads
+;;; package-utils-autoloads.el --- automatically extracted autoloads  -*- lexical-binding: t -*-
 ;;
 ;;; Code:
 
@@ -24,9 +24,7 @@ With prefix argument NO-FETCH, do not call `package-refresh-contents'.
 \(fn &optional NO-FETCH)" t nil)
 
 (autoload 'package-utils-upgrade-all-no-fetch "package-utils" "\
-Upgrade all packages that can be upgraded without calling `package-refresh-contents' first.
-
-\(fn)" t nil)
+Upgrade all packages that can be upgraded without calling `package-refresh-contents' first." t nil)
 
 (autoload 'package-utils-upgrade-all-and-quit "package-utils" "\
 Upgrade all packages that can be upgraded, then quit emacs.
@@ -59,7 +57,7 @@ Uninstall the package NAME.
 
 \(fn NAME)" t nil)
 
-(if (fboundp 'register-definition-prefixes) (register-definition-prefixes "package-utils" '("package-utils-")))
+(register-definition-prefixes "package-utils" '("package-utils-"))
 
 ;;;***
 

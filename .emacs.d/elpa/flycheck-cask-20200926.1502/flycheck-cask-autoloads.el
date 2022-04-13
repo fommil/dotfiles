@@ -1,4 +1,4 @@
-;;; flycheck-cask-autoloads.el --- automatically extracted autoloads
+;;; flycheck-cask-autoloads.el --- automatically extracted autoloads  -*- lexical-binding: t -*-
 ;;
 ;;; Code:
 
@@ -20,7 +20,7 @@ syntax checking.
 Set `flycheck-emacs-lisp-initialize-packages' and
 `flycheck-emacs-lisp-package-user-dir' accordingly." nil nil)
 
-(if (fboundp 'register-definition-prefixes) (register-definition-prefixes "flycheck-cask" '("flycheck-cask-")))
+(register-definition-prefixes "flycheck-cask" '("flycheck-cask-"))
 
 ;;;***
 

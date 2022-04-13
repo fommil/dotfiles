@@ -1,4 +1,4 @@
-;;; flx-autoloads.el --- automatically extracted autoloads
+;;; flx-autoloads.el --- automatically extracted autoloads  -*- lexical-binding: t -*-
 ;;
 ;;; Code:
 
@@ -9,7 +9,7 @@
 ;;;### (autoloads nil "flx" "flx.el" (0 0 0 0))
 ;;; Generated autoloads from flx.el
 
-(if (fboundp 'register-definition-prefixes) (register-definition-prefixes "flx" '("flx-")))
+(register-definition-prefixes "flx" '("flx-"))
 
 ;;;***
 

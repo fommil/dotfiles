@@ -5,6 +5,7 @@
 ;; Author: Iqbal Ansari <iqbalansari02@yahoo.com>
 ;; Keywords: convenience
 ;; Package-Version: 0.1.1
+;; Package-Commit: e9292fe88d8be7d0ecf9f4f30ed98ffbc6bd689b
 ;; URL: https://github.com/iqbalansari/restart-emacs
 ;; Version: 0.1.1
 

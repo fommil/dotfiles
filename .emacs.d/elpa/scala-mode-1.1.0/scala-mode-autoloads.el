@@ -1,4 +1,4 @@
-;;; scala-mode-autoloads.el --- automatically extracted autoloads
+;;; scala-mode-autoloads.el --- automatically extracted autoloads  -*- lexical-binding: t -*-
 ;;
 ;;; Code:
 
@@ -10,14 +10,10 @@
 ;;; Generated autoloads from scala-mode.el
 
 (autoload 'scala-mode:set-scala-syntax-mode "scala-mode" "\
-Sets the syntax-table and other related variables for the current buffer to those of scala-mode. Can be used to make some other major mode (such as sbt-mode) use scala syntax-table.
-
-\(fn)" nil nil)
+Sets the syntax-table and other related variables for the current buffer to those of scala-mode. Can be used to make some other major mode (such as sbt-mode) use scala syntax-table." nil nil)
 
 (autoload 'scala-mode:goto-start-of-code "scala-mode" "\
-Go to the start of the real code in the file: object, class or trait.
-
-\(fn)" t nil)
+Go to the start of the real code in the file: object, class or trait." t nil)
 
 (autoload 'scala-mode "scala-mode" "\
 Major mode for editing scala code.
@@ -32,7 +28,7 @@ When started, runs `scala-mode-hook'.
 
 (modify-coding-system-alist 'file "\\.\\(scala\\|sbt\\)\\'" 'utf-8)
 
-(if (fboundp 'register-definition-prefixes) (register-definition-prefixes "scala-mode" '("scala-mode:")))
+(register-definition-prefixes "scala-mode" '("scala-mode:"))
 
 ;;;***
 
@@ -40,7 +36,7 @@ When started, runs `scala-mode-hook'.
 ;;;;;;  (0 0 0 0))
 ;;; Generated autoloads from scala-mode-fontlock.el
 
-(if (fboundp 'register-definition-prefixes) (register-definition-prefixes "scala-mode-fontlock" '("scala-font-lock:")))
+(register-definition-prefixes "scala-mode-fontlock" '("scala-font-lock:"))
 
 ;;;***
 
@@ -48,7 +44,7 @@ When started, runs `scala-mode-hook'.
 ;;;;;;  0 0 0))
 ;;; Generated autoloads from scala-mode-imenu.el
 
-(if (fboundp 'register-definition-prefixes) (register-definition-prefixes "scala-mode-imenu" '("scala-imenu:")))
+(register-definition-prefixes "scala-mode-imenu" '("scala-imenu:"))
 
 ;;;***
 
@@ -56,7 +52,7 @@ When started, runs `scala-mode-hook'.
 ;;;;;;  (0 0 0 0))
 ;;; Generated autoloads from scala-mode-indent.el
 
-(if (fboundp 'register-definition-prefixes) (register-definition-prefixes "scala-mode-indent" '("scala-")))
+(register-definition-prefixes "scala-mode-indent" '("scala-"))
 
 ;;;***
 
@@ -64,7 +60,7 @@ When started, runs `scala-mode-hook'.
 ;;;;;;  0))
 ;;; Generated autoloads from scala-mode-lib.el
 
-(if (fboundp 'register-definition-prefixes) (register-definition-prefixes "scala-mode-lib" '("scala-")))
+(register-definition-prefixes "scala-mode-lib" '("scala-"))
 
 ;;;***
 
@@ -72,7 +68,7 @@ When started, runs `scala-mode-hook'.
 ;;;;;;  0))
 ;;; Generated autoloads from scala-mode-map.el
 
-(if (fboundp 'register-definition-prefixes) (register-definition-prefixes "scala-mode-map" '("scala-mode-map")))
+(register-definition-prefixes "scala-mode-map" '("scala-mode-map"))
 
 ;;;***
 
@@ -80,7 +76,7 @@ When started, runs `scala-mode-hook'.
 ;;;;;;  (0 0 0 0))
 ;;; Generated autoloads from scala-mode-paragraph.el
 
-(if (fboundp 'register-definition-prefixes) (register-definition-prefixes "scala-mode-paragraph" '("scala-paragraph:")))
+(register-definition-prefixes "scala-mode-paragraph" '("scala-paragraph:"))
 
 ;;;***
 
@@ -88,7 +84,7 @@ When started, runs `scala-mode-hook'.
 ;;;;;;  (0 0 0 0))
 ;;; Generated autoloads from scala-mode-syntax.el
 
-(if (fboundp 'register-definition-prefixes) (register-definition-prefixes "scala-mode-syntax" '("scala-syntax:")))
+(register-definition-prefixes "scala-mode-syntax" '("scala-syntax:"))
 
 ;;;***
 

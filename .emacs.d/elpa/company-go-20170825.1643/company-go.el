@@ -244,9 +244,6 @@ triggers a completion immediately."
   (case command
     (interactive (company-begin-backend 'company-go))
     (prefix (and (derived-mode-p 'go-mode)
-                 ;; fommil: changed semantics to only work after .
-                 (or (= 46 (char-before))
-                     (looking-back (rx "." (+ word)) 10))
                  (not (company-in-string-or-comment))
                  (not (company-go--in-num-literal-p))
                  (or (company-go--prefix) 'stop)))
