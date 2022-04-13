@@ -816,10 +816,12 @@ Inspired by `org-combine-plists'."
 (use-package go-mode
   ;; Make sure to install dependencies:
   ;;
-  ;; go get golang.org/x/tools/cmd/goimports@latest
-  ;; go get github.com/rogpeppe/godef@latest
-  ;; go get github.com/stamblerre/gocode@latest
-  ;; go get honnef.co/go/tools/cmd/staticcheck@latest
+  ;; go install golang.org/x/tools/cmd/goimports@latest
+  ;; go install github.com/rogpeppe/godef@latest
+  ;; go install github.com/stamblerre/gocode@latest
+  ;; go install honnef.co/go/tools/cmd/staticcheck@latest
+  ;;
+  ;; go install golang.org/x/tools/gopls@latest
   ;;
   ;; Note: gocode and godef is unmaintained but it should be possible to write a
   ;; gopls (non-lsp) based company/go-to-definition/eldoc backend. e.g. use the
@@ -829,8 +831,9 @@ Inspired by `org-combine-plists'."
   ;; could be cross referenced with gopls references or fqn of types confirmed).
   ;; We could also use the `go doc` tool to list contents of a package, again
   ;; needing package name lookup. TODO gopls backends
+  ;; TODO https://github.com/golang/go/issues/52069
   ;;
-  ;; go get github.com/pquerna/ffjson@latest
+  ;; go install github.com/pquerna/ffjson@latest
   ;; https://yalantis.com/blog/speed-up-json-encoding-decoding/
   ;;
   ;; TODO is there something like hoogle for Go?
