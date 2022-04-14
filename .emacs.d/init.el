@@ -565,19 +565,6 @@ Inspired by `org-combine-plists'."
   :diminish rainbow-delimiters-mode
   :commands rainbow-delimiters-mode)
 
-(use-package smartparens
-  :diminish smartparens-mode
-  :commands
-  smartparens-mode
-  sp-local-pair
-  :config
-  (require 'smartparens-config)
-  :bind
-  (:map
-   smartparens-mode-map
-   ("M-<delete>" . sp-unwrap-sexp)
-   ("s-{" . sp-rewrap-sexp)))
-
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; This section is for overriding common emacs keybindings with tweaks.
 (global-unset-key (kbd "C-z")) ;; I hate you so much C-z
@@ -654,7 +641,7 @@ Inspired by `org-combine-plists'."
 (advice-add
  #'insert-parentheses
  :filter-args
- '(lambda (a) (if (equal a '(nil)) '(1) a)))
+ #'(lambda (a) (if (equal a '(nil)) '(1) a)))
 
 (use-package paredit
   :config
@@ -729,7 +716,7 @@ Inspired by `org-combine-plists'."
 (add-hook 'c-mode-hook (lambda ()
                          (yas-minor-mode 1)
                          (company-mode 1)
-                         (smartparens-mode 1)))
+                         (electric-pair-local-mode 1)))
 
 ;;..............................................................................
 ;; IRC
@@ -767,7 +754,13 @@ Inspired by `org-combine-plists'."
   (require 'scala-compile)
   :bind
   (:map scala-mode-map
-        ("C-c c" . scala-compile)))
+        ("C-c c" . scala-compile))
+  :hook
+  ((scala-mode . git-gutter-mode)
+   (scala-mode . show-paren-mode)
+   ;; TODO space/return should clean up the newly inserted braces
+   (scala-mode . electric-pair-local-mode)
+   (scala-mode . yas-minor-mode)))
 
 (use-package ensime-mode
   :ensure nil
@@ -780,18 +773,13 @@ Inspired by `org-combine-plists'."
         ("C-c C-i s" . ensime-symbol-at-point)
         ("C-c C-r i" . ensime-import-symbol-at-point)))
 
-(add-hook 'scala-mode-hook
-          (lambda ()
-            (show-paren-mode 1)
-            (smartparens-mode 1)
-            (yas-minor-mode 1)
-            (git-gutter-mode 1)
-            (ensime-mode 1)))
+(add-hook 'scala-mode-hook #'ensime-mode)
 
 (use-package javap-mode)
 
+;; TODO this newline block shouldn't be necessary, do it properly with elec-pair
 (defun go-insert-opening-block ()
-  "workaround electric-pair / smartparens broken newline semantics"
+  "workaround elec-pair broken newline semantics"
   (interactive)
   (cond
    ((use-region-p)
@@ -857,9 +845,11 @@ Inspired by `org-combine-plists'."
   :hook
   (;;(go-mode . abbrev-mode)
    (go-mode . git-gutter-mode)
+   (go-mode . show-paren-mode)
+   (go-mode . electric-pair-local-mode)
+   (go-mode . yas-minor-mode)
    (go-mode . flycheck-mode)
-   (go-mode . company-mode)
-   (go-mode . electric-pair-local-mode)))
+   (go-mode . company-mode)))
 (use-package company-go
   :config
   (setq company-go-show-annotation t

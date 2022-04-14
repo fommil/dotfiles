@@ -11,7 +11,6 @@
 
 (require 'company)
 (require 'rx)
-(require 'smartparens)
 
 (use-package haskell-tng-mode
   :ensure nil
@@ -29,7 +28,6 @@
   (require 'haskell-tng-extra-hideshow)
   (require 'haskell-tng-extra-company)
   (require 'haskell-tng-extra-projectile)
-  (require 'haskell-tng-extra-smartparens)
   (require 'haskell-tng-extra-yasnippet)
   (require 'haskell-tng-extra-cabal-mode)
 
@@ -73,6 +71,7 @@
  (lambda ()
    (whitespace-mode-with-local-variables)
    (show-paren-mode 1)
+   (electric-pair-local-mode 1)
    (git-gutter-mode 1)))
 
 (provide 'fommil-haskell-tng)

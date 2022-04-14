@@ -20,7 +20,6 @@
 
 ;; (add-hook 'python-mode-hook
 ;;           (lambda ()
-;;             (smartparens-mode)
 ;;             (elpy-mode)
 ;;             (let ((backends (company-backends-for-buffer)))
 ;;               (setq company-backends (cons 'elpy-company-backend backends)))))
