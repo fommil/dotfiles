@@ -14,8 +14,7 @@
 ;;; Code:
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; User Site Local
-(setq load-prefer-newer t
-      comp-deferred-compilation t)
+(setq load-prefer-newer t)
 (load (expand-file-name "local-preinit.el" user-emacs-directory) 'no-error)
 (setq package-check-signature nil)
 (unless (and (boundp 'package--initialized) package--initialized)
@@ -107,9 +106,7 @@
 (global-auto-revert-mode 1)
 
 (electric-indent-mode 0)
-(remove-hook 'post-self-insert-hook
-             'electric-indent-post-self-insert-function)
-(remove-hook 'find-file-hooks 'vc-find-file-hook)
+(remove-hook 'find-file-hook 'vc-find-file-hook)
 
 (global-auto-composition-mode 0)
 (auto-encryption-mode 0)
@@ -156,6 +153,25 @@
 (defun xref-prev-line-quiet ()
   (interactive)
   (xref--search-property 'xref-item t))
+
+(use-package elec-pair
+  :ensure nil)
+;; overwrite this built-in function from `elec-mode.el` with one that uses
+;; `newline-and-indent` rather than `newline`.
+(defun electric-pair-open-newline-between-pairs-psif ()
+  "Honour `electric-pair-open-newline-between-pairs'.
+Member of `post-self-insert-hook' if `electric-pair-mode' is on."
+  (when (and (if (functionp electric-pair-open-newline-between-pairs)
+                 (funcall electric-pair-open-newline-between-pairs)
+               electric-pair-open-newline-between-pairs)
+             (eq last-command-event ?\n)
+             (< (1+ (point-min)) (point) (point-max))
+             (eq (save-excursion
+                   (skip-chars-backward "\t\s")
+                   (char-before (1- (point))))
+                 (matching-paren (char-after))))
+    (save-excursion (newline-and-indent))))
+
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; This section is for generic interactive convenience methods.
@@ -689,8 +705,6 @@ Inspired by `org-combine-plists'."
 (add-hook 'emacs-lisp-mode-hook
           (lambda ()
             (setq show-trailing-whitespace t)
-
-            ;; TODO prefer projectile to compile / test
             (setq-local compile-command "cask exec ert-runner")
 
             ;; the default elisp--xref-backend is C-h f, not TAGS lookup
@@ -754,11 +768,11 @@ Inspired by `org-combine-plists'."
   (require 'scala-compile)
   :bind
   (:map scala-mode-map
+        ("M-<delete>" . paredit-unwrap)
         ("C-c c" . scala-compile))
   :hook
   ((scala-mode . git-gutter-mode)
    (scala-mode . show-paren-mode)
-   ;; TODO space/return should clean up the newly inserted braces
    (scala-mode . electric-pair-local-mode)
    (scala-mode . yas-minor-mode)))
 
@@ -776,30 +790,6 @@ Inspired by `org-combine-plists'."
 (add-hook 'scala-mode-hook #'ensime-mode)
 
 (use-package javap-mode)
-
-;; TODO this newline block shouldn't be necessary, do it properly with elec-pair
-(defun go-insert-opening-block ()
-  "workaround elec-pair broken newline semantics"
-  (interactive)
-  (cond
-   ((use-region-p)
-    (goto-char (region-end))
-    (insert "\n}")
-    (goto-char (region-beginning))
-    (insert "{\n")
-    (pop-mark)
-    (forward-line 1)
-    (indent-for-tab-command)
-    (forward-line -1)
-    (indent-for-tab-command))
-   ((looking-back (rx space) 1)
-    (insert "{\n\n}")
-    (indent-for-tab-command)
-    (forward-line -1)
-    (indent-for-tab-command))
-   (t
-    (insert "{}")
-    (backward-char))))
 
 (use-package go-mode
   ;; Make sure to install dependencies:
@@ -840,7 +830,6 @@ Inspired by `org-combine-plists'."
    ("C-c C-r f" . gofmt)
    ("C-c C-i t" . godef-describe)
    ("M-." . godef-jump)
-   ("{" . go-insert-opening-block)
    ("M-<delete>" . paredit-unwrap))
   :hook
   (;;(go-mode . abbrev-mode)
@@ -855,30 +844,12 @@ Inspired by `org-combine-plists'."
   (setq company-go-show-annotation t
         company-go-insert-arguments t))
 
-;; (defun go--abbrev-expand-p ()
-;;   "abbrevs should not expand in strings and comments."
-;;   (not (nth 8 (syntax-ppss))))
-;;
-;; ;; this isn't great... bad trigger and bad indentation.
-;; (define-skeleton go--skeleton-if-error
-;;   "if err != nil... boilerplate"
-;;   nil "if err != nil {\n" > _ "\n" > "}")
-;; (define-abbrev
-;;   go-mode-abbrev-table
-;;   "iferr" "" #'go--skeleton-if-error
-;;   :system t
-;;   :case-fixed t
-;;   :enable-function #'go--abbrev-expand-p)
-
-
 (add-hook
  'go-mode-hook
  (lambda ()
    (setq-local flycheck-checker 'go-staticcheck)
-
    (setq-local company-backends '(company-files company-go (company-dabbrev-code company-etags)))
-
-   (setq-local electric-pair-open-newline-between-pairs nil)))
+   ))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; OS specific
