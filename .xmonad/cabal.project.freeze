@@ -1,7 +1,8 @@
 active-repositories: hackage.haskell.org:merge
 constraints: any.X11 ==1.10.2,
              X11 -pedantic,
-             any.X11-xft ==0.3.1,
+             any.X11-xft ==0.3.4,
+             X11-xft -pedantic,
              any.array ==0.5.4.0,
              any.base ==4.14.1.0,
              any.bytestring ==0.10.12.0,
@@ -16,7 +17,7 @@ constraints: any.X11 ==1.10.2,
              any.integer-gmp ==1.0.3.0,
              any.mtl ==2.2.2,
              any.process ==1.6.9.0,
-             any.random ==1.2.1,
+             any.random ==1.2.1.1,
              any.rts ==1.0,
              any.setlocale ==1.0.0.10,
              any.splitmix ==0.1.0.4,
@@ -29,4 +30,4 @@ constraints: any.X11 ==1.10.2,
              xmonad -pedantic +quickcheck-classes,
              any.xmonad-contrib ==0.17.0,
              xmonad-contrib -pedantic +use_xft
-index-state: hackage.haskell.org 2021-11-23T16:04:44Z
+index-state: hackage.haskell.org 2022-06-16T10:40:42Z
