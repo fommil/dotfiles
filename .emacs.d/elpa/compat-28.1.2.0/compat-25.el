@@ -25,7 +25,10 @@
 ;; Find here the functionality added in Emacs 25.1, needed by older
 ;; versions.
 ;;
-;; Do NOT load this library manually.  Instead require `compat'.
+;; Only load this library if you need to use one of the following
+;; functions:
+;;
+;; - `compat-sort'
 
 ;;; Code:
 
@@ -313,5 +316,5 @@ recursion."
             (push (concat dir "/" file) files)))))
     (nconc result (nreverse files))))
 
-(provide 'compat-25)
+(compat--inhibit-prefixed (provide 'compat-25))
 ;;; compat-25.el ends here

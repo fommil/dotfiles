@@ -25,7 +25,15 @@
 ;; Find here the functionality added in Emacs 24.4, needed by older
 ;; versions.
 ;;
-;; Do NOT load this library manually.  Instead require `compat'.
+;; Only load this library if you need to use one of the following
+;; functions:
+;;
+;; - `compat-='
+;; - `compat-<'
+;; - `compat->'
+;; - `compat-<='
+;; - `compat->='
+;; - `split-string'.
 
 ;;; Code:
 
@@ -512,5 +520,5 @@ function for defining FACE and recalculating its attributes."
   (dolist (frame (frame-list))
     (face-spec-recalc face frame)))
 
-(provide 'compat-24)
+(compat--inhibit-prefixed (provide 'compat-24))
 ;;; compat-24.el ends here

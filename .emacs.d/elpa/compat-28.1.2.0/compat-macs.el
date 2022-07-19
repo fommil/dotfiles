@@ -29,6 +29,17 @@
   "Ignore all arguments."
   nil)
 
+(defvar compat--inhibit-prefixed nil
+  "Non-nil means that prefixed definitions are not loaded.
+A prefixed function is something like `compat-assoc', that is
+only made visible when the respective compatibility version file
+is loaded (in this case `compat-26').")
+
+(defmacro compat--inhibit-prefixed (&rest body)
+  "Ignore BODY unless `compat--inhibit-prefixed' is true."
+  `(unless (bound-and-true-p compat--inhibit-prefixed)
+     ,@body))
+
 (defvar compat--generate-function #'compat--generate-minimal
   "Function used to generate compatibility code.
 The function must take six arguments: NAME, DEF-FN, INSTALL-FN,
@@ -82,19 +93,23 @@ DEF-FN, INSTALL-FN, CHECK-FN, ATTR and TYPE."
          (max-version (plist-get attr :max-version))
          (feature (plist-get attr :feature))
          (cond (plist-get attr :cond))
-         (version (or (plist-get attr :version)
-                      (let ((file (or (bound-and-true-p byte-compile-current-file)
-                                      load-file-name
-                                      (buffer-file-name))))
-                        ;; Guess the version from the file the macro is
-                        ;; being defined in.
-                        (cond
-                         ((not file) emacs-version)
-                         ((string-match
-                           "compat-\\([[:digit:]]+\\)\\.\\(?:elc?\\)\\'"
-                           file)
-                          (match-string 1 file))
-                         ((error "No version number could be extracted"))))))
+         (version ; If you edit this, also edit `compat--generate-verbose'.
+          (or (plist-get attr :version)
+              (let* ((file (car (last current-load-list)))
+                     (file (if (stringp file)
+                               ;; Some library, which requires compat-XY.el,
+                               ;; is being compiled and compat-XY.el has not
+                               ;; been compiled yet.
+                               file
+                             ;; compat-XY.el is being compiled.
+                             (or (bound-and-true-p byte-compile-current-file)
+                                 ;; Fallback to the buffer being evaluated.
+                                 (buffer-file-name)))))
+                (if (and file
+                         (string-match
+                          "compat-\\([[:digit:]]+\\)\\.\\(?:elc?\\)\\'" file))
+                    (concat (match-string 1 file) ".1")
+                  (error "BUG: No version number could be extracted")))))
          (realname (or (plist-get attr :realname)
                        (intern (format "compat--%S" name))))
          (check (cond
@@ -104,7 +119,7 @@ DEF-FN, INSTALL-FN, CHECK-FN, ATTR and TYPE."
                            (version< max-version emacs-version)))
                   '(compat--ignore))
                  ((plist-get attr :prefix)
-                  '(progn))
+                  '(compat--inhibit-prefixed))
                  ((and version (version<= version emacs-version) (not cond))
                   '(compat--ignore))
                  (`(when (and ,(if cond cond t)
@@ -140,13 +155,6 @@ DEF-FN, INSTALL-FN, CHECK-FN, ATTR and TYPE."
             `(eval-after-load ,feature `(funcall ',(lambda () ,body)))
           body))))))
 
-(defun compat--generate-minimal-no-prefix (name def-fn install-fn check-fn attr type)
-  "Generate a leaner compatibility definition.
-See `compat-generate-function' for details on the arguments NAME,
-DEF-FN, INSTALL-FN, CHECK-FN, ATTR and TYPE."
-  (unless (plist-get attr :prefix)
-    (compat--generate-minimal name def-fn install-fn check-fn attr type)))
-
 (defun compat--generate-verbose (name def-fn install-fn check-fn attr type)
   "Generate a more verbose compatibility definition, fit for testing.
 See `compat-generate-function' for details on the arguments NAME,
@@ -155,19 +163,18 @@ DEF-FN, INSTALL-FN, CHECK-FN, ATTR and TYPE."
          (max-version (plist-get attr :max-version))
          (feature (plist-get attr :feature))
          (cond (plist-get attr :cond))
-         (version (or (plist-get attr :version)
-                      (let ((file (or (bound-and-true-p byte-compile-current-file)
-                                      load-file-name
-                                      (buffer-file-name))))
-                        ;; Guess the version from the file the macro is
-                        ;; being defined in.
-                        (cond
-                         ((not file) emacs-version)
-                         ((string-match
-                           "compat-\\([[:digit:]]+\\)\\.\\(?:elc?\\)\\'"
-                           file)
-                          (match-string 1 file))
-                         ((error "No version number could be extracted"))))))
+         (version ; If you edit this, also edit `compat--generate-minimal'.
+          (or (plist-get attr :version)
+              (let* ((file (car (last current-load-list)))
+                     (file (if (stringp file)
+                               file
+                             (or (bound-and-true-p byte-compile-current-file)
+                                 (buffer-file-name)))))
+                (if (and file
+                         (string-match
+                          "compat-\\([[:digit:]]+\\)\\.\\(?:elc?\\)\\'" file))
+                    (concat (match-string 1 file) ".1")
+                  (error "BUG: No version number could be extracted")))))
          (realname (or (plist-get attr :realname)
                        (intern (format "compat--%S" name))))
          (body `(progn
@@ -191,7 +198,7 @@ DEF-FN, INSTALL-FN, CHECK-FN, ATTR and TYPE."
                      (version< max-version emacs-version)))
             '(compat--ignore))
            ((plist-get attr :prefix)
-            '(progn))
+            '(compat--inhibit-prefixed))
            ((and version (version<= version emacs-version) (not cond))
             '(compat--ignore))
            (`(when (and ,(if cond cond t)
