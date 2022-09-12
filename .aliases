@@ -14,7 +14,7 @@ else
     alias la="ls -A"
 fi
 if [ `grep --help 2>/dev/null | grep -c gnu` -gt 0 ] &&
-    [ `grep --help 2>/dev/null | grep -c '\-\-color'` -gt 0 ] ; then
+    [ `grep --help 2>/dev/null | grep -c 'color'` -gt 0 ] ; then
     alias grep="grep --color=auto"
 fi
 if [ `uname` = "SunOS" ] &&
