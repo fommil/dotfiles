@@ -766,10 +766,12 @@ Inspired by `org-combine-plists'."
   :mode ((rx (| ".scala" ".sbt") eos) . scala-mode)
   :config
   (require 'scala-compile)
+  (require 'scala-organise)
   :bind
   (:map scala-mode-map
         ("M-<delete>" . paredit-unwrap)
-        ("C-c c" . scala-compile))
+        ("C-c c" . scala-compile)
+        ("C-c C-r f" . scala-organise))
   :hook
   ((scala-mode . git-gutter-mode)
    (scala-mode . show-paren-mode)
