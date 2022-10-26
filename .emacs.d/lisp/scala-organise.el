@@ -62,13 +62,14 @@
                 (setq keys (seq-difference keys done))))
             (when keys
               (dolist (key keys)
-                (if (string-match-p (rx string-start upper) key)
+                (if (let (case-fold-search)
+                      (string-match-p (rx line-start upper) key))
                     (push key deferred)
                   (insert (scala-organise--render (assoc key imports)))))
-              (insert "\n"))
+              (when (length> keys (length deferred))
+                (insert "\n")))
             (when deferred
-              (insert "\n")
-              (dolist (key deferred)
+              (dolist (key (reverse deferred))
                 (insert (scala-organise--render (assoc key imports))))
               (insert "\n")))))
       (when (re-search-forward (rx line-start (* space) "import ") nil t)
