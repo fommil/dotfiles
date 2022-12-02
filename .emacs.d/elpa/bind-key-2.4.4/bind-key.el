@@ -1,37 +1,35 @@
-;;; bind-key.el --- A simple way to manage personal keybindings
+;;; bind-key.el --- A simple way to manage personal keybindings  -*- lexical-binding: t; -*-
 
-;; Copyright (c) 2012-2017 John Wiegley
+;; Copyright (c) 2012-2022 Free Software Foundation, Inc.
 
 ;; Author: John Wiegley <johnw@newartisans.com>
 ;; Maintainer: John Wiegley <johnw@newartisans.com>
 ;; Created: 16 Jun 2012
-;; Modified: 29 Nov 2017
-;; Version: 2.4
-;; Package-Version: 2.4.1
-;; Package-Commit: caa92f1d64fc25480551757d854b4b49981dfa6b
-;; Keywords: keys keybinding config dotemacs
+;; Version: 2.4.1
+;; Package-Version: 2.4.4
+;; Package-Commit: 9090080b15486c3e337be254226efe7e5fde4c99
+;; Package-Requires: ((emacs "24.3"))
+;; Keywords: keys keybinding config dotemacs extensions
 ;; URL: https://github.com/jwiegley/use-package
 
-;; This program is free software; you can redistribute it and/or
-;; modify it under the terms of the gnu general public license as
-;; published by the free software foundation; either version 3, or (at
-;; your option) any later version.
+;; This program is free software; you can redistribute it and/or modify
+;; it under the terms of the GNU General Public License as published by
+;; the Free Software Foundation, either version 3 of the License, or
+;; (at your option) any later version.
 
-;; This program is distributed in the hope that it will be useful, but
-;; without any warranty; without even the implied warranty of
-;; merchantability or fitness for a particular purpose.  see the gnu
-;; general public license for more details.
+;; This program is distributed in the hope that it will be useful,
+;; but WITHOUT ANY WARRANTY; without even the implied warranty of
+;; MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+;; GNU General Public License for more details.
 
-;; You should have received a copy of the gnu general public license
-;; along with gnu emacs; see the file copying.  if not, write to the
-;; free software foundation, inc., 59 temple place - suite 330,
-;; boston, ma 02111-1307, usa.
-
+;; You should have received a copy of the GNU General Public License
+;; along with this program.  If not, see <https://www.gnu.org/licenses/>.
+
 ;;; Commentary:
 
 ;; If you have lots of keybindings set in your .emacs file, it can be hard to
 ;; know which ones you haven't set yet, and which may now be overriding some
-;; new default in a new emacs version.  This module aims to solve that
+;; new default in a new Emacs version.  This module aims to solve that
 ;; problem.
 ;;
 ;; Bind keys as follows in your .emacs:
@@ -106,7 +104,7 @@
 (require 'easy-mmode)
 
 (defgroup bind-key nil
-  "A simple way to manage personal keybindings"
+  "A simple way to manage personal keybindings."
   :group 'emacs)
 
 (defcustom bind-key-column-widths '(18 . 40)
@@ -129,11 +127,12 @@
 ;; Create override-global-mode to force key remappings
 
 (defvar override-global-map (make-keymap)
-  "override-global-mode keymap")
+  "Keymap for `override-global-mode'.")
 
 (define-minor-mode override-global-mode
   "A minor mode so that keymap settings override other modes."
-  t "")
+  :init-value t
+  :lighter "")
 
 ;; the keymaps in `emulation-mode-map-alists' take precedence over
 ;; `minor-mode-map-alist'
@@ -151,7 +150,7 @@ Elements have the form ((KEY . [MAP]) CMD ORIGINAL-CMD)")
 
 KEY-NAME may be a vector, in which case it is passed straight to
 `define-key'. Or it may be a string to be interpreted as
-spelled-out keystrokes, e.g., \"C-c C-z\". See documentation of
+spelled-out keystrokes, e.g., `C-c C-z'. See documentation of
 `edmacro-mode' for details.
 
 COMMAND must be an interactive function or lambda form.
@@ -159,9 +158,9 @@ COMMAND must be an interactive function or lambda form.
 KEYMAP, if present, should be a keymap variable or symbol.
 For example:
 
-  (bind-key \"M-h\" #'some-interactive-function my-mode-map)
+  (bind-key \"M-h\" #\\='some-interactive-function my-mode-map)
 
-  (bind-key \"M-h\" #'some-interactive-function 'my-mode-map)
+  (bind-key \"M-h\" #\\='some-interactive-function \\='my-mode-map)
 
 If PREDICATE is non-nil, it is a form evaluated to determine when
 a key should be bound. It must return non-nil in such cases.
@@ -170,16 +169,20 @@ or operates on menu data structures, so you should write it so it
 can safely be called at any time."
   (let ((namevar (make-symbol "name"))
         (keyvar (make-symbol "key"))
+        (kmapvar (make-symbol "kmap"))
         (kdescvar (make-symbol "kdesc"))
         (bindingvar (make-symbol "binding")))
     `(let* ((,namevar ,key-name)
-            (,keyvar (if (vectorp ,namevar) ,namevar
-                       (read-kbd-macro ,namevar)))
-            (kmap (if (and ,keymap (symbolp ,keymap)) (symbol-value ,keymap) ,keymap))
+            (,keyvar ,(if (stringp key-name) (read-kbd-macro key-name)
+                        `(if (vectorp ,namevar) ,namevar
+                           (read-kbd-macro ,namevar))))
+            (,kmapvar (or (if (and ,keymap (symbolp ,keymap))
+                              (symbol-value ,keymap) ,keymap)
+                          global-map))
             (,kdescvar (cons (if (stringp ,namevar) ,namevar
                                (key-description ,namevar))
                              (if (symbolp ,keymap) ,keymap (quote ,keymap))))
-            (,bindingvar (lookup-key (or kmap global-map) ,keyvar)))
+            (,bindingvar (lookup-key ,kmapvar ,keyvar)))
        (let ((entry (assoc ,kdescvar personal-keybindings))
              (details (list ,command
                             (unless (numberp ,bindingvar)
@@ -188,27 +191,57 @@ can safely be called at any time."
              (setcdr entry details)
            (add-to-list 'personal-keybindings (cons ,kdescvar details))))
        ,(if predicate
-            `(define-key (or kmap global-map) ,keyvar
+            `(define-key ,kmapvar ,keyvar
                '(menu-item "" nil :filter (lambda (&optional _)
                                             (when ,predicate
                                               ,command))))
-          `(define-key (or kmap global-map) ,keyvar ,command)))))
+          `(define-key ,kmapvar ,keyvar ,command)))))
 
 ;;;###autoload
 (defmacro unbind-key (key-name &optional keymap)
   "Unbind the given KEY-NAME, within the KEYMAP (if specified).
 See `bind-key' for more details."
-  `(progn
-     (bind-key ,key-name nil ,keymap)
-     (setq personal-keybindings
-           (cl-delete-if #'(lambda (k)
-                             ,(if keymap
-                                  `(and (consp (car k))
-                                        (string= (caar k) ,key-name)
-                                        (eq (cdar k) ',keymap))
-                                `(and (stringp (car k))
-                                      (string= (car k) ,key-name))))
-                         personal-keybindings))))
+  (let ((namevar (make-symbol "name"))
+        (kdescvar (make-symbol "kdesc")))
+    `(let* ((,namevar ,key-name)
+            (,kdescvar (cons (if (stringp ,namevar) ,namevar
+                               (key-description ,namevar))
+                             (if (symbolp ,keymap) ,keymap (quote ,keymap)))))
+       (bind-key--remove (if (vectorp ,namevar) ,namevar
+                           (read-kbd-macro ,namevar))
+                         (or (if (and ,keymap (symbolp ,keymap))
+                                 (symbol-value ,keymap) ,keymap)
+                             global-map))
+       (setq personal-keybindings
+             (cl-delete-if (lambda (k) (equal (car k) ,kdescvar))
+                           personal-keybindings))
+       nil)))
+
+(defun bind-key--remove (key keymap)
+  "Remove KEY from KEYMAP.
+
+In contrast to `define-key', this function removes the binding from the keymap."
+  (define-key keymap key nil)
+  ;; Split M-key in ESC key
+  (setq key (cl-mapcan (lambda (k)
+                         (if (and (integerp k) (/= (logand k ?\M-\0) 0))
+                             (list ?\e (logxor k ?\M-\0))
+                           (list k)))
+                       key))
+  ;; Delete single keys directly
+  (if (= (length key) 1)
+      (delete key keymap)
+    ;; Lookup submap and delete key from there
+    (let* ((prefix (vconcat (butlast key)))
+           (submap (lookup-key keymap prefix)))
+      (unless (keymapp submap)
+        (error "Not a keymap for %s" key))
+      (when (symbolp submap)
+        (setq submap (symbol-function submap)))
+      (delete (last key) submap)
+      ;; Delete submap if it is empty
+      (when (= 1 (length submap))
+        (bind-key--remove prefix keymap)))))
 
 ;;;###autoload
 (defmacro bind-key* (key-name command &optional predicate)
@@ -226,30 +259,60 @@ Accepts keyword arguments:
                          for these bindings
 :prefix-docstring STR  - docstring for the prefix-map variable
 :menu-name NAME        - optional menu string for prefix map
+:repeat-docstring STR  - docstring for the repeat-map variable
+:repeat-map MAP        - name of the repeat map that should be created
+                         for these bindings. If specified, the
+                         `repeat-map' property of each command bound
+                         (within the scope of the `:repeat-map' keyword)
+                         is set to this map.
+:exit BINDINGS         - Within the scope of `:repeat-map' will bind the
+                         key in the repeat map, but will not set the
+                         `repeat-map' property of the bound command.
+:continue BINDINGS     - Within the scope of `:repeat-map' forces the
+                         same behaviour as if no special keyword had
+                         been used (that is, the command is bound, and
+                         it's `repeat-map' property set)
 :filter FORM           - optional form to determine when bindings apply
 
 The rest of the arguments are conses of keybinding string and a
 function symbol (unquoted)."
   (let (map
-        doc
+        prefix-doc
         prefix-map
         prefix
+        repeat-map
+        repeat-doc
+        repeat-type ;; Only used internally
         filter
         menu-name
         pkg)
 
     ;; Process any initial keyword arguments
-    (let ((cont t))
+    (let ((cont t)
+          (arg-change-func 'cddr))
       (while (and cont args)
         (if (cond ((and (eq :map (car args))
                         (not prefix-map))
                    (setq map (cadr args)))
                   ((eq :prefix-docstring (car args))
-                   (setq doc (cadr args)))
+                   (setq prefix-doc (cadr args)))
                   ((and (eq :prefix-map (car args))
                         (not (memq map '(global-map
                                          override-global-map))))
                    (setq prefix-map (cadr args)))
+                  ((eq :repeat-docstring (car args))
+                   (setq repeat-doc (cadr args)))
+                  ((and (eq :repeat-map (car args))
+                        (not (memq map '(global-map
+                                         override-global-map))))
+                   (setq repeat-map (cadr args))
+                   (setq map repeat-map))
+                  ((eq :continue (car args))
+                   (setq repeat-type :continue
+                         arg-change-func 'cdr))
+                  ((eq :exit (car args))
+                   (setq repeat-type :exit
+                         arg-change-func 'cdr))
                   ((eq :prefix (car args))
                    (setq prefix (cadr args)))
                   ((eq :filter (car args))
@@ -258,12 +321,16 @@ function symbol (unquoted)."
                    (setq menu-name (cadr args)))
                   ((eq :package (car args))
                    (setq pkg (cadr args))))
-            (setq args (cddr args))
+            (setq args (funcall arg-change-func args))
           (setq cont nil))))
 
     (when (or (and prefix-map (not prefix))
               (and prefix (not prefix-map)))
       (error "Both :prefix-map and :prefix must be supplied"))
+
+    (when repeat-type
+      (unless repeat-map
+        (error ":continue and :exit require specifying :repeat-map")))
 
     (when (and menu-name (not prefix))
       (error "If :menu-name is supplied, :prefix must be too"))
@@ -296,13 +363,16 @@ function symbol (unquoted)."
         (append
          (when prefix-map
            `((defvar ,prefix-map)
-             ,@(when doc `((put ',prefix-map 'variable-documentation ,doc)))
+             ,@(when prefix-doc `((put ',prefix-map 'variable-documentation ,prefix-doc)))
              ,@(if menu-name
                    `((define-prefix-command ',prefix-map nil ,menu-name))
                  `((define-prefix-command ',prefix-map)))
              ,@(if (and map (not (eq map 'global-map)))
                    (wrap map `((bind-key ,prefix ',prefix-map ,map ,filter)))
                  `((bind-key ,prefix ',prefix-map nil ,filter)))))
+         (when repeat-map
+           `((defvar ,repeat-map (make-sparse-keymap)
+               ,@(when repeat-doc `(,repeat-doc)))))
          (wrap map
                (cl-mapcan
                 (lambda (form)
@@ -310,13 +380,19 @@ function symbol (unquoted)."
                     (if prefix-map
                         `((bind-key ,(car form) ,fun ,prefix-map ,filter))
                       (if (and map (not (eq map 'global-map)))
-                          `((bind-key ,(car form) ,fun ,map ,filter))
+                          ;; Only needed in this branch, since when
+                          ;; repeat-map is non-nil, map is always
+                          ;; non-nil
+                          `(,@(when (and repeat-map (not (eq repeat-type :exit)))
+                                `((put ,fun 'repeat-map ',repeat-map)))
+                            (bind-key ,(car form) ,fun ,map ,filter))
                         `((bind-key ,(car form) ,fun nil ,filter))))))
                 first))
          (when next
-           (bind-keys-form (if pkg
-                               (cons :package (cons pkg next))
-                             next) map)))))))
+           (bind-keys-form `(,@(when repeat-map `(:repeat-map ,repeat-map))
+                             ,@(if pkg
+                                   (cons :package (cons pkg next))
+                                 next)) map)))))))
 
 ;;;###autoload
 (defmacro bind-keys (&rest args)
@@ -330,6 +406,19 @@ Accepts keyword arguments:
                          for these bindings
 :prefix-docstring STR  - docstring for the prefix-map variable
 :menu-name NAME        - optional menu string for prefix map
+:repeat-docstring STR  - docstring for the repeat-map variable
+:repeat-map MAP        - name of the repeat map that should be created
+                         for these bindings. If specified, the
+                         `repeat-map' property of each command bound
+                         (within the scope of the `:repeat-map' keyword)
+                         is set to this map.
+:exit BINDINGS         - Within the scope of `:repeat-map' will bind the
+                         key in the repeat map, but will not set the
+                         `repeat-map' property of the bound command.
+:continue BINDINGS     - Within the scope of `:repeat-map' forces the
+                         same behaviour as if no special keyword had
+                         been used (that is, the command is bound, and
+                         it's `repeat-map' property set)
 :filter FORM           - optional form to determine when bindings apply
 
 The rest of the arguments are conses of keybinding string and a
@@ -430,8 +519,7 @@ function symbol (unquoted)."
                (command-desc (get-binding-description command))
                (was-command-desc (and was-command
                                       (get-binding-description was-command)))
-               (at-present-desc (get-binding-description at-present))
-               )
+               (at-present-desc (get-binding-description at-present)))
           (let ((line
                  (format
                   (format "%%-%ds%%-%ds%%s\n" (car bind-key-column-widths)
@@ -453,7 +541,6 @@ function symbol (unquoted)."
 
 ;; Local Variables:
 ;; outline-regexp: ";;;\\(;* [^\s\t\n]\\|###autoload\\)\\|("
-;; indent-tabs-mode: nil
 ;; End:
 
 ;;; bind-key.el ends here

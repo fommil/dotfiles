@@ -90,6 +90,7 @@ this file.  Usage:
                  package.  This is useful if the package is being lazily
                  loaded, and you wish to conditionally call functions in your
                  `:init' block that are defined in the package.
+:autoload        Similar to :commands, but it for no-interactive one.
 :hook            Specify hook(s) to attach this package to.
 
 :bind            Bind keys, and define autoloads for the bound commands.
@@ -117,16 +118,16 @@ this file.  Usage:
 :load-path       Add to the `load-path' before attempting to load the package.
 :diminish        Support for diminish.el (if installed).
 :delight         Support for delight.el (if installed).
-:custom          Call `custom-set' or `set-default' with each variable
+:custom          Call `Custom-set' or `set-default' with each variable
                  definition without modifying the Emacs `custom-file'.
                  (compare with `custom-set-variables').
-:custom-face     Call `customize-set-faces' with each face definition.
+:custom-face     Call `custom-set-faces' with each face definition.
 :ensure          Loads the package using package.el if necessary.
 :pin             Pin the package to an archive.
 
 \(fn NAME &rest ARGS)" nil t)
 
-(function-put 'use-package 'lisp-indent-function '1)
+(function-put 'use-package 'lisp-indent-function 'defun)
 
 (register-definition-prefixes "use-package-core" '("use-package-"))
 
@@ -191,11 +192,10 @@ Normalize arguments to delight.
 ;;; Generated autoloads from use-package-jump.el
 
 (autoload 'use-package-jump-to-package-form "use-package-jump" "\
-Attempt to find and jump to the `use-package' form that loaded
-PACKAGE. This will only find the form if that form actually
-required PACKAGE. If PACKAGE was previously required then this
-function will jump to the file that originally required PACKAGE
-instead.
+Attempt to find and jump to the `use-package' form that loaded PACKAGE.
+This will only find the form if that form actually required
+PACKAGE.  If PACKAGE was previously required then this function
+will jump to the file that originally required PACKAGE instead.
 
 \(fn PACKAGE)" t nil)
 
@@ -208,7 +208,7 @@ instead.
 ;;; Generated autoloads from use-package-lint.el
 
 (autoload 'use-package-lint "use-package-lint" "\
-Check for errors in use-package declarations.
+Check for errors in `use-package' declarations.
 For example, if the module's `:if' condition is met, but even
 with the specified `:load-path' the module cannot be found." t nil)
 

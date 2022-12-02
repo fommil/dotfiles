@@ -39,7 +39,7 @@ library is made available as a separate package.  It also defines some
 additional functionality which makes it useful even for end-users, who
 don’t use Magit or another package which uses it internally.
 
-This manual is for With-Editor version 3.2.0-git.
+This manual is for With-Editor version 3.2.0.50-git.
 
      Copyright (C) 2015-2022 Jonas Bernoulli <jonas@bernoul.li>
 
@@ -366,13 +366,13 @@ Appendix B Variable Index
 
 Tag Table:
 Node: Top773
-Node: Using the With-Editor package2567
-Node: Configuring With-Editor3153
-Node: Using With-Editor commands7699
-Node: Using With-Editor as a library10984
-Node: Debugging13009
-Node: Function and Command Index13901
-Node: Variable Index15399
+Node: Using the With-Editor package2570
+Node: Configuring With-Editor3156
+Node: Using With-Editor commands7702
+Node: Using With-Editor as a library10987
+Node: Debugging13012
+Node: Function and Command Index13904
+Node: Variable Index15402
 
 End Tag Table
 
