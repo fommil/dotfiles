@@ -8,7 +8,9 @@ TEMPO=${2:-2.0}
 # ACTIVATION_BYTES=...
 
 # to get the decrypted m4b
-ffmpeg -activation_bytes $ACTIVATION_BYTES -i "$1" -c:a copy -vn "${1%.*}.m4b"
+if [[ "$1" = *.aac ]] ; then
+    ffmpeg -activation_bytes $ACTIVATION_BYTES -i "$1" -c:a copy -vn "${1%.*}.m4b"
+fi
 
 # sped-up mp3
 ffmpeg -activation_bytes ${ACTIVATION_BYTES} -i "$1" -c:a libmp3lame -qscale:a 0 -filter:a "atempo=${TEMPO}" -vn "${1%.*}.${TEMPO}.mp3"
