@@ -1,10 +1,10 @@
-(define-package "flycheck" "20221112.1552" "On-the-fly syntax checking"
+(define-package "flycheck" "20221213.107" "On-the-fly syntax checking"
   '((dash "2.12.1")
     (pkg-info "0.4")
     (let-alist "1.0.4")
     (seq "1.11")
     (emacs "24.3"))
-  :commit "ab93e2db1dd8333e86f8aeeafbf1e2a0e5f0be38" :authors
+  :commit "15f0759602f9a31aff134c44d001ab058fbe747c" :authors
   '(("Sebastian Wiesner" . "swiesner@lunaryorn.com"))
   :maintainer
   '("Clément Pit-Claudel" . "clement.pitclaudel@live.com")
