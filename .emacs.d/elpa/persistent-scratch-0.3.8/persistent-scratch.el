@@ -2,14 +2,14 @@
 
 ;; Author: Fanael Linithien <fanael4@gmail.com>
 ;; URL: https://github.com/Fanael/persistent-scratch
-;; Package-Commit: 92f540e7d310ec2e0b636eff1033cf78f0d9eb40
-;; Package-Version: 0.3.7
-;; Package-X-Original-Version: 0.3.7
+;; Package-Commit: f9c1361ad69073af8133174f9e37b594df9be361
+;; Package-Version: 0.3.8
+;; Package-X-Original-Version: 0.3.8
 ;; Package-Requires: ((emacs "24"))
 
 ;; This file is NOT part of GNU Emacs.
 
-;; Copyright (c) 2015-2022, Fanael Linithien
+;; Copyright (c) 2015-2023, Fanael Linithien
 ;; All rights reserved.
 ;;
 ;; Redistribution and use in source and binary forms, with or without
@@ -176,6 +176,7 @@ representing the time of the last `persistent-scratch-new-backup' call."
         (set-default-file-modes old-umask)))
     (run-hook-with-args 'persistent-scratch-before-save-commit-functions tmp-file)
     (rename-file tmp-file actual-file t)
+    (set-buffer-modified-p nil)
     (when (called-interactively-p 'interactive)
       (message "Wrote persistent-scratch file %s" actual-file)))
   (unless file
