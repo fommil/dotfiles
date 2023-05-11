@@ -10,7 +10,7 @@
 ;; URL: http://www.flycheck.org
 ;; Keywords: convenience, languages, tools
 ;; Version: 33-cvs
-;; Package-Requires: ((dash "2.12.1") (pkg-info "0.4") (let-alist "1.0.4") (seq "1.11") (emacs "24.3"))
+;; Package-Requires: ((emacs "25.1") (dash "2.12.1") (pkg-info "0.4") (let-alist "1.0.4") (seq "1.11"))
 
 ;; This file is not part of GNU Emacs.
 
@@ -10828,6 +10828,13 @@ See URL https://github.com/microsoft/pyright."
   :safe #'flycheck-string-or-nil-p
   :package-version '(flycheck . "32"))
 
+(flycheck-def-option-var flycheck-python-mypy-python-executable nil python-mypy
+  "Python executable to find the installed PEP 561 packages."
+  :type '(choice (const :tag "Same as mypy's" nil)
+                 (string :tag "Path"))
+  :safe #'flycheck-string-or-nil-p
+  :package-version '(flycheck . "33"))
+
 (flycheck-define-checker python-mypy
   "Mypy syntax and type checker.  Requires mypy>=0.730.
 
@@ -10837,6 +10844,7 @@ See URL `http://mypy-lang.org/'."
             "--no-pretty"
             (config-file "--config-file" flycheck-python-mypy-config)
             (option "--cache-dir" flycheck-python-mypy-cache-dir)
+            (option "--python-executable" flycheck-python-mypy-python-executable)
             source-original)
   :error-patterns
   ((error line-start (file-name) ":" line (optional ":" column)
@@ -11003,15 +11011,35 @@ See URL `https://github.com/rpm-software-management/rpmlint'."
                             (eq sh-shell 'rpm))))
 
 (flycheck-def-config-file-var flycheck-markdown-markdownlint-cli-config
-    markdown-markdownlint-cli nil
-  :package-version '(flycheck . "32"))
+    markdown-markdownlint-cli
+    '(".markdownlint.json" ".markdownlint.jsonc" ".markdownlint.yaml")
+  :package-version '(flycheck . "33"))
+
+(flycheck-def-option-var flycheck-markdown-markdownlint-cli-disable-rules
+    nil markdown-markdownlint-cli
+  "Rules to disable for markdownlint-cli."
+  :type '(repeat :tag "Disabled rule"
+                 (string :tag "Rule name"))
+  :safe #'flycheck-string-list-p
+  :package-version '(flycheck . "33"))
+
+(flycheck-def-option-var flycheck-markdown-markdownlint-cli-enable-rules
+    nil markdown-markdownlint-cli
+  "Rules to enable for markdownlint-cli."
+  :type '(repeat :tag "Enabled rule"
+                 (string :tag "Rule name"))
+  :safe #'flycheck-string-list-p
+  :package-version '(flycheck . "33"))
 
 (flycheck-define-checker markdown-markdownlint-cli
   "Markdown checker using markdownlint-cli.
 
-See URL `https://github.com/igorshubovych/markdownlint-cli'."
+See URL `https://github.com/DavidAnson/markdownlint-cli'."
   :command ("markdownlint"
             (config-file "--config" flycheck-markdown-markdownlint-cli-config)
+            (option-list "--disable" flycheck-markdown-markdownlint-cli-disable-rules)
+            (option-list "--enable" flycheck-markdown-markdownlint-cli-enable-rules)
+            "--"
             source)
   :error-patterns
   ((error line-start
