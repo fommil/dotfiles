@@ -23,7 +23,7 @@ myFocusedBorderColor = "#000000"
 main = do
        args <- getArgs
        xmonad $ withUrgencyHook dzenUrgencyHook { args = ["-bg", "darkgreen", "-xs", "1"] }
-              $ ewmh def {
+              $ ewmhFullscreen . ewmh $ def {
               terminal = "urxvt"
             , startupHook = startup (null args)
             , normalBorderColor  = myNormalBorderColor
@@ -32,7 +32,7 @@ main = do
             , modMask = mod3Mask
             , keys = keys'
             , manageHook = manageSpawn <+> manageHook'
-            , handleEventHook = handleEventHook def <+> fullscreenEventHook
+            , handleEventHook = handleEventHook def
        }
 
 startup :: Bool -> X ()
