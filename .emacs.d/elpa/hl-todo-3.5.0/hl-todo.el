@@ -1,31 +1,29 @@
-;;; hl-todo.el --- highlight TODO and similar keywords  -*- lexical-binding: t -*-
+;;; hl-todo.el --- Highlight TODO and similar keywords  -*- lexical-binding:t -*-
 
-;; Copyright (C) 2013-2022  Jonas Bernoulli
+;; Copyright (C) 2013-2023 Jonas Bernoulli
 
 ;; Author: Jonas Bernoulli <jonas@bernoul.li>
 ;; Homepage: https://github.com/tarsius/hl-todo
 ;; Keywords: convenience
-;; Package-Version: 3.4.2
-;; Package-Commit: e52285965b5ee89c18080661d4f80270143ae8dc
+;; Package-Version: 3.5.0
+;; Package-Commit: b27cddf7373408681cc949c8ef829f87a01ed3f3
 
-;; Package-Requires: ((emacs "25"))
+;; Package-Requires: ((emacs "25.1") (compat "29.1.3.4"))
 
 ;; SPDX-License-Identifier: GPL-3.0-or-later
 
-;; This file is free software; you can redistribute it and/or modify
-;; it under the terms of the GNU General Public License as published by
-;; the Free Software Foundation; either version 3, or (at your option)
-;; any later version.
+;; This file is free software: you can redistribute it and/or modify
+;; it under the terms of the GNU General Public License as published
+;; by the Free Software Foundation, either version 3 of the License,
+;; or (at your option) any later version.
 ;;
 ;; This file is distributed in the hope that it will be useful,
 ;; but WITHOUT ANY WARRANTY; without even the implied warranty of
 ;; MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 ;; GNU General Public License for more details.
 ;;
-;; For a full copy of the GNU General Public License
-;; see <http://www.gnu.org/licenses/>.
-
-;; This file is not part of GNU Emacs.
+;; You should have received a copy of the GNU General Public License
+;; along with this file.  If not, see <https://www.gnu.org/licenses/>.
 
 ;;; Commentary:
 
@@ -43,10 +41,10 @@
 ;; known keywords, and to insert a keyword.  If you want to use these
 ;; commands, then you should bind them in `hl-todo-mode-map', e.g.:
 ;;
-;;   (define-key hl-todo-mode-map (kbd "C-c p") 'hl-todo-previous)
-;;   (define-key hl-todo-mode-map (kbd "C-c n") 'hl-todo-next)
-;;   (define-key hl-todo-mode-map (kbd "C-c o") 'hl-todo-occur)
-;;   (define-key hl-todo-mode-map (kbd "C-c i") 'hl-todo-insert)
+;;   (define-key hl-todo-mode-map (kbd "C-c p") #'hl-todo-previous)
+;;   (define-key hl-todo-mode-map (kbd "C-c n") #'hl-todo-next)
+;;   (define-key hl-todo-mode-map (kbd "C-c o") #'hl-todo-occur)
+;;   (define-key hl-todo-mode-map (kbd "C-c i") #'hl-todo-insert)
 
 ;; See [[https://www.emacswiki.org/emacs/FixmeMode][this list]] on the Emacswiki for other packages that implement
 ;; the same basic features, but which might also provide additional
@@ -55,9 +53,12 @@
 ;;; Code:
 
 (require 'cl-lib)
+(require 'compat)
 
-(eval-when-compile
-  (require 'subr-x))
+(eval-when-compile (require 'subr-x))
+
+(defvar grep-find-template)
+(declare-function grep-read-files "grep" (regexp))
 
 (defgroup hl-todo nil
   "Highlight TODO and similar keywords in comments and strings."
@@ -122,7 +123,7 @@ located inside a string."
     ("HACK"   . "#d0bf8f")
     ("TEMP"   . "#d0bf8f")
     ("FIXME"  . "#cc9393")
-    ("XXX+"   . "#cc9393"))
+    ("XXXX*"  . "#cc9393"))
   "An alist mapping keywords to colors/faces used to display them.
 
 Each entry has the form (KEYWORD . COLOR).  KEYWORD is used as
@@ -139,8 +140,15 @@ This package, like most of Emacs, does not use POSIX regexp
 backtracking.  See info node `(elisp)POSIX Regexp' for why that
 matters.  If you have two keywords \"TODO-NOW\" and \"TODO\", then
 they must be specified in that order.  Alternatively you could
-use \"TODO\\(-NOW\\)?\"."
-  :package-version '(hl-todo . "3.0.0")
+use \"TODO\\(-NOW\\)?\".
+
+If you use the command `hl-todo-rgrep', rewrite KEYWORDs to
+use \"*\" instead of \"+\" and generally make sure they are valid
+as Emacs regexps and as basic regular expressions as understood
+by Grep.  If you customize variables in the `grep' group, or use
+a Grep implementation other than GNU's, then that may break
+`hl-todo-rgrep'."
+  :package-version '(hl-todo . "3.5.0")
   :group 'hl-todo
   :type '(repeat (cons (string :tag "Keyword")
                        (choice :tag "Face   "
@@ -212,7 +220,7 @@ including alphanumeric characters, cannot be used here."
 (defun hl-todo--setup ()
   (hl-todo--setup-regexp)
   (setq hl-todo--keywords
-        `(((lambda (bound) (hl-todo--search nil bound))
+        `((,(lambda (bound) (hl-todo--search nil bound))
            (1 (hl-todo--get-face) prepend t))))
   (font-lock-add-keywords nil hl-todo--keywords t))
 
@@ -248,13 +256,13 @@ including alphanumeric characters, cannot be used here."
 
 (defun hl-todo--combine-face (face)
   (if (stringp face)
-      (list :inherit 'hl-todo
-            (if hl-todo-color-background :background :foreground)
-            face)
+      `((,(if hl-todo-color-background :background :foreground)
+         ,face)
+        hl-todo)
     face))
 
-(defvar hl-todo-mode-map (make-sparse-keymap)
-  "Keymap for `hl-todo-mode'.")
+(defvar-keymap hl-todo-mode-map
+  :doc "Keymap for `hl-todo-mode'.")
 
 ;;;###autoload
 (define-minor-mode hl-todo-mode
@@ -344,6 +352,30 @@ string or comment."
     (occur (hl-todo--regexp))))
 
 ;;;###autoload
+(defun hl-todo-rgrep (regexp &optional files dir confirm)
+  "Use `rgrep' to find all TODO or similar keywords.
+This actually finds a superset of the highlighted keywords,
+because it uses a regexp instead of a more sophisticated
+matcher.  It also finds occurrences that are not within a
+string or comment.  See `rgrep' for the meaning of REGEXP,
+FILES, DIR and CONFIRM, except that the type of prefix
+argument does not matter; with any prefix you can edit the
+constructed shell command line before it is executed.
+Also see option `hl-todo-keyword-faces'."
+  (interactive
+   (progn
+     (require 'grep)
+     (grep-compute-defaults)
+     (unless grep-find-template
+       (error "grep.el: No `grep-find-template' available"))
+     (let ((regexp (with-temp-buffer (hl-todo--regexp))))
+       (list regexp
+             (grep-read-files regexp)
+             (read-directory-name "Base directory: " nil default-directory t)
+             current-prefix-arg))))
+  (rgrep regexp files dir confirm))
+
+;;;###autoload
 (defun hl-todo-insert (keyword)
   "Insert TODO or similar keyword.
 If point is not inside a string or comment, then insert a new
@@ -380,7 +412,7 @@ current line."
     (indent-region (line-beginning-position) (line-end-position)))))
 
 (define-obsolete-function-alias 'hl-todo-insert-keyword
-  'hl-todo-insert "hl-todo 3.0.0")
+  #'hl-todo-insert "hl-todo 3.0.0")
 
 ;;; _
 (provide 'hl-todo)

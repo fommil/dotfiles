@@ -77,6 +77,19 @@ because it uses a regexp instead of a more sophisticated
 matcher.  It also finds occurrences that are not within a
 string or comment." t nil)
 
+(autoload 'hl-todo-rgrep "hl-todo" "\
+Use `rgrep' to find all TODO or similar keywords.
+This actually finds a superset of the highlighted keywords,
+because it uses a regexp instead of a more sophisticated
+matcher.  It also finds occurrences that are not within a
+string or comment.  See `rgrep' for the meaning of REGEXP,
+FILES, DIR and CONFIRM, except that the type of prefix
+argument does not matter; with any prefix you can edit the
+constructed shell command line before it is executed.
+Also see option `hl-todo-keyword-faces'.
+
+\(fn REGEXP &optional FILES DIR CONFIRM)" t nil)
+
 (autoload 'hl-todo-insert "hl-todo" "\
 Insert TODO or similar keyword.
 If point is not inside a string or comment, then insert a new
