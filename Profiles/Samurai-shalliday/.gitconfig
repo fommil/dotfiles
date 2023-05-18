@@ -63,3 +63,5 @@
 #git config credential.helper "cache --timeout=3600"
 [protocol]
 	version = 2
+[init]
+	defaultBranch = main

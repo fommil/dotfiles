@@ -43,6 +43,7 @@
   (:map
    haskell-tng-mode-map
    ("C-<tab>" . dabbrev-expand)
+   ("M-<delete>" . paredit-unwrap)
 
    ("RET" . haskell-tng-newline)
 
