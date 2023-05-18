@@ -1,4 +1,5 @@
-alias update="sudo pacman -Syu"
+# modmap update needed to workaround some weird behaviour
+alias update="sudo pacman -Syu ; xmodmap ~/.Xmodmap ; xmodmap ~/.Xmodmap.local"
 alias update-aggressive="yay -Syu --devel --aur ; update"
 
 alias keepers="sudo pacman -Qqet"
