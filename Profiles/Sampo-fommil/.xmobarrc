@@ -1,12 +1,13 @@
 -- https://archives.haskell.org/projects.haskell.org/xmobar/
--- cabal v2-install -w ghc-8.8.3 --overwrite-policy=always xmobar --flags="with_xft with_utf8 with_threaded"
+-- cabal install -w ghc-9.4.5 -O2 xmobar --flags="with_threaded"
 Config {
-         font = "xft:Hack:size=12"
+         font = "Hack"
+       , dpi = 192
        , borderColor = "black"
        , border = TopB
        , bgColor = "black"
        , fgColor = "grey"
-       , position = Top
+       , position = TopH 32
        , lowerOnStart = True
        , persistent = False
        , hideOnStart = False
