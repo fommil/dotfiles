@@ -32,7 +32,7 @@
    ;; firefox respects your privacy
    browse-url-generic-program "firefox"
    x-select-enable-clipboard t
-   interprogram-paste-function 'x-cut-buffer-or-selection-value))
+   interprogram-paste-function 'x-selection-value))
 
 ;; (use-package ess-site
 ;;   :ensure ess
