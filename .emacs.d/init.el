@@ -438,6 +438,9 @@ Inspired by `org-combine-plists'."
   :commands popup-imenu
   :bind ("M-i" . popup-imenu))
 
+;; legacy dependency of git-gutter
+(use-package linum
+  :ensure nil)
 (use-package git-gutter
   :diminish git-gutter-mode
   :commands git-gutter-mode
