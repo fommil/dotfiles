@@ -72,8 +72,7 @@
  (lambda ()
    (whitespace-mode-with-local-variables)
    (show-paren-mode 1)
-   (electric-pair-local-mode 1)
-   (git-gutter-mode 1)))
+   (electric-pair-local-mode 1)))
 
 (provide 'fommil-haskell-tng)
 ;;; fommil-haskell-tng.el ends here

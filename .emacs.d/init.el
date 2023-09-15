@@ -438,16 +438,6 @@ Inspired by `org-combine-plists'."
   :commands popup-imenu
   :bind ("M-i" . popup-imenu))
 
-;; legacy dependency of git-gutter
-(use-package linum
-  :ensure nil)
-(use-package git-gutter
-  :diminish git-gutter-mode
-  :commands git-gutter-mode
-  :init
-  ;; always a column reserved, but no flickering
-  (setq git-gutter:unchanged-sign ""))
-
 ;; WORKAROUND (missing in 2.9.4) https://github.com/magit/with-editor/issues/82
 (use-package with-editor
   :pin melpa)
@@ -776,8 +766,7 @@ Inspired by `org-combine-plists'."
         ("C-c c" . scala-compile)
         ("C-c C-r f" . scala-organise))
   :hook
-  ((scala-mode . git-gutter-mode)
-   (scala-mode . show-paren-mode)
+  ((scala-mode . show-paren-mode)
    (scala-mode . electric-pair-local-mode)
    (scala-mode . yas-minor-mode)))
 
@@ -838,7 +827,6 @@ Inspired by `org-combine-plists'."
    ("M-<delete>" . paredit-unwrap))
   :hook
   (;;(go-mode . abbrev-mode)
-   (go-mode . git-gutter-mode)
    (go-mode . show-paren-mode)
    (go-mode . electric-pair-local-mode)
    (go-mode . yas-minor-mode)
