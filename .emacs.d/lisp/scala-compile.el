@@ -15,6 +15,7 @@
 ;;
 ;;; Code:
 
+(require 'cl-extra)
 (require 'compile)
 (require 'ansi-color)
 (require 'files)
@@ -60,7 +61,7 @@
 
 (defvar-local scala--compile-command nil)
 (defvar-local scala--compile-alt "sbtn clean")
-(defvar scala--compile-project "build.sbt")
+(defvar scala--compile-project-files '("build.sbt" "build.sc"))
 
 ;;;###autoload
 (defun scala-compile (&optional edit-command)
@@ -94,13 +95,14 @@ will cause the subsequent call to prompt."
                    (equal command scala--compile-alt))
             command))
     (let ((default-directory
-            (or
-             (locate-dominating-file default-directory scala--compile-project)
-             default-directory)))
+           (or
+            (cl-some
+             (lambda (e) (locate-dominating-file default-directory e))
+             scala--compile-project-files)
+            default-directory)))
       (compilation-start
        command
        'scala-compilation-mode
-       ;; TODO name the compilation buffer
        ))))
 
 (defun scala--compile-ansi-color ()
