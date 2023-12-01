@@ -1,3 +1,0 @@
-include "/usr/share/themes/Moblin-Netbook/gtk-2.0/gtkrc"
-include "/usr/share/themes/Emacs/gtk-2.0-key/gtkrc"
-gtk-font-name="sans-serif 12"

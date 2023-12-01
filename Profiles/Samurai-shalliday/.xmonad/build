@@ -1,0 +1,10 @@
+#!/bin/bash
+
+set -e
+
+cd ~/.xmonad
+
+if [ cabal.project.freeze -nt cabal.project ] || [ xmonad.hs -nt cabal.project ]; then
+    cabal install --installdir=. --install-method=copy --overwrite-policy=always
+    touch cabal.project*
+fi

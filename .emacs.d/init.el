@@ -754,7 +754,9 @@ Inspired by `org-combine-plists'."
 (use-package eglot
   :ensure nil
   :config
-  (setq eglot-ignored-server-capabilities
+  (setq
+   eglot-report-progress nil
+   eglot-ignored-server-capabilities
    '(:hoverProvider
      :signatureHelpProvider
      :implementationProvider
@@ -773,8 +775,11 @@ Inspired by `org-combine-plists'."
      :colorProvider
      :foldingRangeProvider
      :inlayHintProvider))
-  (add-to-list 'eglot-stay-out-of 'flymake))
-;; TODO reduce the noise coming from [eglot] on the minibuffer on file save etc
+  (add-to-list 'eglot-stay-out-of 'flymake)
+  (add-to-list 'eglot-server-programs
+               '((rust-ts-mode rust-mode) .
+                 ("rust-analyzer" :initializationOptions (:diagnostics (:enable "false")))))
+  )
 ;; TODO standard binding for type-at-point
 
 (require 'fommil-email)
@@ -874,13 +879,11 @@ Inspired by `org-combine-plists'."
 (use-package rust-mode
   :config
   ;; TODO standard commands to build / format / etc
-  ;;(setq rust-format-on-save t)
+  (setq rust-format-on-save t)
   :hook
   ((rust-mode . show-paren-mode)
    (rust-mode . electric-pair-local-mode)
    (rust-mode . yas-minor-mode)
-   (rust-mode . flycheck-mode)
-   ;;(rust-mode . prettify-symbols-mode)
    (rust-mode . eglot-ensure)
    (rust-mode . company-mode)))
 
