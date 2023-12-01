@@ -750,6 +750,33 @@ Inspired by `org-combine-plists'."
 (use-package dockerfile-mode
   :mode ((rx "Dockerfile" eos) . dockerfile-mode))
 
+;; I don't use a lot of LSP features, so turn them off
+(use-package eglot
+  :ensure nil
+  :config
+  (setq eglot-ignored-server-capabilities
+   '(:hoverProvider
+     :signatureHelpProvider
+     :implementationProvider
+     :declarationProvider
+     :referencesProvider
+     :documentHighlightProvider
+     :documentSymbolProvider
+     :workspaceSymbolProvider
+     :codeActionProvider
+     :codeLensProvider
+     :documentFormattingProvider
+     :documentRangeFormattingProvider
+     :documentOnTypeFormattingProvider
+     :renameProvider
+     :documentLinkProvider
+     :colorProvider
+     :foldingRangeProvider
+     :inlayHintProvider))
+  (add-to-list 'eglot-stay-out-of 'flymake))
+;; TODO reduce the noise coming from [eglot] on the minibuffer on file save etc
+;; TODO standard binding for type-at-point
+
 (require 'fommil-email)
 (require 'fommil-haskell-tng)
 (require 'fommil-python)
@@ -843,6 +870,19 @@ Inspired by `org-combine-plists'."
    (setq-local flycheck-checker 'go-staticcheck)
    (setq-local company-backends '(company-files company-go (company-dabbrev-code company-etags)))
    ))
+
+(use-package rust-mode
+  :config
+  ;; TODO standard commands to build / format / etc
+  ;;(setq rust-format-on-save t)
+  :hook
+  ((rust-mode . show-paren-mode)
+   (rust-mode . electric-pair-local-mode)
+   (rust-mode . yas-minor-mode)
+   (rust-mode . flycheck-mode)
+   ;;(rust-mode . prettify-symbols-mode)
+   (rust-mode . eglot-ensure)
+   (rust-mode . company-mode)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; OS specific
