@@ -72,3 +72,27 @@ URxvt.tabbed.tabbar-fg: 2
 URxvt.tabbed.tabbar-bg: 0
 URxvt.tabbed.tab-fg:    0
 URxvt.tabbed.tab-bg:    2
+
+!! Mini-darcula
+xterm*background:  #2B2B2B
+xterm*foreground:  #a9b7c6
+xterm*color0:      #2B2B2B
+xterm*color1:      #cc7832
+xterm*color2:      #629755
+xterm*color3:      #fec66c
+xterm*color4:      #5859b7
+xterm*color5:      #9876aa
+xterm*color6:      #259185
+xterm*color7:      #a9b7c6
+! the lighter/stronger variants
+xterm*color8:      #4d4d4d
+xterm*color9:      #de7620
+xterm*color10:     #59a547
+xterm*color11:     #fec64c
+xterm*color12:     #4041cf
+xterm*color13:     #9e64bc
+xterm*color14:     #179f90
+xterm*color15:     #ced6de
+
+!xterm*highlightColor:  [material:view-selected-bg]
+!xterm*cursorColor:     [material:cursor-normal-bg]

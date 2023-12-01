@@ -35,17 +35,18 @@ autocutsel -selection PRIMARY -fork
 
 if [ -f ~/.bg.png ] ; then
     feh --bg-center --no-fehbg ~/.bg.png
+elif [ -f ~/.bg.jpg ] ; then
+    feh --bg-center --no-fehbg ~/.bg.jpg
 fi
 
 if [ -f ~/.xsession.local ] ; then
   . ~/.xsession.local
 fi
 
-# http://askubuntu.com/questions/124815
-gsettings set org.gnome.desktop.interface gtk-key-theme "Emacs"
-
-# stops problems with virtual windows not re-rendering
-# https://github.com/chjj/compton/wiki/perf-guide
-#compton -b
-
-exec xmonad
+if [ -x $HOME/.local/bin/dwm ] ; then
+    exec $HOME/.local/bin/dwm
+elif [ -x $HOME/.cabal/bin/xmonad ] ; then
+    exec $HOME/.cabal/bin/xmonad
+else
+    xterm
+fi

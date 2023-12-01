@@ -17,4 +17,4 @@ set completion-ignore-case on
 "\e[5D": backward-word           # Ctrl+left
 "\e\e[C": forward-word         # Alt+right
 "\e\e[D": backward-word        # Alt+left
-
+"ÿ":    backward-kill-word # Alt-Backspace

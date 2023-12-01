@@ -4,3 +4,4 @@ TAGS
 cabal.project.local
 .ghc.flags
 .ghc.path
+.emacs.d/elpa/gnupg/
