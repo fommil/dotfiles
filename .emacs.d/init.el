@@ -757,9 +757,14 @@ Inspired by `org-combine-plists'."
   (setq
    eglot-report-progress nil
    eglot-ignored-server-capabilities
+   ;; the things we actually want are uncommented here. Weird
+   ;; way to do it, but ok.
    '(:hoverProvider
-     :signatureHelpProvider
-     :implementationProvider
+     ;:completionProvider
+     ;:signatureHelpProvider
+     ;:definitionProvider
+     :typeDefinitionProvider
+     ;:implementationProvider
      :declarationProvider
      :referencesProvider
      :documentHighlightProvider
@@ -774,13 +779,16 @@ Inspired by `org-combine-plists'."
      :documentLinkProvider
      :colorProvider
      :foldingRangeProvider
+     :executeCommandProvider
      :inlayHintProvider))
   (add-to-list 'eglot-stay-out-of 'flymake)
   (add-to-list 'eglot-server-programs
                '((rust-ts-mode rust-mode) .
-                 ("rust-analyzer" :initializationOptions (:diagnostics (:enable "false")))))
+                 ("rust-analyzer"
+                  :initializationOptions
+                  (:checkOnSave :json-false :diagnostics (:enable :json-false)))))
   )
-;; TODO standard binding for type-at-point
+;; TODO standard binding for the features we want
 
 (require 'fommil-email)
 (require 'fommil-haskell-tng)
@@ -878,8 +886,11 @@ Inspired by `org-combine-plists'."
 
 (use-package rust-mode
   :config
-  ;; TODO standard commands to build / format / etc
-  (setq rust-format-on-save t)
+  ;; TODO default compile command with correct directory base
+  ;; TODO is there a way to get a "import type at point" feature?
+  (setq rust-format-on-save t
+        rust-format-show-buffer nil
+        rust-format-goto-problem nil)
   :hook
   ((rust-mode . show-paren-mode)
    (rust-mode . electric-pair-local-mode)

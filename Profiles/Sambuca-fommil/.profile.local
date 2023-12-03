@@ -25,5 +25,3 @@ export EMACS_SOURCE=$HOME/Projects/emacs
 
 export GOPATH=$HOME/.go
 export PATH="$GOPATH/bin:$PATH"
-
-[ "$(tty)" = "/dev/tty1" ] && exec startx
