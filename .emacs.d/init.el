@@ -763,7 +763,7 @@ Inspired by `org-combine-plists'."
      ;:completionProvider
      ;:signatureHelpProvider
      ;:definitionProvider
-     :typeDefinitionProvider
+     ;:typeDefinitionProvider
      ;:implementationProvider
      :declarationProvider
      :referencesProvider
@@ -788,7 +788,14 @@ Inspired by `org-combine-plists'."
                   :initializationOptions
                   (:checkOnSave :json-false :diagnostics (:enable :json-false)))))
   )
-;; TODO standard binding for the features we want
+;; TODO standard binding for the eglot features we want
+;;
+;; - type at point echoed to minibuffer (and without hover)
+;; - jump to definiton (done)
+;; - completion (done)
+;;
+;; Note that newly created / opened files don't always show up correctly and a
+;; reconnect may be needed. It's unclear if it's an eglot or rust issue.
 
 (require 'fommil-email)
 (require 'fommil-haskell-tng)
@@ -891,6 +898,9 @@ Inspired by `org-combine-plists'."
   (setq rust-format-on-save t
         rust-format-show-buffer nil
         rust-format-goto-problem nil)
+  :bind
+  (:map rust-mode-map
+        ("M-<delete>" . paredit-unwrap))
   :hook
   ((rust-mode . show-paren-mode)
    (rust-mode . electric-pair-local-mode)

@@ -10,3 +10,5 @@ update-desktop-database ~/.local/share/applications
 # note that firefox needs
 #   browser.ctrlTab.recentlyUsedOrder=false
 # in about:config
+
+xterm &
