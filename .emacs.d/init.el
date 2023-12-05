@@ -764,11 +764,6 @@ Inspired by `org-combine-plists'."
 (use-package dockerfile-mode
   :mode ((rx "Dockerfile" eos) . dockerfile-mode))
 
-;; I'd prefer this to go to the minibuffer, but a box it is... could also look
-;; into providing a custom `eldoc-display-functions'.
-;; https://github.com/joaotavora/eglot/discussions/1328
-(use-package eldoc-box)
-
 ;; I don't use a lot of LSP features, so turn them off
 (use-package eglot
   :ensure nil
@@ -809,6 +804,8 @@ Inspired by `org-combine-plists'."
   :bind
   (:map eglot-mode-map
         ("C-c C-r i" . eglot-code-action-quickfix)
+        ;; I'd prefer to use the minibuffer, see `eldoc-display-functions'.
+        ;; https://github.com/joaotavora/eglot/discussions/1328
         ("C-c C-i t" . eldoc-print-current-symbol-info)))
 
 (add-hook
