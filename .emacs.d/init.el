@@ -764,6 +764,9 @@ Inspired by `org-combine-plists'."
 (use-package dockerfile-mode
   :mode ((rx "Dockerfile" eos) . dockerfile-mode))
 
+;; I'd prefer this to go to the minibuffer, but a box it is...
+(use-package eldoc-box)
+
 ;; I don't use a lot of LSP features, so turn them off
 (use-package eglot
   :ensure nil
@@ -773,9 +776,9 @@ Inspired by `org-combine-plists'."
    eglot-ignored-server-capabilities
    ;; the things we actually want are uncommented here. Weird
    ;; way to do it, but ok.
-   '(:hoverProvider
+   '(;:hoverProvider ;(provides async type info, would like this to be manual)
      ;:completionProvider (provides company with completions)
-     ;:signatureHelpProvider (provides eldoc with type information)
+     ;:signatureHelpProvider (eldoc integration, unsure entirely what it does)
      ;:definitionProvider (M-. jump to definition)
      :typeDefinitionProvider
      :implementationProvider
@@ -795,22 +798,27 @@ Inspired by `org-combine-plists'."
      :foldingRangeProvider
      :executeCommandProvider
      :inlayHintProvider))
-  (add-to-list 'eglot-stay-out-of 'flymake)
+  (add-to-list 'eglot-stay-out-of 'flymake) ;; disable diagnostics, needs server support
   (add-to-list 'eglot-server-programs
                '((rust-ts-mode rust-mode) .
                  ("rust-analyzer"
                   :initializationOptions
                   (:checkOnSave :json-false :diagnostics (:enable :json-false)))))
-  )
-;; TODO standard binding for the eglot features we want
-;;
-;; - quickfixes
-;; - type at point echoed to minibuffer (and without hover)
-;; - jump to definiton (done)
-;; - completion (done)
-;;
-;; Note that newly created files don't get connected and a reconnect seems to be
-;; needed. It's unclear if it's an eglot or rust issue.
+  :bind
+  (:map eglot-mode-map
+        ("C-c C-r i" . eglot-code-action-quickfix)
+        ;("C-c C-i t" . eldoc-print-current-symbol-info)
+        ("C-c C-i t" . eldoc-box-help-at-point)))
+
+(add-hook
+ 'eglot-managed-mode-hook
+ (lambda ()
+   ;; we want eglot to setup callbacks from eldoc, but we don't want eldoc
+   ;; running after every command. As a workaround, we disable it after we just
+   ;; enabled it. Now calling `M-x eldoc` will put the help we want in the eldoc
+   ;; buffer. Alternatively we could tell eglot to stay out of eldoc, and add
+   ;; the hooks manually, but that seems fragile to updates in eglot.
+   (eldoc-mode -1)))
 
 (require 'fommil-email)
 (require 'fommil-haskell-tng)
@@ -919,7 +927,8 @@ Inspired by `org-combine-plists'."
         ("M-<delete>" . paredit-unwrap)
         ("C-c c" . compile-with-directory)
         ;; C-c C-f is rust-format-buffer
-        ("C-c C-r i" . eglot-code-action-quickfix))
+        ;; ("C-c C-r i" . eglot-code-action-quickfix)
+        )
   :hook
   ((rust-mode . show-paren-mode)
    (rust-mode . electric-pair-local-mode)
