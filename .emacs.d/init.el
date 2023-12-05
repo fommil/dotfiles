@@ -255,6 +255,20 @@ Member of `post-self-insert-hook' if `electric-pair-mode' is on."
         (clean-buffer-list-delay-special 0))
     (clean-buffer-list)))
 
+(defcustom compile-with-directory-file
+  "Makefile"
+  "A filename indicating the `compile' dir."
+  :type 'string
+  :group 'tools
+  :safe
+  :local)
+(defun compile-with-directory ()
+  "`compile' but from a part directory that matches a predicate."
+  (interactive)
+  (let ((default-directory
+         (or (locate-dominating-file default-directory compile-with-directory-file)
+             default-directory)))
+    (call-interactively #'compile)))
 
 (defvar ido-buffer-whitelist
   '("^[*]\\(notmuch\\-hello\\|unsent\\|ag search\\|grep\\|eshell\\|magit\\([:]\\|-log\\|-diff\\)\\).*")
@@ -760,17 +774,17 @@ Inspired by `org-combine-plists'."
    ;; the things we actually want are uncommented here. Weird
    ;; way to do it, but ok.
    '(:hoverProvider
-     ;:completionProvider
-     ;:signatureHelpProvider
-     ;:definitionProvider
-     ;:typeDefinitionProvider
-     ;:implementationProvider
+     ;:completionProvider (provides company with completions)
+     ;:signatureHelpProvider (provides eldoc with type information)
+     ;:definitionProvider (M-. jump to definition)
+     :typeDefinitionProvider
+     :implementationProvider
      :declarationProvider
      :referencesProvider
      :documentHighlightProvider
      :documentSymbolProvider
      :workspaceSymbolProvider
-     :codeActionProvider
+     ;:codeActionProvider (quickfix is useful, e.g. import type at point)
      :codeLensProvider
      :documentFormattingProvider
      :documentRangeFormattingProvider
@@ -790,12 +804,13 @@ Inspired by `org-combine-plists'."
   )
 ;; TODO standard binding for the eglot features we want
 ;;
+;; - quickfixes
 ;; - type at point echoed to minibuffer (and without hover)
 ;; - jump to definiton (done)
 ;; - completion (done)
 ;;
-;; Note that newly created / opened files don't always show up correctly and a
-;; reconnect may be needed. It's unclear if it's an eglot or rust issue.
+;; Note that newly created files don't get connected and a reconnect seems to be
+;; needed. It's unclear if it's an eglot or rust issue.
 
 (require 'fommil-email)
 (require 'fommil-haskell-tng)
@@ -892,15 +907,19 @@ Inspired by `org-combine-plists'."
    ))
 
 (use-package rust-mode
-  :config
-  ;; TODO default compile command with correct directory base
-  ;; TODO is there a way to get a "import type at point" feature?
-  (setq rust-format-on-save t
+  :init
+  (setq rust-format-on-save nil
         rust-format-show-buffer nil
         rust-format-goto-problem nil)
+  :config
+  (setq compile-with-directory-file "Cargo.toml"
+        compile-command "cargo fmt && cargo build")
   :bind
   (:map rust-mode-map
-        ("M-<delete>" . paredit-unwrap))
+        ("M-<delete>" . paredit-unwrap)
+        ("C-c c" . compile-with-directory)
+        ;; C-c C-f is rust-format-buffer
+        ("C-c C-r i" . eglot-code-action-quickfix))
   :hook
   ((rust-mode . show-paren-mode)
    (rust-mode . electric-pair-local-mode)
