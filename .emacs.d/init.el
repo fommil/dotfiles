@@ -452,10 +452,6 @@ Inspired by `org-combine-plists'."
   :commands popup-imenu
   :bind ("M-i" . popup-imenu))
 
-;; WORKAROUND (missing in 2.9.4) https://github.com/magit/with-editor/issues/82
-(use-package with-editor
-  :pin melpa)
-
 (use-package magit
   :commands magit-status magit-blame-addition
   :init (setq
@@ -804,9 +800,7 @@ Inspired by `org-combine-plists'."
   :bind
   (:map eglot-mode-map
         ("C-c C-r i" . eglot-code-action-quickfix)
-        ;; I'd prefer to use the minibuffer, see `eldoc-display-functions'.
-        ;; https://github.com/joaotavora/eglot/discussions/1328
-        ("C-c C-i t" . eldoc-print-current-symbol-info)))
+        ("C-c C-i t" . eldoc-fancy)))
 
 (add-hook
  'eglot-managed-mode-hook
@@ -817,6 +811,15 @@ Inspired by `org-combine-plists'."
    ;; buffer. Alternatively we could tell eglot to stay out of eldoc, and add
    ;; the hooks manually, but that seems fragile to updates in eglot.
    (eldoc-mode -1)))
+(defun eldoc-fancy (arg)
+  "`eldoc' but uses the echo area by default and a prefix will swap to a buffer."
+  ;; https://github.com/joaotavora/eglot/discussions/1328
+  (interactive "P")
+  (let (_)
+    (defvar eldoc-display-functions)
+    (setq eldoc-display-functions
+          (if arg '(eldoc-display-in-buffer) '(eldoc-display-in-echo-area)))
+    (call-interactively #'eldoc)))
 
 (require 'fommil-email)
 (require 'fommil-haskell-tng)
