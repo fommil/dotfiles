@@ -96,3 +96,10 @@ xterm*color15:     #ced6de
 
 !xterm*highlightColor:  [material:view-selected-bg]
 !xterm*cursorColor:     [material:cursor-normal-bg]
+
+!https://www.gnu.org/software/emacs/manual/html_node/efaq/Meta-key-does-not-work-in-xterm.html
+!XTerm*eightBitInput:   false
+!XTerm*eightBitOutput:  true
+!XTerm.VT100.EightBitInput: false
+!https://askubuntu.com/questions/442644/
+xterm*VT100.metaSendsEscape: true

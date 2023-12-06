@@ -1,5 +1,7 @@
 clear      lock 
 
+keycode      64 = Meta_L
+
 clear      mod3
 clear      control
 keycode      37 = Hyper_L
