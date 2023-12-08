@@ -111,3 +111,7 @@ source_if_exists ~/.aliases
 source_if_exists ~/.aliases.local
 source_if_exists ~/.aliases.sec
 
+
+# xterm cursor
+# https://superuser.com/a/607479
+echo -e -n "\x1b[\x35 q"

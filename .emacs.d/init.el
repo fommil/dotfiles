@@ -819,7 +819,7 @@ Inspired by `org-combine-plists'."
     (defvar eldoc-display-functions)
     (setq eldoc-display-functions
           (if arg '(eldoc-display-in-buffer) '(eldoc-display-in-echo-area)))
-    (call-interactively #'eldoc)))
+    (eldoc t)))
 
 (require 'fommil-email)
 (require 'fommil-haskell-tng)
