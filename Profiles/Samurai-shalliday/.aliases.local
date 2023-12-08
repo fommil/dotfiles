@@ -1,5 +1,5 @@
 # ensures keybinds remain mapped, shows which apps need a restart
-alias update="sudo pacman -Syu ; xmodmap ~/.Xmodmap"
+alias update="sudo pacman -Syu ; xmodmap ~/.Xmodmap ; xmodmap ~/.Xmodmap.local"
 alias update-aggressive="yay -Syu --devel --aur ; update"
 alias keepers="sudo pacman -Qqet"
 alias cleanup='sudo pacman -Rsn $(pacman -Qdtq | tr "\n" " ")'
