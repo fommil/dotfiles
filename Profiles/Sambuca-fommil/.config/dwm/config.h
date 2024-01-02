@@ -62,7 +62,7 @@ static const Key keys[] = {
 	{ MODKEY,                       XK_Return, spawn,          {.v = termcmd } },
 // TODO screenshot
 // TODO lock screen
-	{ MODKEY,                       XK_b,      togglebar,      {0} },
+//	{ MODKEY,                       XK_b,      togglebar,      {0} },
 // TODO focusstack doesn't do what I expect. I want to change the master
 	{ MODKEY|ShiftMask,             XK_Tab,    focusstack,     {.i = +1 } },
 	{ MODKEY,                       XK_Tab,    incnmaster,     {.i = +1 } },

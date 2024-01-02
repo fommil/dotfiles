@@ -398,9 +398,6 @@ Inspired by `org-combine-plists'."
   ;; nice to have it on the modeline
   :init
   (put 'ag-ignore-list 'safe-local-variable #'listp)
-  (setq-default
-   ;; explicit -e here forces +Unknown lang parser
-   projectile-tags-command "ctags -R -f \"%s\" %s \"%s\"")
   (setq
    projectile-tags-backend 'xref
    projectile-use-git-grep t
@@ -458,6 +455,8 @@ Inspired by `org-combine-plists'."
          git-commit-style-convention-checks nil)
   :bind (("s-g" . magit-status)
          ("s-b" . magit-blame-addition)))
+(with-eval-after-load 'transient
+  (transient-bind-q-to-quit))
 
 ;; BLOCKED https://github.com/magit/forge/issues/21
 ;; BLOCKED https://github.com/magit/forge/issues/22
