@@ -16,6 +16,9 @@
 ;;(light-theme)
 (dark-theme)
 
+(when (not (display-graphic-p))
+  (normal-erase-is-backspace-mode))
+
 ;; Local Variables:
 ;; byte-compile-warnings: (not free-vars unresolved)
 ;; End:

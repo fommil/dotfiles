@@ -92,7 +92,7 @@ function docker-nuke {
 }
 
 function ffmpeg-h264-mp4 {
-    ffmpeg -i "$1" -f mp4 -c:a libmp3lame -qscale:a 0 -c:v copy "${1%.*}.mp4"
+    ffmpeg -i "$1" -f mp4 -c:a libmp3lame -qscale:a 0 -c:v copy "${1%.*}-recode.mp4"
 }
 
 function ffmpeg-mp4 {

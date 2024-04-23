@@ -8,8 +8,11 @@ TEMPO=${2:-2.0}
 # ACTIVATION_BYTES=...
 
 # to get the decrypted m4b
-if [[ "$1" = *.aac ]] ; then
-    ffmpeg -activation_bytes $ACTIVATION_BYTES -i "$1" -c:a copy -vn "${1%.*}.m4b"
+if [[ "$1" =~ [.]aa[cx]$ ]] ; then
+    OUT="${1%.*}.m4b"
+    if [ ! -f "$OUT" ] ; then
+        ffmpeg -activation_bytes $ACTIVATION_BYTES -i "$1" -c:a copy -vn "$OUT"
+    fi
 fi
 
 # sped-up mp3

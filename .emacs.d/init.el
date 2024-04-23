@@ -244,7 +244,7 @@ Member of `post-self-insert-hook' if `electric-pair-mode' is on."
       (delete-frame)
     ;; would be better to filter non-hidden buffers
     (let ((count-buffers (length (buffer-list))))
-      (if (< count-buffers 11)
+      (if (< count-buffers 12)
           (save-buffers-kill-emacs)
         (message-box "use 'M-x exit'")))))
 

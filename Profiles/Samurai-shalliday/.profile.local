@@ -19,7 +19,7 @@ export PRINTER=HP_Color
 # the (jenv init -) thing doesn't work in emacs
 export PATH="$HOME/.jenv/shims:$HOME/.jenv/bin:$PATH"
 
-export YOURKIT_AGENT=/opt/YourKit-JavaProfiler-2021.11/bin/linux-x86-64/libyjpagent.so
+export YOURKIT_AGENT=/opt/YourKit-JavaProfiler-2024.3/bin/linux-x86-64/libyjpagent.so
 export ASYNC_PROFILER_DIR=$HOME/Projects/async-profiler
 export FLAME_GRAPH_DIR=$HOME/Projects/FlameGraph
 

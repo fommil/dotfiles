@@ -11,4 +11,4 @@ update-desktop-database ~/.local/share/applications
 #   browser.ctrlTab.recentlyUsedOrder=false
 # in about:config
 
-xterm &
+#xterm &
