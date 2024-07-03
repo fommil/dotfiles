@@ -6,8 +6,8 @@
 ;; Homepage: https://github.com/magit/with-editor
 ;; Keywords: processes terminals
 
-;; Package-Version: 3.3.2
-;; Package-Requires: ((emacs "25.1") (compat "29.1.4.1"))
+;; Package-Version: 3.3.4
+;; Package-Requires: ((emacs "25.1") (compat "29.1.4.5"))
 
 ;; SPDX-License-Identifier: GPL-3.0-or-later
 
@@ -113,7 +113,7 @@ please see https://github.com/magit/magit/wiki/Emacsclient."))))
 
 (defun with-editor-locate-emacsclient-1 (path depth)
   (let* ((version-lst (cl-subseq (split-string emacs-version "\\.") 0 depth))
-         (version-reg (concat "^" (mapconcat #'identity version-lst "\\."))))
+         (version-reg (concat "^" (string-join version-lst "\\."))))
     (or (locate-file
          (cond ((equal (downcase invocation-name) "remacs")
                 "remacsclient")
@@ -125,7 +125,7 @@ please see https://github.com/magit/magit/wiki/Emacsclient."))))
           (nconc (and (boundp 'debian-emacs-flavor)
                       (list (format ".%s" debian-emacs-flavor)))
                  (cl-mapcon (lambda (v)
-                              (setq v (mapconcat #'identity (reverse v) "."))
+                              (setq v (string-join (reverse v) "."))
                               (list v (concat "-" v) (concat ".emacs" v)))
                             (reverse version-lst))
                  (list "" "-snapshot" ".emacs-snapshot")))
@@ -720,7 +720,8 @@ are prevented from being added to that list."
     (when (cl-find-if (lambda (regexp)
                         (string-match-p regexp file))
                       with-editor-file-name-history-exclude)
-      (setq file-name-history (delete file file-name-history)))))
+      (setq file-name-history
+            (delete (abbreviate-file-name file) file-name-history)))))
 
 ;;; Augmentations
 

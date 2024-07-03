@@ -93,12 +93,17 @@ enabling `flymake-mode'.
 
 (fn REPORT-FN &rest PLIST)")
 (autoload 'hl-todo-insert "hl-todo" "\
-Insert TODO or similar keyword.
+Read a TODO or similar keyword and insert it at point.
+
 If point is not inside a string or comment, then insert a new
 comment.  If point is at the end of the line, then insert the
 comment there, otherwise insert it as a new line before the
-current line.  When called interactively the KEYWORD is read via
-`completing-read'.
+current line.  When called interactively the KEYWORD is read
+via `completing-read'.
+
+If `hl-todo-require-punctuation' is non-nil and
+`hl-todo-highlight-punctuation' contains a single character,
+then append that character to the inserted string.
 
 (fn KEYWORD)" t)
 (register-definition-prefixes "hl-todo" '("hl-todo-"))
