@@ -4,3 +4,5 @@ alias update="sudo apt update && sudo apt upgrade"
 alias s3push='aws s3 sync --storage-class REDUCED_REDUNDANCY --size-only --no-guess-mime-type /home/s3/fommil/ s3://fommil/'
 alias s3pull='aws s3 sync --size-only s3://fommil/ /home/s3/fommil/'
 
+alias poweroff='sudo /sbin/poweroff'
+alias reboot='sudo /sbin/reboot'
