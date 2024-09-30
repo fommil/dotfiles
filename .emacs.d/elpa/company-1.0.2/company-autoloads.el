@@ -78,7 +78,11 @@ Company mode is enabled in all buffers where `company-mode-on' would do it.
 See `company-mode' for more information on Company mode.
 
 (fn &optional ARG)" t)
-(autoload 'company-manual-begin "company" nil t)
+(autoload 'company-manual-begin "company" "\
+Start the completion interface.
+
+Unlike `company-complete-selection' or `company-complete', this command
+doesn't cause any immediate changes to the buffer text." t)
 (autoload 'company-complete "company" "\
 Insert the common part of all candidates or the current selection.
 The first time this is called, the common part is inserted, the second
@@ -145,17 +149,8 @@ dabbrev-like `company-mode' backend for code.
 The backend looks for all symbols in the current buffer that aren't in
 comments or strings.
 
-(fn COMMAND &optional ARG &rest IGNORED)" t)
-(register-definition-prefixes "company-dabbrev-code" '("company-dabbrev-code-"))
-
-
-;;; Generated autoloads from company-elisp.el
-
-(autoload 'company-elisp "company-elisp" "\
-`company-mode' completion backend for Emacs Lisp.
-
-(fn COMMAND &optional ARG &rest IGNORED)" t)
-(register-definition-prefixes "company-elisp" '("company-elisp-"))
+(fn COMMAND &optional ARG &rest REST)" t)
+(register-definition-prefixes "company-dabbrev-code" '("company-dabbrev-"))
 
 
 ;;; Generated autoloads from company-etags.el
@@ -163,7 +158,7 @@ comments or strings.
 (autoload 'company-etags "company-etags" "\
 `company-mode' completion backend for etags.
 
-(fn COMMAND &optional ARG &rest IGNORED)" t)
+(fn COMMAND &optional ARG &rest REST)" t)
 (register-definition-prefixes "company-etags" '("company-etags-"))
 
 
@@ -174,7 +169,7 @@ comments or strings.
 Completions works for proper absolute and relative files paths.
 File paths with spaces are only supported inside strings.
 
-(fn COMMAND &optional ARG &rest IGNORED)" t)
+(fn COMMAND &optional ARG &rest REST)" t)
 (register-definition-prefixes "company-files" '("company-file"))
 
 
@@ -193,7 +188,7 @@ File paths with spaces are only supported inside strings.
 `company-mode' completion backend using Ispell.
 
 (fn COMMAND &optional ARG &rest IGNORED)" t)
-(register-definition-prefixes "company-ispell" '("company-ispell-"))
+(register-definition-prefixes "company-ispell" '("company-"))
 
 
 ;;; Generated autoloads from company-keywords.el
