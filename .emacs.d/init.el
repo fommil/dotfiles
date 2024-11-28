@@ -422,6 +422,11 @@ Inspired by `org-combine-plists'."
   :init
   (setq ps-left-header (list 'ps-get-buffer-name (lambda () (file-relative-name default-directory (projectile-project-root))))
         ps-right-header (list "/pagenumberstring load")))
+
+(use-package executable
+  :ensure nil
+  :init
+  (add-hook 'after-save-hook 'executable-make-buffer-file-executable-if-script-p))
 (when (executable-find "ps2pdf")
   (defun pdf-print-buffer-with-faces (&optional filename)
     ;; https://emacs.stackexchange.com/a/42163/5142
@@ -819,15 +824,25 @@ converted to PDF at the same location."
                '((rust-ts-mode rust-mode) .
                  ("rust-analyzer"
                   :initializationOptions
-                  (:checkOnSave :json-false :diagnostics (:enable :json-false)))))
+                  (:checkOnSave :json-false
+                   :diagnostics (:enable :json-false)))))
   :bind
   (:map eglot-mode-map
         ("C-c C-r i" . eglot-code-action-quickfix)
         ("C-c C-i t" . eldoc-fancy)))
 
+(defun my/special-eglot-hover-function (cb)
+  "Same as `eglot-hover-eldoc-function`, but throw away its short :echo cookie"
+  (eglot-hover-eldoc-function (lambda (info &rest _ignore)
+                                ;; ignore the :echo cookie that eglot-hover-eldoc-function offers
+                                (funcall cb info))))
+
 (add-hook
  'eglot-managed-mode-hook
  (lambda ()
+   ;; we don't want eglot trying to trim the eldoc echo buffer
+   ;; https://github.com/joaotavora/eglot/discussions/1458
+   (setq-local eldoc-documentation-functions (cl-substitute #'my/special-eglot-hover-function 'eglot-hover-eldoc-function eldoc-documentation-functions))
    ;; we want eglot to setup callbacks from eldoc, but we don't want eldoc
    ;; running after every command. As a workaround, we disable it after we just
    ;; enabled it. Now calling `M-x eldoc` will put the help we want in the eldoc
@@ -837,6 +852,7 @@ converted to PDF at the same location."
 (defun eldoc-fancy (arg)
   "`eldoc' but uses the echo area by default and a prefix will swap to a buffer."
   ;; https://github.com/joaotavora/eglot/discussions/1328
+  ;; https://github.com/joaotavora/eglot/discussions/1458
   (interactive "P")
   (let (_)
     (defvar eldoc-display-functions)
@@ -942,7 +958,9 @@ converted to PDF at the same location."
   :init
   (setq rust-format-on-save nil
         rust-format-show-buffer nil
-        rust-format-goto-problem nil)
+        rust-format-goto-problem nil
+        ;; rust-mode-treesitter-derive t
+        )
   :config
   (setq compile-with-directory-file "Cargo.toml"
         compile-command "cargo fmt && cargo build")

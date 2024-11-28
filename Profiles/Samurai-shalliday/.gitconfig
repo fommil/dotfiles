@@ -10,6 +10,7 @@
     editor = emacs -nw
 [diff]
     renames = copy
+    renameLimit = 10240
 [pull]
 # There is apparently no way to set these by default,
 # so don't forget to pass them explicitly for big merges.
