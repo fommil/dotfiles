@@ -3,4 +3,11 @@
 --exclude=flycheck_*
 --exclude=.git
 --exclude=*_pb2.py
---languages=c,emacslisp,python,go,java,c#
+--exclude=target
+--exclude=build
+--exclude=*.wav
+--exclude=*.png
+--exclude=*.html
+--exclude=*.zip
+--exclude=*.csv
+--languages=c,emacslisp,python,go,java,c#,rust

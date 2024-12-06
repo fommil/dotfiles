@@ -10,7 +10,8 @@
 ;;             Bozhidar Batsov <bozhidar@batsov.dev>
 ;; URL: https://www.flycheck.org
 ;; Keywords: convenience, languages, tools
-;; Version: 35.0-snapshot
+;; Package-Version: 20241130.1502
+;; Package-Revision: ebaf48359b3e
 ;; Package-Requires: ((emacs "26.1"))
 
 ;; This file is not part of GNU Emacs.
@@ -10602,7 +10603,7 @@ See URL `https://puppet.com/'."
           ": Could not parse for environment " (one-or-more word)
           ": " (message (minimal-match (zero-or-more anything)))
           " at " (file-name "/" (zero-or-more not-newline)) ":" line line-end))
-  :modes puppet-mode
+  :modes (puppet-mode puppet-ts-mode)
   :next-checkers ((warning . puppet-lint)))
 
 (flycheck-def-config-file-var flycheck-puppet-lint-rc puppet-lint
@@ -10644,7 +10645,7 @@ See URL `https://puppet-lint.com/'."
   :error-patterns
   ((warning line-start (file-name) ":" line ":warning: " (message) line-end)
    (error line-start (file-name) ":" line ":error: " (message) line-end))
-  :modes puppet-mode
+  :modes (puppet-mode puppet-ts-mode)
   ;; Since we check the original file, we can only use this syntax checker if
   ;; the buffer is actually linked to a file, and if it is not modified.
   :predicate flycheck-buffer-saved-p)
