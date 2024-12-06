@@ -290,6 +290,7 @@ SYMBOL with `flycheck-def-executable-var'.
 ;;; Generated autoloads from flycheck-ert.el
 
 (register-definition-prefixes "flycheck-ert" '("flycheck-er"))
+
 
 ;;; End of scraped data
 
