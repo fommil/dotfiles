@@ -8,6 +8,9 @@
 (add-to-list 'default-frame-alist
              '(font . "Hack-28"))
 
+(when (not (display-graphic-p))
+  (normal-erase-is-backspace-mode))
+
 (package-ensure-compiled)
 
 ;; I'll usually want access to these..

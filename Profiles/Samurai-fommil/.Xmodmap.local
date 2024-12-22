@@ -1,1 +1,10 @@
+clear      lock 
+
+clear      mod3
+clear      control
 keycode      37 = Hyper_L
+add        mod3 = Hyper_L
+add        control = Control_R
+
+clear      mod4
+add        mod4 = Super_R

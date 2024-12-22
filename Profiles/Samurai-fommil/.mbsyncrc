@@ -7,7 +7,7 @@ Expunge Both
 
 IMAPAccount gmail
 Host imap.gmail.com
-SSLType IMAPS
+TLSType IMAPS
 CertificateFile /etc/ssl/certs/ca-certificates.crt
 PipelineDepth 64
 User sam.halliday@gmail.com
