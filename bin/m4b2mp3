@@ -2,7 +2,7 @@
 
 # TODO use https://sites.google.com/site/speechrate/ to get the right atempo
 
-TEMPO=${2:-2.0}
+TEMPO=${2:-1.5}
 
 # Using https://github.com/inAudible-NG/audible-activator
 # ACTIVATION_BYTES=...
