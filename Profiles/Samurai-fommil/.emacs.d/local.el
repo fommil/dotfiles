@@ -8,8 +8,9 @@
 (add-to-list 'default-frame-alist
              '(font . "Hack-28"))
 
-(when (not (display-graphic-p))
-  (normal-erase-is-backspace-mode))
+(if (not (display-graphic-p))
+    (normal-erase-is-backspace-mode)
+  (dark-theme))
 
 (package-ensure-compiled)
 
@@ -22,7 +23,7 @@
 ;;      (find-file "~/Work")
 ;;    (find-file "~/Projects/haskell-tng.el/haskell-tng-smie.el")))
 
-(find-file "~/Projects/haskell-tng.el/")
+;;(find-file "~/Projects/haskell-tng.el/")
 
 (notmuch)
 
@@ -35,7 +36,6 @@
 ;;     (if (and (< 8 hour) (< hour 20))
 ;;         (light-theme)
 ;;       (dark-theme))))
-(light-theme)
 
 ;; flycheck is CPU intensive so only for desktops
 ;; (add-hook 'haskell-mode-hook
