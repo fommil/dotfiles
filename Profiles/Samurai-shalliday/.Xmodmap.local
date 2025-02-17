@@ -1,6 +1,11 @@
 clear      lock 
 
 keycode      64 = Meta_L
+keycode     108 = Super_R
+
+clear      mod1
+add        mod1 = Alt_L
+add        mod1 = Meta_L
 
 clear      mod3
 clear      control
