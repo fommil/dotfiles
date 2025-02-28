@@ -11,12 +11,15 @@
 
 (require 'company)
 
-;; elpy broken in melpa stable...
 ;;(use-package elpy)
 (use-package python-mode
   :ensure nil
   :bind (("C-c c" . compile)
-         ("C-c e" . next-error)))
+         ("C-c e" . next-error))
+  :hook
+  ((python-mode . show-paren-mode)
+   (python-mode . electric-pair-local-mode)
+   (python-mode . yas-minor-mode)))
 
 ;; (add-hook 'python-mode-hook
 ;;           (lambda ()
