@@ -7,7 +7,7 @@
 
 
 #redshift -b 0.9:0.7 &
-#redshift -l 56.291000:-3.722257 -b 0.9:0.5 &
+redshift -l 56.291000:-3.722257 -b 0.9:0.5 &
 
 # top right corner stops screen lock
 xautolock -locker slock -time 15 -corners +--- &
