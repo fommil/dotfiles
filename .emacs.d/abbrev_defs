@@ -1,0 +1,7 @@
+;;-*-coding: utf-8;-*-
+
+(define-abbrev-table 'haskell-tng-mode-abbrev-table
+  '(
+    ("panic" "panic \"TODO not implemented\"" nil :count 0)
+   ))
+
