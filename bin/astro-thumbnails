@@ -1,0 +1,8 @@
+#!/bin/bash
+
+# extracts the jpeg thumbnails from all the Sony raw images in the current
+# working directory. Useful to be able to view them in feh or whatever.
+
+for f in *.ARW ; do
+    exiftool -b -PreviewImage "$f" > "${f%.ARW}.jpg"
+done

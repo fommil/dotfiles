@@ -1,0 +1,53 @@
+#!/bin/bash
+
+# given a folder of Sony raw images this will sort them according to their
+# jpeg preview's mean pixel values into darks, lights and lights_filter.
+#
+# It is wise to test a few files to calibrate the levels to use. If a filename
+# is provided as a parameter, this script will return its brightness level.
+#
+# If a single number is provided, it is treated as the threshold for light
+# frames. If no number is provided, a default value of 0.001 is used.
+#
+# If two numbers are provided, the first is used as the threshold to distinguish
+# dark frames from filtered frames, and the second number is used to distinguish
+# filtered frames from rgb frames.
+
+brightness () {
+    f=$1
+    thumb=${f%.ARW}.jpg
+    if [ -f $thumb ] ; then
+        # we already created a thumbnail, this is faster
+        magick jpeg:$thumb -format "%[fx:mean]\n" info:
+    else
+        exiftool -b -PreviewImage $f | magick jpeg:- -format "%[fx:mean]\n" info:
+    fi
+}
+
+if [ -f "$1" ] ; then
+    brightness $1
+    exit 0
+fi
+
+# These defaults are roughly correct for 30 second exposures on an fs-60cb (with
+# reducer) captured by a full spectrum modified sony a7iii, with a ZWO uv/ir cut
+# or an SV220 dual band, under bortle 4 skies (with moonlight). Your mileage may
+# vary...
+filter=${1:-0.001}
+light=${2:-0.1}
+
+for f in *.ARW ; do
+    echo $f
+    mean=$(brightness $f)
+    echo "$f $mean"
+    if [ $(awk -v x="$mean" -v y="$filter" 'BEGIN { if (x < y) print "1"; else print "0"; }') -eq 1 ] ; then
+        mkdir darks 2>/dev/null
+        mv -v $f darks/
+    elif [ $(awk -v x="$mean" -v y="$light" 'BEGIN { if (x < y) print "1"; else print "0"; }') -eq 1 ] ; then
+        mkdir lights_filter 2>/dev/null
+        mv -v $f lights_filter/
+    else
+        mkdir lights 2>/dev/null
+        mv -v $f lights/
+    fi
+done

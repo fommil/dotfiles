@@ -1,0 +1,14 @@
+#!/bin/bash
+
+# extracts the exposure information from all the Sony raw images in the current
+# working directory and sorts the files into folders of that name. It should
+# then be relatively obvious which files are biases (the lowest number), flats
+# (the next numbers) and darks/lights (the highest numbers) for input into
+# siril. Run astro-sort-lights in the highest exposure folder to further sort
+# the files into darks / lights / lighs_filter folders.
+
+for f in *.ARW ; do
+    e=$(exiftool -b -s -S -ExposureTime $f)
+    mkdir $e 2>/dev/null
+    mv -v $f $e
+done

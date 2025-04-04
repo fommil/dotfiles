@@ -630,6 +630,7 @@ converted to PDF at the same location."
 (global-set-key (kbd "M-Q") 'unfill-paragraph)
 (global-set-key (kbd "<f6>") 'dot-emacs)
 (global-set-key (kbd "C-x \\") 'indent-defun)
+(define-key key-translation-map (kbd "s-3") (kbd "£"))
 
 ;;..............................................................................
 ;; elisp
