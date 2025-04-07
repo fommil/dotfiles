@@ -37,9 +37,8 @@ filter=${1:-0.001}
 light=${2:-0.1}
 
 for f in *.ARW ; do
-    echo $f
     mean=$(brightness $f)
-    echo "$f $mean"
+    # echo "$f $mean"
     if [ $(awk -v x="$mean" -v y="$filter" 'BEGIN { if (x < y) print "1"; else print "0"; }') -eq 1 ] ; then
         mkdir darks 2>/dev/null
         mv -v $f darks/
