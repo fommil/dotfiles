@@ -29,10 +29,18 @@ if [ -f "$1" ] ; then
     exit 0
 fi
 
-# These defaults are roughly correct for 30 second exposures on an fs-60cb (with
-# reducer) captured by a full spectrum modified sony a7iii, with a ZWO uv/ir cut
-# or an SV220 dual band, under bortle 4 skies (with moonlight). Your mileage may
-# vary...
+if [ "$1" = "calibrate" ] ; then
+    for f in *.ARW ; do
+        mean=$(brightness $f)
+        echo "$f : $mean"
+    done
+    exit 0
+fi
+
+# These defaults are roughly correct for 30 second exposures at ISO3200 on an
+# fs-60cb (with reducer) captured by a full spectrum modified sony a7iii, with a
+# ZWO uv/ir cut or an SV220 dual band, under bortle 4 skies (with moonlight).
+# Your mileage may vary.
 filter=${1:-0.001}
 light=${2:-0.1}
 
