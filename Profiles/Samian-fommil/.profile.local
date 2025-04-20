@@ -1,0 +1,27 @@
+#!/bin/sh
+
+# rustup installed manually
+export PATH="$HOME/.cargo/bin:$PATH"
+
+# pyenv installed manually
+export PATH="$HOME/.pyenv/bin:$PATH"
+eval "$(pyenv init -pyenv init -)"
+eval "$(pyenv virtualenv-init -)"
+
+# jenv installed manually https://www.jenv.be/
+export PATH="$HOME/.jenv/shims:$HOME/.jenv/bin:$PATH"
+
+# cask installed manually https://github.com/cask/cask
+export PATH="$HOME/.cask/bin:$PATH"
+
+# also update /etc/makepkg.conf
+export MAKEFLAGS="-j$(nproc)"
+export CFLAGS="-march=native -O3 -pipe -fno-plt"
+export CXXFLAGS="$CFLAGS"
+
+export EMACS_SOURCE=$HOME/Projects/emacs
+# when building emacs-*-git use this
+# source=("$pkgname::git+file:///home/fommil/Projects/emacs#branch=emacs-25")
+
+export GOPATH=$HOME/.go
+export PATH="$GOPATH/bin:$PATH"
