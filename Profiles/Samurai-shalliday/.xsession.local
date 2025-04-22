@@ -7,6 +7,9 @@ redshift -l 56.291000:-3.722257 -b 0.9:0.6 &
 
 update-desktop-database ~/.local/share/applications
 
+# needed for some apps (e.g. rpi-imager) to gain privileged access
+/usr/lib/polkit-gnome/polkit-gnome-authentication-agent-1 &
+
 # note that firefox needs
 #   browser.ctrlTab.recentlyUsedOrder=false
 # in about:config
