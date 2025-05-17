@@ -1,0 +1,61 @@
+#!/bin/sh
+
+# This is started by dash in debian, everything must be POSIX
+# Note that this must be ~/.xsessionrc not ~/.xsession
+# because of subtelties in the way XSession works.
+
+# make it a login shell
+[ -f "$HOME/.profile" ] && . "$HOME/.profile"
+
+# Some distributions (e.g. Ubuntu) need to have a lightdm
+# menu entry to be able to login with this script. Add the
+# following (without comments) to /usr/share/xsessions/Xsession.desktop
+#  [Desktop Entry]
+#  Name=Xsession
+#  Exec=/etc/X11/Xsession
+
+# https://wiki.archlinux.org/index.php/Java#Applications_not_resizing_with_WM.2C_menus_immediately_closing
+export _JAVA_AWT_WM_NONREPARENTING=1
+
+# these are loaded by debian
+#if [ -f $HOME/.Xresources ] ; then
+#    xrdb -load $HOME/.Xresources
+#fi
+if [ -f $HOME/.Xresources.local ] ; then
+    xrdb -merge $HOME/.Xresources.local
+fi
+
+# WARNING: this will not be used if the keyboard is removed and reinserted
+# I did write something that works for xkb but it also isn't persisted.
+if [ -f $HOME/.Xmodmap ] ; then
+    xmodmap $HOME/.Xmodmap
+fi
+if [ -f $HOME/.Xmodmap.local ] ; then
+    xmodmap $HOME/.Xmodmap.local
+fi
+
+# clipboard
+autocutsel -fork
+autocutsel -selection PRIMARY -fork
+
+# background
+
+if [ -f $HOME/.bg.png ] ; then
+    feh --bg-center --no-fehbg $HOME/.bg.png
+elif [ -f $HOME/.bg.jpg ] ; then
+    feh --bg-center --no-fehbg $HOME/.bg.jpg
+fi
+
+if [ -f $HOME/.xsession.local ] ; then
+  . $HOME/.xsession.local
+fi
+
+if [ -x $HOME/.local/bin/dwm ] ; then
+    # fallback incase keymappings are broken
+    xterm &
+    exec $HOME/.local/bin/dwm
+elif [ -x $HOME/.cabal/bin/xmonad ] ; then
+    exec $HOME/.cabal/bin/xmonad
+else
+    xterm
+fi

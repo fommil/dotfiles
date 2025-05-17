@@ -1,7 +1,7 @@
 #!/bin/sh
 
-function source_if_exists {
-    if [ -f "$1" ] ; then
+source_if_exists() {
+    if [ -f "$1" ]; then
         . "$1"
     fi
 }

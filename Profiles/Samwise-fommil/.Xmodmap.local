@@ -1,0 +1,17 @@
+! reset with
+!   setxkbmap -layout us -option ''
+! see bindings with
+!   xmodmap -pm
+
+! reassign Control_L to send Hyper_L
+! (must remove the old binding first)
+remove  control = Control_L
+remove     mod4 = Hyper_L
+keycode     207 = NoSymbol
+keycode      37 = Hyper_L
+add        mod3 = Hyper_L
+
+! reassign Alt_R to send Super_R
+remove mod1 = Alt_R
+keycode     108 = Super_R
+

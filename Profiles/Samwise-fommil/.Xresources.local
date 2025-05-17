@@ -1,0 +1,13 @@
+Xft.dpi: 96
+URxvt*font: xft:Hack:size=24
+URxvt*boldFont: xft:Hack:size=24
+
+Xcursor.size: 48
+Xcursor.theme: whiteglass
+!Xcursor.theme: ComixCursors-Green
+!Xcursor.theme: default
+!disables the shadow
+Xcursor.core: 1
+
+xterm*faceName: Hack
+xterm*faceSize: 24
