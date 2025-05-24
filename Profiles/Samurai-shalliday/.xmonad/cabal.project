@@ -1,3 +1,0 @@
-packages: ./
-with-compiler: ghc-9.6.2
-optimization: 2

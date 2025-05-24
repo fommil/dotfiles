@@ -1,6 +1,9 @@
-URxvt*font: xft:Hack:size=14
-URxvt*boldFont: xft:Hack:size=14
+Xft.dpi: 96
+
 Xcursor.size: 32
+Xcursor.theme: whiteglass
+!disables the shadow
+Xcursor.core: 1
 
 xterm*faceName: Hack
 xterm*faceSize: 14

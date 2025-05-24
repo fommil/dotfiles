@@ -1,22 +1,20 @@
-#!/bin/bash
+#!/bin/sh
 
-# for some reason debian doesn't consider an xsession to be a login
-. ~/.profile
+#summer
+redshift -m randr -l 56.291000:-3.722257 -b 1.0:0.7 &
+# winter
+#redshift -m randr -l 56.291000:-3.722257 -b 0.9:0.6 &
 
-# wifi is controlled by TODO
+update-desktop-database ~/.local/share/applications
 
-# signal is installed from
-# https://github.com/0mniteck/Signal-Desktop-Mobian/
+# needed for some apps (e.g. rpi-imager) to gain privileged access
+lxpolkit &
 
-setxkbmap -option ctrl:nocaps
+# auto disk mounting (under /media/<user>)
+devmon &
 
-#redshift -b 0.9:0.7 &
-redshift -l 56.291000:-3.722257 -b 0.9:0.5 &
+xset s 900 0
+xss-lock -- slock &
 
-# TODO replacement for xautolock
-# top right corner stops screen lock
-#xautolock -locker slock -time 15 -corners +--- &
-# start with the lock because we have auto-login
-
-# TODO autologin with immediate slock
-#slock &
+# autologin with immediate slock
+slock &

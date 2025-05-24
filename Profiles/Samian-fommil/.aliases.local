@@ -1,8 +1,10 @@
 alias update="sudo apt update && sudo apt upgrade"
 #alias purge='sudo apt-get purge $(dpkg -l | grep \'^rc\' | awk \'{print $2}\')'
 
-alias s3push='aws s3 sync --storage-class REDUCED_REDUNDANCY --size-only --no-guess-mime-type /home/s3/fommil/ s3://fommil/'
-alias s3pull='aws s3 sync --size-only s3://fommil/ /home/s3/fommil/'
+alias s3push='aws s3 sync --profile fommil --storage-class STANDARD_IA --size-only --no-guess-mime-type ~/Cloud/ s3://fommil-cloud/'
+alias s3pull='aws s3 sync --profile fommil --size-only s3://fommil-cloud/ ~/Cloud/'
 
 alias poweroff='sudo /sbin/poweroff'
 alias reboot='sudo /sbin/reboot'
+
+alias bat='upower -i /org/freedesktop/UPower/devices/battery_BAT0| grep -E "state|to\ full|percentage"'
