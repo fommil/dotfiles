@@ -3,7 +3,10 @@
 # rustup installed manually
 export PATH="$HOME/.cargo/bin:$PATH"
 
-# pyenv installed globally
+# use debian pyenv package
+export PYENV_ROOT="$HOME/.pyenv"
+export PATH="$PYENV_ROOT/bin:$PATH"
+eval "$(pyenv init - sh)"
 
 # jenv installed manually
 # git clone https://github.com/jenv/jenv.git ~/.jenv

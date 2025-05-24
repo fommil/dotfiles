@@ -1,0 +1,29 @@
+#!/bin/sh
+
+# if the keyboard is unplugged, all xmodmaps are lost, so check
+$HOME/.Xmodmap.hack &
+
+#summer
+redshift -m randr -l 56.291000:-3.722257 -b 1.0:0.7 &
+# winter
+#redshift -m randr -l 56.291000:-3.722257 -b 0.9:0.6 &
+
+update-desktop-database ~/.local/share/applications
+
+# needed for some apps (e.g. rpi-imager) to gain privileged access
+lxpolkit &
+
+# auto disk mounting (under /media/<user>)
+devmon &
+
+# my monitor interprets a "blank" as turning off the sound, which
+# kills my music. So just don't blank. We could manually simulate
+# a screensaver with xrandr brightness if we cared enough.
+xset -dpms
+xset s off
+xset s noblank
+xset s 900 0
+xss-lock -- slock &
+
+# autologin with immediate slock
+slock &
