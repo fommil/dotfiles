@@ -10,8 +10,8 @@
 ;;             Bozhidar Batsov <bozhidar@batsov.dev>
 ;; URL: https://www.flycheck.org
 ;; Keywords: convenience, languages, tools
-;; Package-Version: 20250423.1305
-;; Package-Revision: 2842e237f6ab
+;; Package-Version: 20250524.1633
+;; Package-Revision: 6f85589a3b35
 ;; Package-Requires: ((emacs "27.1"))
 
 ;; This file is not part of GNU Emacs.
@@ -10893,7 +10893,7 @@ See URL `https://docs.astral.sh/ruff/'."
   :command ("ruff"
             "check"
             (config-file "--config" flycheck-python-ruff-config)
-            "--output-format=concise"
+            "--output-format=text"
             (option "--stdin-filename" buffer-file-name)
             "-")
   :standard-input t
