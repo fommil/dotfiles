@@ -13,19 +13,24 @@
 
 ;;(use-package elpy)
 (use-package python-mode
+  :init (setq elpy-rpc-python-command "python3")
   :ensure nil
-  :bind (("C-c c" . compile)
-         ("C-c e" . next-error))
+  :bind
+  (:map python-mode-map
+        (("M-<delete>" . paredit-unwrap)
+         ("C-c c" . compile)
+         ("C-c e" . next-error)))
   :hook
   ((python-mode . show-paren-mode)
    (python-mode . electric-pair-local-mode)
    (python-mode . yas-minor-mode)))
 
-;; (add-hook 'python-mode-hook
-;;           (lambda ()
-;;             (elpy-mode)
-;;             (let ((backends (company-backends-for-buffer)))
-;;               (setq company-backends (cons 'elpy-company-backend backends)))))
+(add-hook 'python-mode-hook
+          (lambda ()
+            (when elpy-enabled-p
+              (elpy-mode)
+              (let ((backends (company-backends-for-buffer)))
+                (setq company-backends (cons 'elpy-company-backend backends))))))
 ;; (put 'pyvenv-activate 'safe-local-variable #'stringp)
 
 (provide 'fommil-python)
