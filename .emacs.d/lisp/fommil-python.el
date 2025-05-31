@@ -27,7 +27,7 @@
 
 (add-hook 'python-mode-hook
           (lambda ()
-            (when elpy-enabled-p
+            (when (and (boundp 'elpy-enabled-p) elpy-enabled-p)
               (elpy-mode)
               (let ((backends (company-backends-for-buffer)))
                 (setq company-backends (cons 'elpy-company-backend backends))))))
