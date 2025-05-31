@@ -9,21 +9,21 @@
 ;;
 ;;; Code:
 
-(require 'company)
-
 ;;(use-package elpy)
-(use-package python-mode
-  :init (setq elpy-rpc-python-command "python3")
+(use-package python
   :ensure nil
+  :config
+  (setq elpy-rpc-python-command "python3")
   :bind
   (:map python-mode-map
-        (("M-<delete>" . paredit-unwrap)
-         ("C-c c" . compile)
-         ("C-c e" . next-error)))
+        ("M-<delete>" . paredit-unwrap)
+        ("C-c c" . compile)
+        ("C-c e" . next-error))
   :hook
   ((python-mode . show-paren-mode)
    (python-mode . electric-pair-local-mode)
-   (python-mode . yas-minor-mode)))
+   (python-mode . yas-minor-mode)
+   (python-mode . company-mode)))
 
 (add-hook 'python-mode-hook
           (lambda ()
