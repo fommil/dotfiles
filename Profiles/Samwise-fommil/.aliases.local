@@ -7,4 +7,4 @@ alias s3pull='aws s3 sync --profile fommil --size-only s3://fommil-cloud/ ~/Clou
 alias poweroff='sudo /sbin/poweroff'
 alias reboot='sudo /sbin/reboot'
 
-alias git-fommil='core.sshCommand "ssh -i ~/.ssh/id_rsa_fommil"'
+alias git-fommil='git -c core.sshCommand="ssh -i ~/.ssh/id_rsa_fommil"'
