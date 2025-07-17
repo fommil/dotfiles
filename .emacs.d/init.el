@@ -873,6 +873,7 @@ converted to PDF at the same location."
   (require 'scala-organise)
   :bind
   (:map scala-mode-map
+        ("C-c e" . next-error)
         ("M-<delete>" . paredit-unwrap)
         ("C-c c" . scala-compile)
         ("C-c C-r f" . scala-organise))
@@ -967,6 +968,7 @@ converted to PDF at the same location."
         compile-command "cargo fmt && cargo build")
   :bind
   (:map rust-mode-map
+        ("C-c e" . next-error)
         ("M-<delete>" . paredit-unwrap)
         ("C-c c" . compile-with-directory)
         ;; C-c C-f is rust-format-buffer

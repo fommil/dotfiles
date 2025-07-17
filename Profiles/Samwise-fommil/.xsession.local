@@ -19,6 +19,9 @@ lxpolkit &
 # auto disk mounting (under /media/<user>)
 devmon &
 
+# compositor that prevents visible tearing (not available in the X11 driver)
+picom --backend=glx --vsync &
+
 # my monitor interprets a "blank" as turning off the sound, which
 # kills my music. So just don't blank. We could manually simulate
 # a screensaver with xrandr brightness if we cared enough.
