@@ -26,3 +26,6 @@ export EMACS_SOURCE=$HOME/Projects/emacs
 
 export GOPATH=$HOME/.go
 export PATH="$GOPATH/bin:$PATH"
+
+# some useful things in here like netlistsvg
+export PATH="$HOME/node_modules/.bin:$PATH"

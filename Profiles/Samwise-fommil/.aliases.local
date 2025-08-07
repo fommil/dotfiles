@@ -8,3 +8,5 @@ alias poweroff='sudo /sbin/poweroff'
 alias reboot='sudo /sbin/reboot'
 
 alias git-fommil='git -c core.sshCommand="ssh -i ~/.ssh/id_rsa_fommil"'
+
+alias unmount-all='for f in /media/fommil/* ; do udevil unmount "$f" ; done'
