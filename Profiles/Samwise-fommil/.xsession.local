@@ -28,7 +28,7 @@ picom --backend=glx --vsync &
 xset -dpms
 xset s off
 xset s noblank
-xset s 900 0
+xset s 3600 0
 xss-lock -- slock &
 
 # autologin with immediate slock

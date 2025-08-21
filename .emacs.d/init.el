@@ -866,6 +866,34 @@ converted to PDF at the same location."
 (require 'fommil-python)
 (require 'fommil-manuscripts)
 
+;; I'm unconvinced that eglot-java is necessary here. Modern releases of jdtls
+;; seem to already come with a python launcher script so much of what it does
+;; seems redundant.
+(use-package eglot-java)
+(use-package java-mode
+  :ensure nil
+  :bind
+  (:map java-mode-map
+        ("C-c e" . next-error)
+        ("M-<delete>" . paredit-unwrap)
+        ("C-c c" . projectile-compile-project))
+  :hook
+  ((java-mode . eglot-java-mode)
+   ;;(java-mode . eglot-ensure)
+   (java-mode . show-paren-mode)
+   (java-mode . electric-pair-local-mode)
+   (java-mode . yas-minor-mode)
+   (java-mode . company-mode)))
+(add-hook
+ 'java-mode-hook
+ (lambda ()
+   (setq-local projectile-project-compilation-cmd "./gradlew :spotlessApply compileTestJava")
+   (setq-local c-basic-offset 2)
+   (setq-local eglot--report-diagnostics-fn (lambda (_) nil))))
+(with-eval-after-load 'eglot
+  (setq eglot-workspace-configuration
+        `(:java (:imports (:gradle (:wrapper (:enabled ,json-false)))))))
+
 (use-package scala-mode
   :mode ((rx (| ".scala" ".sbt") eos) . scala-mode)
   :config
@@ -970,10 +998,7 @@ converted to PDF at the same location."
   (:map rust-mode-map
         ("C-c e" . next-error)
         ("M-<delete>" . paredit-unwrap)
-        ("C-c c" . compile-with-directory)
-        ;; C-c C-f is rust-format-buffer
-        ;; ("C-c C-r i" . eglot-code-action-quickfix)
-        )
+        ("C-c c" . compile-with-directory))
   :hook
   ((rust-mode . show-paren-mode)
    (rust-mode . electric-pair-local-mode)

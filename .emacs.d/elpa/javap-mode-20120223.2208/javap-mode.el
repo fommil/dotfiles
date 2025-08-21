@@ -88,8 +88,8 @@
 (defun javap-buffer ()
   "run javap on contents of buffer"
   (interactive)
-  (lexical-let* ((b-name (file-name-nondirectory (buffer-file-name)))
-                 (b-name (substring b-name 0 (- (length b-name) 6)))
+  (lexical-let* ((b-name1 (file-name-nondirectory (buffer-file-name)))
+                 (b-name (substring b-name1 0 (- (length b-name1) 6)))
                  (new-b-name (concat "*javap " b-name ".class" "*"))
                  (new-buf (get-buffer new-b-name))
                  (old-buf (buffer-name))
