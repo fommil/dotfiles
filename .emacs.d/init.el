@@ -827,6 +827,11 @@ converted to PDF at the same location."
                   :initializationOptions
                   (:checkOnSave :json-false
                    :diagnostics (:enable :json-false)))))
+
+  (add-to-list 'eglot-server-programs
+               '((java-ts-mode java-mode) .
+                 ("jdtls")))
+
   :bind
   (:map eglot-mode-map
         ("C-c C-r i" . eglot-code-action-quickfix)
@@ -866,10 +871,6 @@ converted to PDF at the same location."
 (require 'fommil-python)
 (require 'fommil-manuscripts)
 
-;; I'm unconvinced that eglot-java is necessary here. Modern releases of jdtls
-;; seem to already come with a python launcher script so much of what it does
-;; seems redundant.
-(use-package eglot-java)
 (use-package java-mode
   :ensure nil
   :bind
