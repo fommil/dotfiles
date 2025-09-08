@@ -96,7 +96,6 @@ disabled.
 
 (fn &optional ARG)" t)
 (register-definition-prefixes "llama" '("##" "all-completions" "elisp-" "intern" "lisp--el-match-keyword@llama" "llama-"))
-
 
 ;;; End of scraped data
 

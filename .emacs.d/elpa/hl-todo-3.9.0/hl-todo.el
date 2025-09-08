@@ -6,8 +6,8 @@
 ;; Homepage: https://github.com/tarsius/hl-todo
 ;; Keywords: convenience
 
-;; Package-Version: 3.8.5
-;; Package-Revision: v3.8.5-0-gb8be53068b34
+;; Package-Version: 3.9.0
+;; Package-Revision: v3.9.0-0-g862d903e7242
 ;; Package-Requires: ((emacs "26.1") (compat "30.1"))
 
 ;; SPDX-License-Identifier: GPL-3.0-or-later
@@ -55,6 +55,9 @@
 (defvar grep-find-template)
 (declare-function grep-read-files "grep" (regexp))
 (declare-function flymake-make-diagnostic "flymake")
+
+(define-obsolete-variable-alias 'hl-todo--syntax-table
+  'hl-todo-syntax-table "Hl-Todo 3.9.0")
 
 (defgroup hl-todo nil
   "Highlight TODO and similar keywords in comments and strings."
@@ -127,7 +130,7 @@ Instead of a color (a string), each COLOR may alternatively be a
 face.
 
 The syntax class of the characters at either end has to be `w'
-\(which means word) in `hl-todo--syntax-table' (which derives
+\(which means word) in `hl-todo-syntax-table' (which derives
 from `text-mode-syntax-table').
 
 This package, like most of Emacs, does not use POSIX regexp
@@ -179,6 +182,35 @@ controls which of the two it is."
   :group 'hl-todo
   :type 'boolean)
 
+(defcustom hl-todo-keyword-delimiters 'symbol
+  "Delimiters placed around the regexp used to match keywords.
+
+`symbol'
+    The part of the regexp used to match keywords is surrounded by
+    \\_< and \\_>.  This is the default.
+
+`word'
+    The part of the regexp used to match keywords is surrounded by
+    \\< and \\>.  Use this if you want the TODO in foo-TODO_bar to
+    be highlighted.
+
+`nil'
+    The part of the regexp used to match keywords is not surrounded
+    by any delimiters.  Use this if you want the TODO in fooTODObar
+    to be highlighted.
+
+If you want to prevent keyword fontification if certain characters
+appear next to them, then you have to modify `hl-todo-syntax-table'.
+For example, if you do not want the TODO in !TODO to be highlighted,
+use the symbol (`_') syntax class for the ! character.
+
+    (modify-syntax-entry ?! \"_\" hl-todo--syntax-table)"
+  :package-version '(hl-todo . "3.9.0")
+  :group 'hl-todo
+  :type '(choice (const :tag "Wrap with \\_<...\\_>" symbol)
+                 (const :tag "Wrap with \\<...\\>" word)
+                 (const :tag "No delimiters" nil)))
+
 (defcustom hl-todo-wrap-movement nil
   "Whether movement commands wrap around when there are no more matches."
   :package-version '(hl-todo . "3.4.0")
@@ -204,6 +236,11 @@ including alphanumeric characters, cannot be used here."
   :group 'hl-todo
   :type 'boolean)
 
+(defvar hl-todo-syntax-table (copy-syntax-table text-mode-syntax-table)
+  "Syntax table used while searching for TODO keywords.
+This is used instead of the buffer's local syntax table and derives
+from `text-mode-syntax-table'.")
+
 (defvar hl-todo--keywords
   `((,(lambda (bound) (hl-todo--search nil bound))
      (1 (hl-todo--get-face) prepend t))))
@@ -224,15 +261,20 @@ See the function `hl-todo--regexp'."
     ;; in the regexp search taking forever.
     (setq hl-todo-keyword-faces (delete bomb hl-todo-keyword-faces)))
   (setq hl-todo--regexp
-        (concat "\\(\\<"
-                "\\(" (mapconcat #'car hl-todo-keyword-faces "\\|") "\\)"
-                "\\>"
+        (concat "\\(?1:"
+                (pcase hl-todo-keyword-delimiters
+                  ('symbol "\\_<")
+                  ('word   "\\<")
+                  (_       ""))
+                "\\(?2:" (mapconcat #'car hl-todo-keyword-faces "\\|") "\\)"
+                (pcase hl-todo-keyword-delimiters
+                  ('symbol "\\_>")
+                  ('word    "\\>")
+                  (_           ""))
                 (and (not (equal hl-todo-highlight-punctuation ""))
                      (concat "[" hl-todo-highlight-punctuation "]"
                              (if hl-todo-require-punctuation "+" "*")))
                 "\\)")))
-
-(defvar hl-todo--syntax-table (copy-syntax-table text-mode-syntax-table))
 
 (defun hl-todo--search (&optional regexp bound backward)
   "Search for keyword REGEXP, optionally up to BOUND and BACKWARD.
@@ -243,7 +285,7 @@ function `hl-todo--regexp'."
   (cl-block nil
     (while (let ((case-fold-search nil)
                  (syntax-ppss-table (syntax-table)))
-             (with-syntax-table hl-todo--syntax-table
+             (with-syntax-table hl-todo-syntax-table
                (funcall (if backward #'re-search-backward #'re-search-forward)
                         regexp bound t)))
       (cond ((or (apply #'derived-mode-p hl-todo-text-modes)
@@ -366,7 +408,7 @@ because it uses a regexp instead of a more sophisticated
 matcher.  It also finds occurrences that are not within a
 string or comment."
   (interactive)
-  (with-syntax-table hl-todo--syntax-table
+  (with-syntax-table hl-todo-syntax-table
     (occur (hl-todo--regexp))))
 
 ;;;###autoload

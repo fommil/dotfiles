@@ -6,8 +6,8 @@
 ;; Homepage: https://github.com/tarsius/llama
 ;; Keywords: extensions
 
-;; Package-Version: 1.0.0
-;; Package-Revision: v1.0.0-0-g0cc2daffded1
+;; Package-Version: 1.0.1
+;; Package-Revision: v1.0.1-0-gec1d4ef02f55
 ;; Package-Requires: ((emacs "26.1") (compat "30.1"))
 
 ;; SPDX-License-Identifier: GPL-3.0-or-later
@@ -353,7 +353,7 @@ expansion, and the looks of this face should hint at that.")
            (prog1 t
              (save-excursion
                (goto-char (match-beginning 0))
-               (when-let (((save-match-data (not (nth 8 (syntax-ppss)))))
+               (when-let ((_(save-match-data (not (nth 8 (syntax-ppss)))))
                           (expr (ignore-errors
                                   (read-positioning-symbols (current-buffer)))))
                  (put-text-property (match-beginning 0) (point)
@@ -448,9 +448,6 @@ expansion, and the looks of this face should hint at that.")
 
 (defun llama--add-font-lock-keywords ()
   (font-lock-add-keywords nil llama-font-lock-keywords))
-
-(define-obsolete-function-alias 'global-llama-fontify-mode
-  #'llama-fontify-mode "Llama 0.6.2")
 
 (defun lisp--el-match-keyword@llama (limit)
   "Highlight symbols following \"(##\" the same as if they followed \"(\"."
