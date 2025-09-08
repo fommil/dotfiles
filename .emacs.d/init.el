@@ -879,7 +879,7 @@ converted to PDF at the same location."
         ("M-<delete>" . paredit-unwrap)
         ("C-c c" . projectile-compile-project))
   :hook
-  ((java-mode . eglot-java-mode)
+  (;;(java-mode . eglot-java-mode)
    ;;(java-mode . eglot-ensure)
    (java-mode . show-paren-mode)
    (java-mode . electric-pair-local-mode)
