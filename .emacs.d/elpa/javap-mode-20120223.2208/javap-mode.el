@@ -1,3 +1,4 @@
+;; -*- lexical-binding: t -*-
 ;;; javap-mode.el --- Javap major mode
 ;;; Version: 9
 ;; Package-Version: 20120223.2208
@@ -88,7 +89,7 @@
 (defun javap-buffer ()
   "run javap on contents of buffer"
   (interactive)
-  (lexical-let* ((b-name1 (file-name-nondirectory (buffer-file-name)))
+  (let* ((b-name1 (file-name-nondirectory (buffer-file-name)))
                  (b-name (substring b-name1 0 (- (length b-name1) 6)))
                  (new-b-name (concat "*javap " b-name ".class" "*"))
                  (new-buf (get-buffer new-b-name))
