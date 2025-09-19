@@ -5,3 +5,9 @@ cabal.project.local
 .ghc.flags
 .ghc.path
 .emacs.d/elpa/gnupg/
+
+# java lsp (jdtls)
+.project
+.classpath
+.factorypath
+.settings/

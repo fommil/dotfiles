@@ -830,7 +830,11 @@ converted to PDF at the same location."
 
   (add-to-list 'eglot-server-programs
                '((java-ts-mode java-mode) .
-                 ("jdtls")))
+                 ("jdtls"
+                  ;; TODO add emacs handler support for classFileContentsSupport
+                  :initializationOptions
+                  (:extendedClientCapabilities
+                   (:classFileContentsSupport :json-false)))))
 
   :bind
   (:map eglot-mode-map
@@ -889,11 +893,9 @@ converted to PDF at the same location."
  'java-mode-hook
  (lambda ()
    (setq-local projectile-project-compilation-cmd "./gradlew :spotlessApply compileTestJava")
-   (setq-local c-basic-offset 2)
+   ;;(setq-local c-basic-offset 2)
    (setq-local eglot--report-diagnostics-fn (lambda (_) nil))))
-(with-eval-after-load 'eglot
-  (setq eglot-workspace-configuration
-        `(:java (:imports (:gradle (:wrapper (:enabled ,json-false)))))))
+;; TODO get attached source dependencies working in jdtls
 
 (use-package scala-mode
   :mode ((rx (| ".scala" ".sbt") eos) . scala-mode)
