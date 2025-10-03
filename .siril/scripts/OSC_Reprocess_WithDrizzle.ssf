@@ -23,13 +23,17 @@ seqapplyreg bkg_pp_light -drizzle -prefix=dr_
 stack dr_bkg_pp_light rej 3 3 -norm=addscale -output_norm -rgb_equal -out=result -filter-wfwhm=4.0
 
 load result
+cd ..
 
 # Then do a plate solve and a photometric calibration.
-# 
-# Then a NebulaPhotos initial stretch
-# autoghs -linked 0.0 5 -b=10 -lp=0 -hp=1.0
+# TODO this should be moved into a scope specific step
+platesolve -localasnet -focal=590
+pcc
 
-mirrorx -bottomup
-save ../result_reprocess_$LIVETIME:%d$s
-cd ..
+save dr_reprocessed
+
+# Then a NebulaPhotos initial stretch
+autoghs -linked 0.0 5 -b=10 -lp=0 -hp=1.0
+save dr_reprocessed_initial_stretch
+
 close
