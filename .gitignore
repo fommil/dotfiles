@@ -6,6 +6,8 @@ cabal.project.local
 .ghc.path
 .emacs.d/elpa/gnupg/
 
+local.sbt
+
 # java lsp (jdtls)
 .project
 .classpath

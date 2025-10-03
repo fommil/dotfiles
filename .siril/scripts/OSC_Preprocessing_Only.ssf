@@ -1,0 +1,21 @@
+# Just the stock script's registration + stacking.
+# As a reference more than anything, but can be
+# used following OSC_Reprocess.
+
+requires 1.2.0
+
+cd process
+
+# Align lights
+register pp_light
+
+# Stack calibrated lights to result.fit
+stack r_pp_light rej 3 3 -norm=addscale -output_norm -rgb_equal -out=result
+
+# flip if required
+load result
+mirrorx -bottomup
+save ../result_$LIVETIME:%d$s
+
+cd ..
+close
