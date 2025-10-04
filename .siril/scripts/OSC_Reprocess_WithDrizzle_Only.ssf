@@ -32,9 +32,6 @@ stack dr_bkg_pp_light rej 3 3 -norm=addscale -output_norm -rgb_equal -out=result
 
 load result
 cd ..
-save dr_reprocessed_full
-
-resample 0.5
 save dr_reprocessed
 
 close
