@@ -3,23 +3,46 @@
 # Script for Siril 1.2
 # February 2023
 # (C) Cyril Richard
-# Preprocessing v1.3
+# Preprocessing v1.3 + changes
 #
 ########### PREPROCESSING SCRIPT ###########
 #
-# Script for color camera preprocessing
+# Script for color camera preprocessing.
+# Converts files and calibrates light frames.
 #
-# Needs 4 sets of RAW images in the working
-# directory, within 4 directories:
+# Needs RAW images in:
 #   biases/
-#   flats/
 #   darks/
+#   flats/
 #   lights/
-# Saves masters to ./masters/
+#
+# This has been adapted from the stock OSC_Preprocessing
+# script to:
+#
+# 1. use gzip compressed fits to save space
+# 2. calculate and subtract the background
+# 3. halts before registration
+#
+# It is safe to clean up with
+#
+# rm -f process/bias_*.fit* process/dark_*.fit* process/flat_*.fit*
+#
+# and if you don't plan on stacking the raw subs (background retained)
+#
+# rm -f process/pp_light_*.fit*
+#
+# and the sequence that can be registered / stacked is called bkg_pp_light.
+#
+# Siril intentionally does not support file deletion, see
+# https://siril.org/faq/#could-you-add-commands-to-delete-files-or-sequences
 #
 ############################################
 
 requires 1.2.0
+
+# this might mess with the user settings
+# but it saves a hell of a lot of space
+setcompress 1 -type=gzip1 0
 
 # Convert Bias Frames to .fit files
 cd biases
@@ -58,6 +81,12 @@ cd ../process
 
 # Calibrate Light Frames
 calibrate light -dark=../masters/dark_stacked -flat=../masters/pp_flat_stacked -cc=dark -cfa -equalize_cfa -debayer
+
+# doing background sky removal at the sequence level handles
+# local light pollution better than a single pass at the end
+seqsubsky pp_light 1
+
+setcompress 0
 
 cd ..
 close

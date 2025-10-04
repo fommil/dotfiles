@@ -1,4 +1,5 @@
-# Does the "initial stretch" that NebulaPhotos always does
+# Does a typical "initial stretch" as per NebulaPhotos.
+#
 # Next steps, requiring qualitative input are usually:
 #
 # 1. move the black point
@@ -8,6 +9,7 @@
 requires 1.2.0
 
 platesolve -localasnet -focal=590
+unclipstars
 pcc
 autoghs -linked 0.0 5 -b=10 -lp=0 -hp=1.0
 

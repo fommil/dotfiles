@@ -1,5 +1,5 @@
-# First run the standard, stock, OSC_Preprocessing
-# (or my more minimal OSC_Prepare).
+# First run OSC_Prepare to convert, calibrate,
+# and remove the background.
 #
 # This reruns the registration and stacking stages
 # with more aggressive parameters (including doing
@@ -8,11 +8,9 @@
 
 requires 1.2.0
 
-cd process
+setcompress 1 -type=gzip1 0
 
-# doing background sky removal at the sequence level handles
-# local light pollution better than a single pass at the end
-seqsubsky pp_light 1
+cd process
 
 # 2 pass registration should pick a better reference image
 register bkg_pp_light -2pass -drizzle
@@ -21,6 +19,8 @@ seqapplyreg bkg_pp_light -drizzle -prefix=dr_
 # stacking with wfwhm rejection is an automated way to throw
 # away entire bad subs. Adjust 4.0 to whatever your skies + rig allow.
 stack dr_bkg_pp_light rej 3 3 -norm=addscale -output_norm -rgb_equal -out=result -filter-wfwhm=4.0
+
+setcompress 0
 
 load result
 cd ..
