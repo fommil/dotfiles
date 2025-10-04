@@ -13,4 +13,4 @@ unclipstars
 pcc
 autoghs -linked 0.0 5 -b=10 -lp=0 -hp=1.0
 
-close
+save initial_stretch
