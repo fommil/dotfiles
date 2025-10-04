@@ -29,6 +29,7 @@ setcompress 0
 # away entire bad subs. Adjust wfwhm to whatever your skies + rig allow.
 # (but remember that this is upscaled, so it's 2x normal)
 stack dr_bkg_pp_light rej 3 3 -norm=addscale -output_norm -rgb_equal -out=result -filter-wfwhm=8.0
+resample 0.5
 
 load result
 cd ..
