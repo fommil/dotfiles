@@ -16,11 +16,10 @@ pcc
 #
 # This is an aggressive generalised hyperbolic stretch around
 # the background (i.e. the median, which is the default for this
-# command). Intensity is ~10, factor ~4, with an independent
-# channel luminance model.
+# command). Independent channel luminance model.
 #
 # https://youtu.be/Zx6dd7ESLW8?t=1428
-autoghs -linked 0.0 4 -b=10 -lp=0 -hp=1.0
+autoghs -linked 0.0 5 -b=10 -lp=0 -hp=1.0
 save initial_stretch
 
 # Next is linear black point, then stretch / saturate to taste.
