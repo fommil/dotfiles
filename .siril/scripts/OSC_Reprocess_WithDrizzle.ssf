@@ -24,16 +24,6 @@ stack dr_bkg_pp_light rej 3 3 -norm=addscale -output_norm -rgb_equal -out=result
 
 load result
 cd ..
-
-# Then do a plate solve and a photometric calibration.
-# TODO this should be moved into a scope specific step
-platesolve -localasnet -focal=590
-pcc
-
 save dr_reprocessed
-
-# Then a NebulaPhotos initial stretch
-autoghs -linked 0.0 5 -b=10 -lp=0 -hp=1.0
-save dr_reprocessed_initial_stretch
 
 close
