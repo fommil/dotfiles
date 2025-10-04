@@ -16,11 +16,11 @@ cd process
 register bkg_pp_light -2pass
 seqapplyreg bkg_pp_light
 
-# stacking with wfwhm rejection is an automated way to throw
-# away entire bad subs. Adjust 4.0 to whatever your skies + rig allow.
-stack r_bkg_pp_light rej 3 3 -norm=addscale -output_norm -rgb_equal -out=result -filter-wfwhm=4.0
-
 setcompress 0
+
+# stacking with wfwhm rejection is an automated way to throw
+# away entire bad subs. Adjust wfwhm to whatever your skies + rig allow.
+stack r_bkg_pp_light rej 3 3 -norm=addscale -output_norm -rgb_equal -out=result -filter-wfwhm=4.0
 
 load result
 cd ..
