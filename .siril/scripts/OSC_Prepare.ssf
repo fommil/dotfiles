@@ -25,7 +25,7 @@
 #
 # It is safe to clean up with
 #
-# rm -f process/bias_*.fit* process/dark_*.fit* process/flat_*.fit*
+# rm -f process/bias_*.fit* process/dark_*.fit* process/flat_*.fit* process/light_*.fit*
 #
 # and if you don't plan on stacking the raw subs (background retained)
 #

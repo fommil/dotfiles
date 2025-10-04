@@ -5,6 +5,10 @@
 # with more aggressive parameters (including doing
 # background removal on each sub) and should give
 # better results.
+#
+# This consumes a LOT of disk space. Even with
+# compressed images, the registered images can
+# be ~GB per sub.
 
 requires 1.2.0
 
