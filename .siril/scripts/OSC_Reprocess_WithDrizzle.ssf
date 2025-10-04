@@ -1,23 +1,58 @@
-# First run OSC_Prepare to convert, calibrate,
-# and remove the background.
+# Standalone alternative to OSC_Preprocessing_WithDrizzle.
 #
-# This reruns the registration and stacking stages
+# This uses a LOT of disk space (as does the original).
+#
+# Runs registration and stacking stages
 # with more aggressive parameters (including doing
-# background removal on each sub) and should give
-# better results.
-#
-# This consumes a LOT of disk space. Even with
-# compressed images, the registered images can
-# be ~GB per sub. It is definitely a good idea
-# to clean up that stage once stacked
-#
-# rm -f process/dr_bkg_pp_light_*.fit*
+# background removal on each sub and fwhm rejection)
 
 requires 1.2.0
 
+# this might mess with the user settings
+# but it saves a hell of a lot of space
 setcompress 1 -type=gzip1 0
 
-cd process
+# Convert Bias Frames to .fit files
+cd biases
+convert bias -out=../process
+cd ../process
+
+# Stack Bias Frames to bias_stacked.fit
+stack bias rej 3 3 -nonorm -out=../masters/bias_stacked
+cd ..
+
+# Convert Flat Frames to .fit files
+cd flats
+convert flat -out=../process
+cd ../process
+
+# Calibrate Flat Frames
+calibrate flat -bias=../masters/bias_stacked
+
+# Stack Flat Frames to pp_flat_stacked.fit
+stack pp_flat rej 3 3 -norm=mul -out=../masters/pp_flat_stacked
+cd ..
+
+# Convert Dark Frames to .fit files
+cd darks
+convert dark -out=../process
+cd ../process
+
+# Stack Dark Frames to dark_stacked.fit
+stack dark rej 3 3 -nonorm -out=../masters/dark_stacked
+cd ..
+
+# Convert Light Frames to .fit files
+cd lights
+convert light -out=../process
+cd ../process
+
+# Calibrate Light Frames
+calibrate light -dark=../masters/dark_stacked -flat=../masters/pp_flat_stacked -cc=dark -cfa -equalize_cfa -debayer
+
+# doing background sky removal at the sequence level handles
+# local light pollution better than a single pass at the end
+seqsubsky pp_light 1
 
 # 2 pass registration should pick a better reference image
 register bkg_pp_light -2pass -drizzle
