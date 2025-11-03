@@ -37,8 +37,6 @@ alias please="sudo"
 alias fuck="rm -rf"
 alias wtf="ps -ef | grep java"
 
-alias markdown="hsmarkdown"
-
 alias open="xdg-open"
 alias volume="pavucontrol"
 

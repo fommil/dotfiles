@@ -33,7 +33,8 @@
                (dot   . t)))))
 
 (use-package markdown-mode
-  :commands markdown-mode)
+  :commands markdown-mode
+  :init (setq markdown-command "cmark-gfm -e table --unsafe"))
 (add-hook 'markdown-mode-hook
           (lambda ()
             (yas-minor-mode t)
