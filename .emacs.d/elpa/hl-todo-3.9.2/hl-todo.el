@@ -6,9 +6,11 @@
 ;; Homepage: https://github.com/tarsius/hl-todo
 ;; Keywords: convenience
 
-;; Package-Version: 3.9.1
-;; Package-Revision: v3.9.1-0-g2e9504511aa3
-;; Package-Requires: ((emacs "26.1") (compat "30.1"))
+;; Package-Version: 3.9.2
+;; Package-Revision: v3.9.2-0-g94893087e0ac
+;; Package-Requires: (
+;;     (emacs  "26.1")
+;;     (compat "30.1"))
 
 ;; SPDX-License-Identifier: GPL-3.0-or-later
 

@@ -6,9 +6,11 @@
 ;; Homepage: https://github.com/tarsius/llama
 ;; Keywords: extensions
 
-;; Package-Version: 1.0.1
-;; Package-Revision: v1.0.1-0-gec1d4ef02f55
-;; Package-Requires: ((emacs "26.1") (compat "30.1"))
+;; Package-Version: 1.0.2
+;; Package-Revision: v1.0.2-0-ge4803de8ab85
+;; Package-Requires: (
+;;     (emacs  "26.1")
+;;     (compat "30.1"))
 
 ;; SPDX-License-Identifier: GPL-3.0-or-later
 
