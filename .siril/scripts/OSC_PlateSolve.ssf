@@ -1,0 +1,4 @@
+requires 1.2.0
+
+platesolve -localasnet -focal=590 -blindpos
+#platesolve -localasnet -blindpos -blindres
