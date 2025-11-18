@@ -1,0 +1,111 @@
+# A poor man's version of the ContinuumSubtraction.py
+# script that is an optional install for siril 1.4.
+#
+# This script requires files {rgb,ha,oiii}.fit to exist
+# in the working directory, i.e. for use on RGB + Ha/Oiii
+# dual narrowband.
+#
+# It outputs aligned Ha / Oiii files that have had their
+# continuum subtracted. Magic numbers are used to define
+# the scaling factor between the narrow and broadbands.
+#
+# Continuum subtraction is a technique to workaround the
+# fact that a narrowband filter not only lets through
+# quantum emissions, but also continuous blackbody
+# radiation. By using a broadband filter that contains
+# the narrowband, we can subtract the background leaving
+# only the emissions, which can be enhanced to make the
+# image more appealing.
+#
+# A review of the script reveals that it is calculating
+# the median of the narrowband image (allowing user
+# selection) then calculating
+#
+# result = narrowband - (broadband - median) * scale_factor
+#
+# NOTE: I think there's a bug in the python script, I think
+#       it should be using the median of the continuum.
+#
+# and returning the result that has the scale_factor which
+# minimises the Average Absolute Deviation,
+# mean(abs(data - mean(data)).
+#
+# It is then common to blend the features back into the RGB
+# image with a specific colour, e.g. hydrogen alpha as purple.
+# 
+# The following video gives a walkthrough of how to use the
+# python script, and some of its other features,
+# https://youtu.be/6QQlwel2dAU?si=BRD9UZ6eNTN2DLGa
+#
+# R: R+Q*(HaCS-med(HaCS))
+# G: G
+# B: B+Q*(HaCS-med(HaCS))*.2
+# Parameter: Q=3 (Adjust)
+#
+#
+# My general thoughts are that continuum subtraction tends to
+# leave a lot of artifacts. In particular, it would be good to be
+# able to remove the stars from the subtracted image because the
+# pixel math doesn't do a good job of that.
+
+requires 1.2.0
+
+load rgb
+split process/r process/g process/b
+
+load ha
+save process/ha
+
+load oiii
+save process/oiii
+
+cd process
+convert channels
+register channels
+
+# siril will use alphabetical ordering, so Ha is
+load r_channels_00003.fit
+save reg_ha
+#stat
+#
+# and this is Oiii
+load r_channels_00004.fit
+save reg_oiii
+#stat
+#
+# red
+#load r_channels_00005.fit
+#stat
+#
+# green
+#load r_channels_00002.fit
+#stat
+#
+# blue
+#load r_channels_00001.fit
+#stat
+
+# we subtract the median here, so that we don't have to do it again later
+pm "$reg_ha$ - ($r$ - med($r$)) * 0.98 - med($reg_ha$)"
+save ha_cs
+
+pm "$reg_oiii$ - ($g$ - med($g$)) * 0.85 - med($reg_oiii$)"
+save oiii_cs
+
+pm "$r$ + 0.5 * $ha_cs$"
+save r_with_ha
+
+pm "$b$ + 0.5 * 0.2 * $ha_cs$"
+save b_with_ha
+
+# TODO add the Oiii, e.g.
+# G: G + Q*(OIII - med(OIII))
+# B: B + Q*(OIII - med(OIII)) * 0.2
+
+rgbcomp r_with_ha g b_with_ha -out=../rgb_enhanced
+
+rgbcomp reg_ha g b -out=../hgb
+
+cd ..
+load rgb_enhanced
+
