@@ -13,12 +13,14 @@
 # dual narrowband.
 #
 # Magic numbers are used to define the scaling factors
-# between the narrow and broadbands. Delete what is not
+# between the narrow and broadbands.
+#
+# The following files are produced: delete what is not
 # needed:
 #
-# - HGB (Ha, G, B)
-# - ROB (R, Oiii, B)
-# - HOB (Ha, Oiii, B)
+# - hgb (Ha, G, B)
+# - rob (R, Oiii, B)
+# - hob (Ha, Oiii, B)
 # - rgb_with_ha (R + HaCS, G, B + HaCS)
 # - rgb_with_oiii (R, G + OiiiCS, B + OiiiCS)
 # - rgb_with_ha_and_oiii (R + HaCS, G + OiiiCS, B + HaCS + OiiiCS)
@@ -30,6 +32,11 @@
 #
 # result = narrowband - (broadband - median) * scale_factor
 #
+# The scale_factor is a magic number that should be manually
+# (or automatically) discovered for every invocation, but it
+# might be stable for a given camera/scope/gain/filter/exposure
+# combination.
+#
 # NOTE: I think there's a bug in the python script, I think
 #       it should be using the median of the continuum.
 #
@@ -37,18 +44,22 @@
 # minimises the Average Absolute Deviation,
 # mean(abs(data - mean(data)).
 #
-# It is then common to blend the emission lines into the RGB
-# image with a specific colour, e.g. HaCS as purple, OiiiCS
-# as cyan.
-# 
 # The following video gives a walkthrough of how to use the
 # python script, and some of its other features,
 # https://youtu.be/6QQlwel2dAU?si=BRD9UZ6eNTN2DLGa
 #
+# It is common to blend the emission lines into the RGB
+# image with a specific colour, e.g. HaCS as purple, OiiiCS
+# as cyan.
+#
 # R: R+Q*(HaCS-med(HaCS))
 # G: G
 # B: B+Q*(HaCS-med(HaCS))*.2
-# Parameter: Q=3 (Adjust)
+#
+# G: G + Q*(OIII - med(OIII))
+# B: B + Q*(OIII - med(OIII)) * 0.2
+#
+# Parameter: Q=0.5
 #
 # My general thoughts are that continuum subtraction tends to
 # leave a lot of artifacts. In particular, it would be good to be
@@ -87,40 +98,42 @@ rgbcomp r reg_oiii b -out=../rob
 
 rgbcomp reg_ha reg_oiii b -out=../hob
 
-# warning: magic number
-#
-# we subtract the median so that we don't have to do it again later
-pm "$reg_ha$ - ($r$ - med($r$)) * 0.98 - med($reg_ha$)"
+# so that we don't have to do it again later
+pm "$reg_ha$ - ($r$ - med($r$)) * 0.98"
 save ha_cs
 
-# warning: magic number
-pm "$reg_oiii$ - ($g$ - med($g$)) * 0.85 - med($reg_oiii$)"
+pm "$reg_oiii$ - ($g$ - med($g$)) * 0.85"
 save oiii_cs
 
+# remove the median so we don't have to repeat it out
+# every time. Note that we remove the original narrowband
+# median, not the median of the continuum reduced one
+# like most people do.
+pm "$ha_cs$ - med($reg_ha$)"
+save ha_cs_m
+pm "$oiii_cs$ - med($reg_oiii$)"
+save oiii_cs_m
+
 # now for the Ha
-pm "$r$ + 0.5 * $ha_cs$"
+pm "$r$ + 0.5 * $ha_cs_m$"
 save r_with_ha
 
-pm "$b$ + 0.5 * 0.2 * $ha_cs$"
+pm "$b$ + 0.5 * 0.2 * $ha_cs_m$"
 save b_with_ha
 
 rgbcomp r_with_ha g b_with_ha -out=../rgb_with_ha
 
 # then the Oiii
-#
-# G: G + Q*(OIII - med(OIII))
-# B: B + Q*(OIII - med(OIII)) * 0.2
-
-pm "$g$ + 0.5 * $oiii_cs$"
+pm "$g$ + 0.5 * $oiii_cs_m$"
 save g_with_oiii
 
-pm "$b$ + 0.5 * 0.2 * $oiii_cs$"
+pm "$b$ + 0.5 * 0.2 * $oiii_cs_m$"
 save b_with_oiii
 
 rgbcomp r g_with_oiii b_with_oiii -out=../rgb_with_oiii
 
 # all together now
-pm "$b$ + 0.5 * 0.2 * $oiii_cs$ + 0.5 * 0.2 * $ha_cs$"
+pm "$b$ + 0.5 * 0.2 * $oiii_cs_m$ + 0.5 * 0.2 * $ha_cs_m$"
 save b_with_ha_and_oiii
 
 rgbcomp r_with_ha g_with_oiii b_with_ha_and_oiii -out=../rgb_with_ha_and_oiii
