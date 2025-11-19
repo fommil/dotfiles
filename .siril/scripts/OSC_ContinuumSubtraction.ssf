@@ -53,7 +53,6 @@
 # as cyan.
 #
 # R: R+Q*(HaCS-med(HaCS))
-# G: G
 # B: B+Q*(HaCS-med(HaCS))*.2
 #
 # G: G + Q*(OIII - med(OIII))
@@ -61,7 +60,9 @@
 #
 # Parameter: Q=0.5
 #
-# My general thoughts are that continuum subtraction tends to
+# See the comments further in the script for how to manually
+# intervene with the continuum subtracted image, before it is
+# composited back into RGB. Continuum subtraction tends to
 # leave a lot of artifacts. In particular, it would be good to be
 # able to remove the stars from the subtracted image because the
 # pixel math doesn't do a good job of that and the composed final
@@ -105,9 +106,14 @@ save ha_cs
 pm "$reg_oiii$ - ($g$ - med($g$)) * 0.85"
 save oiii_cs
 
+# NOTE: you can go back to the _cs files manually and clean them up, e.g.
+# with star removal, a manual mask, or noise reduction. If you do that,
+# copy the remainder of the script into a scratchpad and run it, to
+# recreate the composited images.
+
 # remove the median so we don't have to repeat it out
 # every time. Note that we remove the original narrowband
-# median, not the median of the continuum reduced one
+# median, not the median of the continuum subtracted one
 # like most people do.
 pm "$ha_cs$ - med($reg_ha$)"
 save ha_cs_m
