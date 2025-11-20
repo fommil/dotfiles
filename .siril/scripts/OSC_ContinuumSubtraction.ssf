@@ -125,25 +125,25 @@ pm "$oiii_cs$ - med($oiii_cs$)"
 save oiii_cs_m
 
 # now for the Ha
-pm "$r$ + 0.5 * $ha_cs_m$"
+pm "$r$ + 1.0 * $ha_cs_m$"
 save r_with_ha
 
-pm "$b$ + 0.5 * 0.2 * $ha_cs_m$"
+pm "$b$ + 1.0 * 0.2 * $ha_cs_m$"
 save b_with_ha
 
 rgbcomp r_with_ha g b_with_ha -out=../rgb_with_ha
 
 # then the Oiii
-pm "$g$ + 0.5 * 0.2 * $oiii_cs_m$"
+pm "$g$ + 1.0 * 0.2 * $oiii_cs_m$"
 save g_with_oiii
 
-pm "$b$ + 0.5 * $oiii_cs_m$"
+pm "$b$ + 1.0 * $oiii_cs_m$"
 save b_with_oiii
 
 rgbcomp r g_with_oiii b_with_oiii -out=../rgb_with_oiii
 
 # all together now
-pm "$b$ + 0.5 * $oiii_cs_m$ + 0.5 * 0.2 * $ha_cs_m$"
+pm "$b$ + 1.0 * $oiii_cs_m$ + 1.0 * 0.2 * $ha_cs_m$"
 save b_with_ha_and_oiii
 
 rgbcomp r_with_ha g_with_oiii b_with_ha_and_oiii -out=../rgb_with_ha_and_oiii
