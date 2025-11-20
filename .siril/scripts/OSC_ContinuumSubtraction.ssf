@@ -23,8 +23,8 @@
 # needed:
 #
 # - hgb (Ha, G, B)
-# - rob (R, Oiii, B)
-# - hob (Ha, Oiii, B)
+# - rgo (R, G, Oiii)
+# - hgo (Ha, G, Oiii)
 # - rgb_with_ha (R + HaCS, G, B + HaCS)
 # - rgb_with_oiii (R, G + OiiiCS, B + OiiiCS)
 # - rgb_with_ha_and_oiii (R + HaCS, G + OiiiCS, B + HaCS + OiiiCS)
@@ -76,9 +76,9 @@ rgbcomp reg_ha g b -out=../hgb
 # and this is Oiii
 load r_channels_00004
 save reg_oiii
-rgbcomp r reg_oiii b -out=../rob
+rgbcomp r g reg_oiii -out=../rgo
 
-rgbcomp reg_ha reg_oiii b -out=../hob
+rgbcomp reg_ha g reg_oiii -out=../hgo
 
 # remove stars before doing continuum subtraction
 # (this is the most expensive bit)
@@ -103,7 +103,7 @@ starnet -stretch -nostarmask
 pm "$starless_reg_ha$ - ($starless_r$ - med($starless_r$)) * 0.25"
 save ha_cs
 
-pm "$starless_reg_oiii$ - ($starless_b$ - med($starless_b$)) * 0.85"
+pm "$starless_reg_oiii$ - ($starless_b$ - med($starless_b$)) * 0.25"
 save oiii_cs
 
 # NOTE: you can go back to the _cs files manually and clean them up, e.g.
