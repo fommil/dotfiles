@@ -32,15 +32,7 @@
 #
 # result = narrowband - (broadband - median) * scale_factor
 #
-# The scale_factor is a magic number that should be manually
-# (or automatically) discovered for every invocation, but it
-# might be stable for a given camera/scope/gain/filter/exposure
-# combination.
-#
-# NOTE: I think there's a bug in the python script, I think
-#       it should be using the median of the continuum.
-#
-# and returning the result that has the scale_factor which
+# returning the result that has the scale_factor which
 # minimises the Average Absolute Deviation,
 # mean(abs(data - mean(data)).
 #
@@ -55,8 +47,8 @@
 # R: R+Q*(HaCS-med(HaCS))
 # B: B+Q*(HaCS-med(HaCS))*.2
 #
-# G: G + Q*(OIII - med(OIII))
-# B: B + Q*(OIII - med(OIII)) * 0.2
+# B: B + Q*(OIII - med(OIII))
+# G: G + Q*(OIII - med(OIII)) * 0.2
 #
 # Parameter: Q=0.5
 #
@@ -112,12 +104,16 @@ save oiii_cs
 # recreate the composited images.
 
 # remove the median so we don't have to repeat it out
-# every time. Note that we remove the original narrowband
-# median, not the median of the continuum subtracted one
-# like most people do.
-pm "$ha_cs$ - med($reg_ha$)"
+# every time. Note that I feel we should remove the original
+# narrowband median, not the median of the continuum subtracted
+# image, but since the difference is negligible, and this is
+# more compatible with manually edited _cs files, we use the
+# median of the _cs image.
+#pm "$ha_cs$ - med($reg_ha$)"
+pm "$ha_cs$ - med($ha_cs$)"
 save ha_cs_m
-pm "$oiii_cs$ - med($reg_oiii$)"
+#pm "$oiii_cs$ - med($reg_oiii$)"
+pm "$oiii_cs$ - med($oiii_cs$)"
 save oiii_cs_m
 
 # now for the Ha
@@ -130,16 +126,16 @@ save b_with_ha
 rgbcomp r_with_ha g b_with_ha -out=../rgb_with_ha
 
 # then the Oiii
-pm "$g$ + 0.5 * $oiii_cs_m$"
+pm "$g$ + 0.5 * 0.2 * $oiii_cs_m$"
 save g_with_oiii
 
-pm "$b$ + 0.5 * 0.2 * $oiii_cs_m$"
+pm "$b$ + 0.5 * $oiii_cs_m$"
 save b_with_oiii
 
 rgbcomp r g_with_oiii b_with_oiii -out=../rgb_with_oiii
 
 # all together now
-pm "$b$ + 0.5 * 0.2 * $oiii_cs_m$ + 0.5 * 0.2 * $ha_cs_m$"
+pm "$b$ + 0.5 * $oiii_cs_m$ + 0.5 * 0.2 * $ha_cs_m$"
 save b_with_ha_and_oiii
 
 rgbcomp r_with_ha g_with_oiii b_with_ha_and_oiii -out=../rgb_with_ha_and_oiii
