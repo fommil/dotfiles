@@ -4,9 +4,6 @@
 # 2. per-sub background removal (handles rotation)
 # 3. 2-pass registration
 # 4. wFWHM rejection
-#
-# NOTE: due to drizzling / green channel, the wFWHM is double what
-#       it would be for an RGB processing of the pixels.
 
 requires 1.2.0
 
@@ -61,10 +58,10 @@ seqextract_HaOIII bkg_pp_light
 
 # Align Ha lights
 register Ha_bkg_pp_light -drizzle -2pass
-seqapplyreg Ha_bkg_pp_light
+seqapplyreg Ha_bkg_pp_light -drizzle
 
 # Stack calibrated Ha lights to Ha_stack (temporary)
-stack r_Ha_bkg_pp_light rej 3 3 -norm=addscale -output_norm -out=results_00001 -filter-wfwhm=8.0
+stack r_Ha_bkg_pp_light rej 3 3 -norm=addscale -output_norm -out=results_00001 -filter-wfwhm=4.0
 
 # and flip if required
 mirrorx_single results_00001
@@ -75,7 +72,7 @@ register OIII_bkg_pp_light -2pass
 seqapplyreg OIII_bkg_pp_light
 
 # Stack calibrated OIII lights to OIII_stack (temporary)
-stack r_OIII_bkg_pp_light rej 3 3 -norm=addscale -output_norm -out=results_00002 -filter-wfwhm=8.0
+stack r_OIII_bkg_pp_light rej 3 3 -norm=addscale -output_norm -out=results_00002 -filter-wfwhm=4.0
 
 # and flip if required
 mirrorx_single results_00002
