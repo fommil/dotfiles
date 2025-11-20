@@ -1,12 +1,16 @@
-# A poor man's version of the ContinuumSubtraction.py
-# script that is an optional install for siril 1.4.
-#
 # Continuum Subtraction is a technique to workaround the
 # fact that a narrowband filter not only lets through
 # quantum emissions, but also continuous blackbody
 # radiation. By using a broadband filter that contains
 # the narrowband, we can subtract the background leaving
 # an approximation of just the emissions.
+#
+# The technique seems to originate from a pixinsight
+# developer, as documented here:
+# https://youtu.be/1Wd7VxpMCH4
+#
+# To avoid star artifacts, it is best to operate on
+# starless images.
 #
 # This script requires files {rgb,ha,oiii}.fit to exist
 # in the working directory, i.e. for use on RGB + Ha/Oiii
@@ -24,21 +28,6 @@
 # - rgb_with_ha (R + HaCS, G, B + HaCS)
 # - rgb_with_oiii (R, G + OiiiCS, B + OiiiCS)
 # - rgb_with_ha_and_oiii (R + HaCS, G + OiiiCS, B + HaCS + OiiiCS)
-#
-#
-# A review of the python script reveals that it is calculating
-# the median of the narrowband image (allowing user
-# selection) then calculating
-#
-# result = narrowband - (broadband - median) * scale_factor
-#
-# returning the result that has the scale_factor which
-# minimises the Average Absolute Deviation,
-# mean(abs(data - mean(data)).
-#
-# The following video gives a walkthrough of how to use the
-# python script, and some of its other features,
-# https://youtu.be/6QQlwel2dAU?si=BRD9UZ6eNTN2DLGa
 #
 # It is common to blend the emission lines into the RGB
 # image with a specific colour, e.g. HaCS as purple, OiiiCS
@@ -91,11 +80,30 @@ rgbcomp r reg_oiii b -out=../rob
 
 rgbcomp reg_ha reg_oiii b -out=../hob
 
-# so that we don't have to do it again later
-pm "$reg_ha$ - ($r$ - med($r$)) * 0.98"
+# remove stars before doing continuum subtraction
+# (this is the most expensive bit)
+load r
+starnet -stretch -nostarmask
+
+load reg_ha
+starnet -stretch -nostarmask
+
+load b
+starnet -stretch -nostarmask
+
+load reg_oiii
+starnet -stretch -nostarmask
+
+# at this point, we should probably just use the new python plugin...
+
+# so that we don't have to do it again later. When finding a good
+# parameter I tend to prefer to maximise the signal of the nebulous
+# regions against the noise of the background, rather than any other
+# arbitrary metric. I'm ok if this means pulling in galaxy cores.
+pm "$starless_reg_ha$ - ($starless_r$ - med($starless_r$)) * 0.25"
 save ha_cs
 
-pm "$reg_oiii$ - ($g$ - med($g$)) * 0.85"
+pm "$starless_reg_oiii$ - ($starless_b$ - med($starless_b$)) * 0.85"
 save oiii_cs
 
 # NOTE: you can go back to the _cs files manually and clean them up, e.g.
