@@ -70,6 +70,6 @@ load result
 cd ..
 
 setcompress 0
-save result_modified
+save rgb
 
 close

@@ -84,11 +84,11 @@ register results -transf=shift -interp=none
 pm $r_results_00002$*mad($r_results_00001$)/mad($r_results_00002$)-mad($r_results_00001$)/mad($r_results_00002$)*median($r_results_00002$)+median($r_results_00001$)
 
 setcompress 0
-save ../result_modified_Oiii
+save ../oiii
 
 # Save Ha final result
 load r_results_00001
-save ../result_modified_Ha
+save ../ha
 
 cd ..
 close
