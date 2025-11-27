@@ -3,6 +3,7 @@
 *.js.map
 *.json
 *_pb2.py
+*.fz
 
 # https://github.com/ggreer/the_silver_searcher/issues/1181
 # use ag-ignore-list in emacs for per-project settings

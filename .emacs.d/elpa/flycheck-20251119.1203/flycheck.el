@@ -10,8 +10,8 @@
 ;;             Bozhidar Batsov <bozhidar@batsov.dev>
 ;; URL: https://www.flycheck.org
 ;; Keywords: convenience, languages, tools
-;; Package-Version: 20251116.2042
-;; Package-Revision: 672ed3d35c7d
+;; Package-Version: 20251119.1203
+;; Package-Revision: 1eafe2911d50
 ;; Package-Requires: ((emacs "27.1") (seq "2.24"))
 
 ;; This file is not part of GNU Emacs.
@@ -10916,7 +10916,8 @@ See URL `https://docs.astral.sh/ruff/'."
   :error-patterns
   ((error line-start
           (or "-" (file-name)) ":" line ":" (optional column ":") " "
-          "SyntaxError: "
+          ;; first variant is produced by ruff < 0.8 and kept for backward compat
+          (or "SyntaxError: " "invalid-syntax: ")
           (message (one-or-more not-newline))
           line-end)
    (warning line-start
