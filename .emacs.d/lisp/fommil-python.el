@@ -9,11 +9,9 @@
 ;;
 ;;; Code:
 
-;;(use-package elpy)
 (use-package python
   :ensure nil
   :config
-  (setq elpy-rpc-python-command "python3")
   :bind
   (:map python-mode-map
         ("M-<delete>" . paredit-unwrap)
@@ -27,10 +25,7 @@
 
 (add-hook 'python-mode-hook
           (lambda ()
-            (when (and (boundp 'elpy-enabled-p) elpy-enabled-p)
-              (elpy-mode)
-              (let ((backends (company-backends-for-buffer)))
-                (setq company-backends (cons 'elpy-company-backend backends))))))
+            (eglot-ensure)))
 ;; (put 'pyvenv-activate 'safe-local-variable #'stringp)
 
 (provide 'fommil-python)

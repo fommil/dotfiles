@@ -829,6 +829,9 @@ converted to PDF at the same location."
                    :diagnostics (:enable :json-false)))))
 
   (add-to-list 'eglot-server-programs
+               '(python-mode . ("pylsp")))
+
+  (add-to-list 'eglot-server-programs
                '((java-ts-mode java-mode) .
                  ("jdtls"
                   ;; TODO add emacs handler support for classFileContentsSupport
