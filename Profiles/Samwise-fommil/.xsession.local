@@ -14,7 +14,7 @@ redshift -m randr -l 56.291:-3.722 -b 1.0:0.7 &
 update-desktop-database ~/.local/share/applications
 
 # to toggle whether we show hidden files or not do
-# gsettings set org.gtk.Settings.FileChooser show-hidden true
+gsettings set org.gtk.Settings.FileChooser show-hidden false
 
 # needed for some apps (e.g. rpi-imager) to gain privileged access
 lxpolkit &
