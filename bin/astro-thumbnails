@@ -1,8 +1,22 @@
 #!/bin/bash
 
-# extracts the jpeg thumbnails from all the Sony raw images in the current
+# extracts the jpeg thumbnails from all the Sony raw images or fits in the current
 # working directory. Useful to be able to view them in feh or whatever.
 
+set -euo pipefail
+shopt -s nullglob
+
 for f in *.ARW ; do
+    echo $f
     exiftool -b -PreviewImage "$f" > "${f%.ARW}.jpg"
+done
+
+for f in *.fit *.fits ; do
+    echo $f
+    magick "$f[0]" -auto-level -resize 25% "${f%.*}.jpg"
+done
+
+for f in *.fz ; do
+    echo $f
+    funpack -S "$f" | magick "fits:-[0]" -auto-level -resize 25% "${f%.fz}.jpg"
 done

@@ -1,7 +1,7 @@
 #!/bin/bash
 
-# given a folder of Sony raw images this will sort them according to their
-# jpeg preview's mean pixel values into darks, lights and lights_filter.
+# given a folder of Sony raw images or fits this will sort them according to their
+# mean pixel values into darks, lights and lights_filter.
 #
 # It is wise to test a few files to calibrate the levels to use. If a filename
 # is provided as a parameter, this script will return its brightness level.
@@ -13,28 +13,45 @@
 # dark frames from filtered frames, and the second number is used to distinguish
 # filtered frames from rgb frames.
 
+set -euo pipefail
+shopt -s nullglob
+
 brightness () {
     f=$1
-    thumb=${f%.ARW}.jpg
-    if [ -f $thumb ] ; then
-        # we already created a thumbnail, this is faster
-        magick jpeg:$thumb -format "%[fx:mean]\n" info:
-    else
-        exiftool -b -PreviewImage $f | magick jpeg:- -format "%[fx:mean]\n" info:
-    fi
+    case "$f" in
+        *.ARW|*.arw)
+            thumb=${f%.*}.jpg
+            if [ -f "$thumb" ] ; then
+                magick "jpeg:$thumb" -format "%[fx:mean]\n" info:
+            else
+                exiftool -b -PreviewImage "$f" | magick jpeg:- -format "%[fx:mean]\n" info:
+            fi
+            ;;
+        *.fit|*.fits)
+            magick "$f[0]" -format "%[fx:mean]\n" info:
+            ;;
+        *.fz)
+            funpack -S "$f" | magick "fits:-[0]" -format "%[fx:mean]\n" info:
+            ;;
+        *)
+            return 1
+            ;;
+    esac
 }
 
-if [ -f "$1" ] ; then
-    brightness $1
-    exit 0
-fi
+if [ $# -ge 1 ] ; then
+    if [ -f "$1" ] ; then
+        brightness "$1"
+        exit 0
+    fi
 
-if [ "$1" = "calibrate" ] ; then
-    for f in *.ARW ; do
-        mean=$(brightness $f)
-        echo "$f : $mean"
-    done
-    exit 0
+    if [ "$1" = "calibrate" ] ; then
+        for f in *.ARW *.fit *.fits *.fz ; do
+            mean=$(brightness "$f") || continue
+            echo "$f : $mean"
+        done
+        exit 0
+    fi
 fi
 
 # These defaults are roughly correct for 30 second exposures at ISO3200 on an
@@ -44,17 +61,17 @@ fi
 filter=${1:-0.001}
 light=${2:-0.1}
 
-for f in *.ARW ; do
-    mean=$(brightness $f)
-    # echo "$f $mean"
-    if [ $(awk -v x="$mean" -v y="$filter" 'BEGIN { if (x < y) print "1"; else print "0"; }') -eq 1 ] ; then
-        mkdir darks 2>/dev/null
-        mv -v $f darks/
-    elif [ $(awk -v x="$mean" -v y="$light" 'BEGIN { if (x < y) print "1"; else print "0"; }') -eq 1 ] ; then
-        mkdir lights_filter 2>/dev/null
-        mv -v $f lights_filter/
+for f in *.ARW *.fit *.fits *.fz ; do
+    mean=$(brightness "$f") || continue
+
+    if [ "$(awk -v x="$mean" -v y="$filter" 'BEGIN{print (x<y)?1:0}')" -eq 1 ] ; then
+        mkdir -p darks
+        mv -v "$f" darks/
+    elif [ "$(awk -v x="$mean" -v y="$light" 'BEGIN{print (x<y)?1:0}')" -eq 1 ] ; then
+        mkdir -p lights_filter
+        mv -v "$f" lights_filter/
     else
-        mkdir lights 2>/dev/null
-        mv -v $f lights/
+        mkdir -p lights
+        mv -v "$f" lights/
     fi
 done

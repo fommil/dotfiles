@@ -20,6 +20,6 @@ pcc
 #
 # https://youtu.be/Zx6dd7ESLW8?t=1428
 autoghs -linked 0.0 5 -b=10 -lp=0 -hp=1.0
-#save initial_stretch
+save initial_stretch
 
 # Next is linear black point, then stretch / saturate to taste.
