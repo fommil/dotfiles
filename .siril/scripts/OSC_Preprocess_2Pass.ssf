@@ -1,0 +1,65 @@
+# Based on the stock OSC_Preprocess but
+#
+# 1. compression for all but the result
+# 2. 2-pass registration
+# 3. wFWHM rejection
+
+requires 1.2.0
+
+# this might mess with the user settings
+# but it saves a hell of a lot of space
+setcompress 1 -type=gzip1 0
+
+# Convert Bias Frames to .fit files
+cd biases
+convert bias -out=../process
+cd ../process
+
+# Stack Bias Frames to bias_stacked.fit
+stack bias rej 3 3 -nonorm -out=../masters/bias_stacked
+cd ..
+
+# Convert Flat Frames to .fit files
+cd flats
+convert flat -out=../process
+cd ../process
+
+# Calibrate Flat Frames
+calibrate flat -bias=../masters/bias_stacked
+
+# Stack Flat Frames to pp_flat_stacked.fit
+stack pp_flat rej 3 3 -norm=mul -out=../masters/pp_flat_stacked
+cd ..
+
+# Convert Dark Frames to .fit files
+cd darks
+convert dark -out=../process
+cd ../process
+
+# Stack Dark Frames to dark_stacked.fit
+stack dark rej 3 3 -nonorm -out=../masters/dark_stacked
+cd ..
+
+# Convert Light Frames to .fit files
+cd lights
+convert light -out=../process
+cd ../process
+
+# Calibrate Light Frames
+calibrate light -dark=../masters/dark_stacked -flat=../masters/pp_flat_stacked -cc=dark -cfa -equalize_cfa -debayer
+
+# 2 pass registration should pick a better reference image
+register pp_light -2pass
+seqapplyreg pp_light
+
+# stacking with wfwhm rejection is an automated way to throw
+# away entire bad subs. Adjust wfwhm to whatever your skies + rig allow.
+stack r_pp_light rej 3 3 -norm=addscale -output_norm -rgb_equal -out=result -filter-wfwhm=9.0
+
+load result
+cd ..
+
+setcompress 0
+save rgb
+
+close

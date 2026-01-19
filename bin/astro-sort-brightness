@@ -1,17 +1,10 @@
 #!/bin/bash
 
-# given a folder of Sony raw images or fits this will sort them according to their
-# mean pixel values into darks, lights and lights_filter.
+# given a folder of Sony ARW images (or fits) this will sort them according to their
+# mean pixel values into darks and lights.
 #
-# It is wise to test a few files to calibrate the levels to use. If a filename
-# is provided as a parameter, this script will return its brightness level.
-#
-# If a single number is provided, it is treated as the threshold for light
-# frames. If no number is provided, a default value of 0.001 is used.
-#
-# If two numbers are provided, the first is used as the threshold to distinguish
-# dark frames from filtered frames, and the second number is used to distinguish
-# filtered frames from rgb frames.
+# Without any parameter this will simply replay back the brightness levels, it must
+# be called with a number to do the splitting.
 
 set -euo pipefail
 shopt -s nullglob
@@ -39,37 +32,26 @@ brightness () {
     esac
 }
 
-if [ $# -ge 1 ] ; then
-    if [ -f "$1" ] ; then
-        brightness "$1"
-        exit 0
-    fi
-
-    if [ "$1" = "calibrate" ] ; then
-        for f in *.ARW *.fit *.fits *.fz ; do
-            mean=$(brightness "$f") || continue
-            echo "$f : $mean"
-        done
-        exit 0
-    fi
+p=${1:-calibrate}
+if [ -f "$p" ] ; then
+    brightness "$p"
+    exit 0
 fi
 
-# These defaults are roughly correct for 30 second exposures at ISO3200 on an
-# fs-60cb (with reducer) captured by a full spectrum modified sony a7iii, with a
-# ZWO uv/ir cut or an SV220 dual band, under bortle 4 skies (with moonlight).
-# Your mileage may vary.
-filter=${1:-0.001}
-light=${2:-0.1}
+if [ "$p" = "calibrate" ] ; then
+    for f in *.ARW *.fit *.fits *.fz ; do
+        mean=$(brightness "$f") || continue
+        echo "$f : $mean"
+    done
+    exit 0
+fi
 
 for f in *.ARW *.fit *.fits *.fz ; do
     mean=$(brightness "$f") || continue
 
-    if [ "$(awk -v x="$mean" -v y="$filter" 'BEGIN{print (x<y)?1:0}')" -eq 1 ] ; then
+    if [ "$(awk -v x="$mean" -v y="$p" 'BEGIN{print (x<y)?1:0}')" -eq 1 ] ; then
         mkdir -p darks
         mv -v "$f" darks/
-    elif [ "$(awk -v x="$mean" -v y="$light" 'BEGIN{print (x<y)?1:0}')" -eq 1 ] ; then
-        mkdir -p lights_filter
-        mv -v "$f" lights_filter/
     else
         mkdir -p lights
         mv -v "$f" lights/
