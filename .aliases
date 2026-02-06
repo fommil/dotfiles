@@ -31,7 +31,7 @@ alias mv="mv -i"
 alias rm="rm -i"
 
 alias nano="nano -w"
-alias feh="feh -d --image-bg black -Z -."
+alias feh="feh --force-aliasing -d --image-bg black -Z -."
 
 alias please="sudo"
 alias fuck="rm -rf"
