@@ -18,8 +18,8 @@
 ;; along with Notmuch.  If not, see <https://www.gnu.org/licenses/>.
 ;;
 ;; Authors: Carl Worth <cworth@cworth.org>
-;; Package-Version: 0.39
-;; Package-Revision: 0.39-0-ga5214eabb63b
+;; Package-Version: 0.40
+;; Package-Revision: 0.40-0-gcee41bccc054
 ;; Homepage: https://notmuchmail.org
 
 ;;; Commentary:
@@ -1093,10 +1093,10 @@ the configured default sort order."
 
   (let* ((query (or query (notmuch-read-query "Notmuch search: ")))
 	 (buffer (get-buffer-create (notmuch-search-buffer-title query))))
-    (if no-display
-	(set-buffer buffer)
-      (pop-to-buffer-same-window buffer))
+    (set-buffer buffer)
     (notmuch-search-mode)
+    (unless no-display
+      (pop-to-buffer-same-window buffer))
     ;; Don't track undo information for this buffer
     (setq buffer-undo-list t)
     (setq notmuch-search-query-string query)
