@@ -830,6 +830,8 @@ converted to PDF at the same location."
 
   (add-to-list 'eglot-server-programs
                '(python-mode . ("pylsp")))
+  ;; (add-to-list 'eglot-server-programs
+  ;;              '(python-mode . ("ty" "server")))
 
   (add-to-list 'eglot-server-programs
                '((java-ts-mode java-mode) .
