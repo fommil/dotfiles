@@ -1,5 +1,4 @@
-This is docvvNI1u.info, produced by makeinfo version 7.1.1 from
-eglot.texi.
+This is eglot.info, produced by makeinfo version 7.2 from eglot.texi.
 
 This manual is for Eglot, the Emacs LSP client.
 
@@ -21,7 +20,7 @@ START-INFO-DIR-ENTRY
 END-INFO-DIR-ENTRY
 
 
-File: docvvNI1u.info,  Node: Top,  Next: Quick Start,  Up: (dir)
+File: eglot.info,  Node: Top,  Next: Quick Start,  Up: (dir)
 
 Eglot
 *****
@@ -82,7 +81,7 @@ read this manual from within Emacs, type ‘M-x eglot-manual <RET>’.
    (1) A “polyglot” is a person who is able to use several languages.
 
 
-File: docvvNI1u.info,  Node: Quick Start,  Next: Eglot and LSP Servers,  Prev: Top,  Up: Top
+File: eglot.info,  Node: Quick Start,  Next: Eglot and LSP Servers,  Prev: Top,  Up: Top
 
 1 Quick Start
 *************
@@ -142,7 +141,7 @@ common use patterns.
   4. That's it!
 
 
-File: docvvNI1u.info,  Node: Eglot and LSP Servers,  Next: Using Eglot,  Prev: Quick Start,  Up: Top
+File: eglot.info,  Node: Eglot and LSP Servers,  Next: Using Eglot,  Prev: Quick Start,  Up: Top
 
 2 Eglot and LSP Servers
 ***********************
@@ -157,7 +156,7 @@ start it.
 * Shutting Down LSP Servers::
 
 
-File: docvvNI1u.info,  Node: Setting Up LSP Servers,  Next: Starting Eglot,  Up: Eglot and LSP Servers
+File: eglot.info,  Node: Setting Up LSP Servers,  Next: Starting Eglot,  Up: Eglot and LSP Servers
 
 2.1 Setting Up LSP Servers
 ==========================
@@ -264,7 +263,7 @@ a given major-mode.  In those cases, you may combine the helper function
 buffers.  Else it will use whichever is available.
 
 
-File: docvvNI1u.info,  Node: Starting Eglot,  Next: Shutting Down LSP Servers,  Prev: Setting Up LSP Servers,  Up: Eglot and LSP Servers
+File: eglot.info,  Node: Starting Eglot,  Next: Shutting Down LSP Servers,  Prev: Setting Up LSP Servers,  Up: Eglot and LSP Servers
 
 2.2 Starting Eglot
 ==================
@@ -316,7 +315,7 @@ Emacs session, it runs the hook ‘eglot-connect-hook’ (*note Other
 Variables::).
 
 
-File: docvvNI1u.info,  Node: Shutting Down LSP Servers,  Prev: Starting Eglot,  Up: Eglot and LSP Servers
+File: eglot.info,  Node: Shutting Down LSP Servers,  Prev: Starting Eglot,  Up: Eglot and LSP Servers
 
 2.3 Shutting Down LSP Servers
 =============================
@@ -347,7 +346,7 @@ associated with it.  This default allows you to start a server only once
 in each Emacs session.
 
 
-File: docvvNI1u.info,  Node: Using Eglot,  Next: Customizing Eglot,  Prev: Eglot and LSP Servers,  Up: Top
+File: eglot.info,  Node: Using Eglot,  Next: Customizing Eglot,  Prev: Eglot and LSP Servers,  Up: Top
 
 3 Using Eglot
 *************
@@ -363,7 +362,7 @@ commands and variables.
 * Eglot Commands::
 
 
-File: docvvNI1u.info,  Node: Eglot Features,  Next: Eglot and Buffers,  Up: Using Eglot
+File: eglot.info,  Node: Eglot Features,  Next: Eglot and Buffers,  Up: Using Eglot
 
 3.1 Eglot Features
 ==================
@@ -469,7 +468,7 @@ Customizing Eglot::) and the ‘eglot-managed-mode-hook’ hook that runs
 after Eglot starts managing a buffer (*note Eglot and Buffers::).
 
 
-File: docvvNI1u.info,  Node: Eglot and Buffers,  Next: Eglot Commands,  Prev: Eglot Features,  Up: Using Eglot
+File: eglot.info,  Node: Eglot and Buffers,  Next: Eglot Commands,  Prev: Eglot Features,  Up: Using Eglot
 
 3.2 Buffers, Projects, and Eglot
 ================================
@@ -585,7 +584,7 @@ use this:
            (eglot-semantic-tokens-mode -1)))
 
 
-File: docvvNI1u.info,  Node: Eglot Commands,  Prev: Eglot and Buffers,  Up: Using Eglot
+File: eglot.info,  Node: Eglot Commands,  Prev: Eglot and Buffers,  Up: Using Eglot
 
 3.3 Eglot Commands
 ==================
@@ -795,7 +794,7 @@ Eglot-managed buffers:
      Request completion of the symbol at point.
 
 
-File: docvvNI1u.info,  Node: Customizing Eglot,  Next: Advanced server configuration,  Prev: Using Eglot,  Up: Top
+File: eglot.info,  Node: Customizing Eglot,  Next: Advanced server configuration,  Prev: Using Eglot,  Up: Top
 
 4 Customizing Eglot
 *******************
@@ -823,7 +822,7 @@ interaction with these features.  *Note More Customization::.
 * More Customization::
 
 
-File: docvvNI1u.info,  Node: Customization Variables,  Next: Other Variables,  Up: Customizing Eglot
+File: eglot.info,  Node: Customization Variables,  Next: Other Variables,  Up: Customizing Eglot
 
 4.1 Customization Variables
 ===========================
@@ -954,7 +953,7 @@ This section provides a reference for the Eglot user options.
           point.
 
 
-File: docvvNI1u.info,  Node: Other Variables,  Next: More Customization,  Prev: Customization Variables,  Up: Customizing Eglot
+File: eglot.info,  Node: Other Variables,  Next: More Customization,  Prev: Customization Variables,  Up: Customizing Eglot
 
 4.2 Other Variables
 ===================
@@ -1004,7 +1003,7 @@ be changed from Elisp snippets.
      other mechanism.
 
 
-File: docvvNI1u.info,  Node: More Customization,  Prev: Other Variables,  Up: Customizing Eglot
+File: eglot.info,  Node: More Customization,  Prev: Other Variables,  Up: Customizing Eglot
 
 4.3 More Customization
 ======================
@@ -1091,7 +1090,7 @@ override Eglot's setting of these variables.
      ‘yas-minor-mode’ when needed to expand server-provided snippets.
 
 
-File: docvvNI1u.info,  Node: Advanced server configuration,  Next: Multi-server support,  Prev: Customizing Eglot,  Up: Top
+File: eglot.info,  Node: Advanced server configuration,  Next: Multi-server support,  Prev: Customizing Eglot,  Up: Top
 
 5 Advanced server configuration
 *******************************
@@ -1137,7 +1136,7 @@ other LSP clients and may be easier to debug than options riding on the
 LSP wire.
 
 
-File: docvvNI1u.info,  Node: Project-specific configuration,  Next: User-specific configuration,  Up: Advanced server configuration
+File: eglot.info,  Node: Project-specific configuration,  Next: User-specific configuration,  Up: Advanced server configuration
 
 5.1 Project-specific configuration
 ==================================
@@ -1276,7 +1275,7 @@ function instead of a plist.  The function is called with the
 return a plist suitable for use as the variable's value.
 
 
-File: docvvNI1u.info,  Node: User-specific configuration,  Next: JSONRPC objects in Elisp,  Prev: Project-specific configuration,  Up: Advanced server configuration
+File: eglot.info,  Node: User-specific configuration,  Next: JSONRPC objects in Elisp,  Prev: Project-specific configuration,  Up: Advanced server configuration
 
 5.2 User-specific configuration
 ===============================
@@ -1292,7 +1291,6 @@ done like so:
      (with-eval-after-load 'eglot
        (add-to-list 'eglot-server-programs
                     `(c++-mode . ("clangd" "--compile-commands-dir=/tmp"))))
-
 
 Another way is to have Eglot pass a JSON object to the server during the
 LSP handshake.  This is done using the ‘:initializationOptions’ syntax
@@ -1329,7 +1327,7 @@ Project-specific configuration::.  Here is an example:
 always overridden if a directory-local value is detected.
 
 
-File: docvvNI1u.info,  Node: JSONRPC objects in Elisp,  Prev: User-specific configuration,  Up: Advanced server configuration
+File: eglot.info,  Node: JSONRPC objects in Elisp,  Prev: User-specific configuration,  Up: Advanced server configuration
 
 5.3 JSONRPC objects in Elisp
 ============================
@@ -1375,7 +1373,7 @@ is serialized by Eglot to the following JSON text:
      }
 
 
-File: docvvNI1u.info,  Node: Multi-server support,  Next: Extending Eglot,  Prev: Advanced server configuration,  Up: Top
+File: eglot.info,  Node: Multi-server support,  Next: Extending Eglot,  Prev: Advanced server configuration,  Up: Top
 
 6 Multi-server support
 **********************
@@ -1430,7 +1428,7 @@ for the same buffer.
 * Design rationale::      Benefits and drawbacks of LSP multiplexers
 
 
-File: docvvNI1u.info,  Node: Using Rassumfrassum,  Next: Design rationale,  Up: Multi-server support
+File: eglot.info,  Node: Using Rassumfrassum,  Next: Design rationale,  Up: Multi-server support
 
 6.1 Using Rassumfrassum
 =======================
@@ -1478,7 +1476,7 @@ automatic use:
                                      "ruff" "server"))))
 
 
-File: docvvNI1u.info,  Node: Design rationale,  Prev: Using Rassumfrassum,  Up: Multi-server support
+File: eglot.info,  Node: Design rationale,  Prev: Using Rassumfrassum,  Up: Multi-server support
 
 6.2 Design rationale
 ====================
@@ -1513,7 +1511,7 @@ However, offloading this complexity to a completely separate layer has
 proven very effective in practice.
 
 
-File: docvvNI1u.info,  Node: Extending Eglot,  Next: Troubleshooting Eglot,  Prev: Multi-server support,  Up: Top
+File: eglot.info,  Node: Extending Eglot,  Next: Troubleshooting Eglot,  Prev: Multi-server support,  Up: Top
 
 7 Extending Eglot
 *****************
@@ -1647,7 +1645,7 @@ code in the buffer will be nicely grayed out using the LSP server
 knowledge about current compile time preprocessor defines.
 
 
-File: docvvNI1u.info,  Node: Troubleshooting Eglot,  Next: GNU Free Documentation License,  Prev: Extending Eglot,  Up: Top
+File: eglot.info,  Node: Troubleshooting Eglot,  Next: GNU Free Documentation License,  Prev: Extending Eglot,  Up: Top
 
 8 Troubleshooting Eglot
 ***********************
@@ -1669,7 +1667,7 @@ problems or at least provide a hint.
 * Reporting bugs::
 
 
-File: docvvNI1u.info,  Node: Performance,  Next: Getting the latest version,  Up: Troubleshooting Eglot
+File: eglot.info,  Node: Performance,  Next: Getting the latest version,  Up: Troubleshooting Eglot
 
 8.1 Performance
 ===============
@@ -1693,7 +1691,7 @@ of JSONRPC information exchanged with Emacs.  Using an LSP program like
 *note Rassumfrassum: Using Rassumfrassum. may alleviate such problems.
 
 
-File: docvvNI1u.info,  Node: Getting the latest version,  Next: Reporting bugs,  Prev: Performance,  Up: Troubleshooting Eglot
+File: eglot.info,  Node: Getting the latest version,  Next: Reporting bugs,  Prev: Performance,  Up: Troubleshooting Eglot
 
 8.2 Getting the latest version
 ==============================
@@ -1717,7 +1715,7 @@ the same way across Emacs versions, meaning your configuration may be
 not portable.
 
 
-File: docvvNI1u.info,  Node: Reporting bugs,  Prev: Getting the latest version,  Up: Troubleshooting Eglot
+File: eglot.info,  Node: Reporting bugs,  Prev: Getting the latest version,  Up: Troubleshooting Eglot
 
 8.3 Reporting bugs
 ==================
@@ -1812,7 +1810,7 @@ that used Eglot to communicate with the language server.  Eglot is, in
 many cases, just a frontend to that functionality.
 
 
-File: docvvNI1u.info,  Node: GNU Free Documentation License,  Next: Index,  Prev: Troubleshooting Eglot,  Up: Top
+File: eglot.info,  Node: GNU Free Documentation License,  Next: Index,  Prev: Troubleshooting Eglot,  Up: Top
 
 Appendix A GNU Free Documentation License
 *****************************************
@@ -2294,7 +2292,7 @@ software license, such as the GNU General Public License, to permit
 their use in free software.
 
 
-File: docvvNI1u.info,  Node: Index,  Prev: GNU Free Documentation License,  Up: Top
+File: eglot.info,  Node: Index,  Prev: GNU Free Documentation License,  Up: Top
 
 Index
 *****
@@ -2361,7 +2359,7 @@ Index
 * eglot-workspace-configuration:         Project-specific configuration.
                                                               (line   6)
 * eglot-workspace-configuration <1>:     User-specific configuration.
-                                                              (line  36)
+                                                              (line  35)
 * ElDoc, and Eglot:                      Eglot Commands.      (line 189)
 * features in buffers supported by Eglot: Eglot Features.     (line   6)
 * finding definitions of identifiers using Eglot: Eglot Commands.
@@ -2436,42 +2434,42 @@ Index
                                                               (line   6)
 * xref, and Eglot:                       Eglot Commands.      (line 199)
 
-
 
 Tag Table:
-Node: Top892
-Ref: Top-Footnote-13613
-Node: Quick Start3688
-Node: Eglot and LSP Servers6361
-Node: Setting Up LSP Servers6782
-Node: Starting Eglot12023
-Node: Shutting Down LSP Servers14689
-Node: Using Eglot16237
-Node: Eglot Features16606
-Node: Eglot and Buffers22132
-Node: Eglot Commands28349
-Node: Customizing Eglot38210
-Node: Customization Variables39266
-Node: Other Variables45842
-Node: More Customization48000
-Node: Advanced server configuration51843
-Node: Project-specific configuration53844
-Node: User-specific configuration60319
-Node: JSONRPC objects in Elisp62771
-Node: Multi-server support64311
-Node: Using Rassumfrassum66879
-Node: Design rationale68900
-Node: Extending Eglot70770
-Node: Troubleshooting Eglot77489
-Node: Performance78264
-Node: Getting the latest version79378
-Node: Reporting bugs80496
-Node: GNU Free Documentation License85269
-Node: Index110432
+Node: Top886
+Ref: Top-Footnote-13603
+Node: Quick Start3678
+Node: Eglot and LSP Servers6347
+Node: Setting Up LSP Servers6764
+Node: Starting Eglot12001
+Node: Shutting Down LSP Servers14663
+Node: Using Eglot16207
+Node: Eglot Features16572
+Node: Eglot and Buffers22094
+Node: Eglot Commands28307
+Node: Customizing Eglot38164
+Node: Customization Variables39216
+Node: Other Variables45788
+Node: More Customization47942
+Node: Advanced server configuration51781
+Node: Project-specific configuration53778
+Node: User-specific configuration60249
+Node: JSONRPC objects in Elisp62696
+Node: Multi-server support64232
+Node: Using Rassumfrassum66796
+Node: Design rationale68813
+Node: Extending Eglot70679
+Node: Troubleshooting Eglot77394
+Node: Performance78165
+Node: Getting the latest version79275
+Node: Reporting bugs80389
+Node: GNU Free Documentation License85158
+Node: Index110317
 
 End Tag Table
 
 
 Local Variables:
 coding: utf-8
+Info-documentlanguage: en
 End:

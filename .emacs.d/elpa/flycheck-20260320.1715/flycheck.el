@@ -10,8 +10,8 @@
 ;;             Bozhidar Batsov <bozhidar@batsov.dev>
 ;; URL: https://github.com/flycheck/flycheck
 ;; Keywords: convenience, languages, tools
-;; Package-Version: 20260224.1923
-;; Package-Revision: b714e2770f6a
+;; Package-Version: 20260320.1715
+;; Package-Revision: 0e5eb8300d32
 ;; Package-Requires: ((emacs "27.1") (seq "2.24"))
 
 ;; This file is not part of GNU Emacs.
@@ -10050,7 +10050,7 @@ See URL `https://opam.ocaml.org/doc/man/opam-lint.html'."
   (lambda (errors)
     (flycheck-increment-error-columns
      (flycheck-fill-empty-line-numbers errors)))
-  :modes tuareg-opam-mode)
+  :modes (tuareg-opam-mode neocaml-opam-mode))
 
 (flycheck-def-option-var flycheck-perl-include-path nil perl
   "A list of include directories for Perl.
