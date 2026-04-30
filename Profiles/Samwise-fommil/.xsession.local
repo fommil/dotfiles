@@ -3,10 +3,7 @@
 # if the keyboard is unplugged, all xmodmaps are lost, so check
 $HOME/.Xmodmap.hack &
 
-#summer
-redshift -m randr -l 56.291:-3.722 -b 1.0:0.7 &
-# winter
-#redshift -m randr -l 56.291:-3.722 -b 0.9:0.6 &
+redshift -m randr -l 56.291:-3.722 -b 0.9:0.6 &
 #
 # It's the 18th hole of my local golf course, you didn't think
 # I'd be stupid enough to give away my home location, did you?

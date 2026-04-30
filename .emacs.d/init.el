@@ -879,6 +879,7 @@ converted to PDF at the same location."
 (require 'fommil-haskell-tng)
 (require 'fommil-python)
 (require 'fommil-manuscripts)
+(require 'fommil-llm)
 
 (use-package java-mode
   :ensure nil
