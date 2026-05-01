@@ -23,9 +23,10 @@
 ;; This file adds support for the Kagi FastGPT LLM API to gptel
 
 ;;; Code:
+(require 'gptel)
 (require 'cl-generic)
-(eval-when-compile (require 'cl-lib))
-(eval-and-compile (require 'gptel-request))
+(eval-when-compile
+  (require 'cl-lib))
 
 (declare-function gptel-context--wrap "gptel-context")
 
@@ -37,10 +38,7 @@
 (cl-defmethod gptel--parse-response ((_backend gptel-kagi) response info)
   (let* ((data (plist-get response :data))
          (output (plist-get data :output))
-         (references (plist-get data :references))
-         (tokens (plist-get data :tokens)))
-    (when tokens
-      (plist-put info :tokens (list :input tokens :output tokens)))
+         (references (plist-get data :references)))
     (if (eq references :null) (setq references nil))
     (if (eq output :null) (setq output nil))
     (when references
@@ -123,8 +121,7 @@
 (cl-defun gptel-make-kagi
     (name &key curl-args stream key
           (host "kagi.com")
-          (header (lambda (_info)
-                    `(("Authorization" . ,(concat "Bot " (gptel--get-api-key))))))
+          (header (lambda () `(("Authorization" . ,(concat "Bot " (gptel--get-api-key))))))
           (models '((fastgpt :capabilities (nosystem))
                     (summarize:cecil :capabilities (nosystem))
                     (summarize:agnes :capabilities (nosystem))
@@ -174,7 +171,7 @@ Example:
                   :protocol protocol
                   :endpoint endpoint
                   :url
-                  (lambda (_info)
+                  (lambda ()
                     (concat protocol "://" host endpoint
                             (if (equal gptel-model 'fastgpt)
                                 "fastgpt" "summarize"))))))

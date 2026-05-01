@@ -80,6 +80,10 @@
  browse-url-browser-function 'browse-url-generic
  ediff-window-setup-function 'ediff-setup-windows-plain)
 
+(add-to-list 'display-buffer-alist
+             '("\\*Compile-Log\\*" display-buffer-no-window
+               (allow-no-window . t)))
+
 (setq-default
  c-basic-offset 4)
 

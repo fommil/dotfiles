@@ -124,7 +124,7 @@
                       '("exa-search" :url "https://mcp.exa.ai/mcp"))
                     ;;
                     ;; or locally hosted, `devx install duckduckgo-mcp-server`
-                    ;; ("ddg-search" . (:command "duckduckgo-mcp-server"))
+                    ;; '("ddg-search" . (:command "duckduckgo-mcp-server"))
                     )))
 
 (add-hook

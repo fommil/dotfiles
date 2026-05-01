@@ -627,70 +627,6 @@ see `gptel-make-openai'.
 (register-definition-prefixes "gptel-openai-extras" '("gptel--p"))
 
 
-;;; Generated autoloads from gptel-openai-responses.el
-
-(autoload 'gptel-make-openai-responses "gptel-openai-responses" "\
-Register an OpenAI Responses API backend for gptel with NAME.
-
-The Responses API is OpenAI's new API for agentic applications that
-provides built-in tools like web search, code interpreter, and file
-search.
-
-Keyword arguments:
-
-CURL-ARGS (optional) is a list of additional Curl arguments.
-
-HOST (optional) is the API host, typically \"api.openai.com\".
-
-MODELS is a list of available model names, as symbols.
-Additionally, you can specify supported LLM capabilities like
-vision or tool-use by appending a plist to the model with more
-information, in the form
-
- (model-name . plist)
-
-For a list of currently recognized plist keys, see
-`gptel--openai-models'.
-
-STREAM is a boolean to toggle streaming responses, defaults to
-false.
-
-PROTOCOL (optional) specifies the protocol, https by default.
-
-ENDPOINT (optional) is the API endpoint for completions, defaults to
-\"/v1/responses\".
-
-HEADER (optional) is for additional headers to send with each
-request.  It should be an alist or a function that returns an
-alist, like:
- ((\"Content-Type\" . \"application/json\"))
-
-KEY (optional) is a variable whose value is the API key, or
-function that returns the key.
-
-REQUEST-PARAMS (optional) is a plist of additional HTTP request
-parameters (as plist keys) and values supported by the API.  Use
-these to set parameters that gptel does not provide user options
-for.
-
-Example:
--------
-
- (gptel-make-openai-responses
-  \"OpenAI-Responses\"
-  :stream t
-  :models '((gpt-4o
-             :capabilities (media tool-use json url responses-api)
-             :mime-types (\"image/jpeg\" \"image/png\" \"image/gif\" \"image/webp\"))
-            (gpt-4o-mini
-             :capabilities (media tool-use json url responses-api)
-             :mime-types (\"image/jpeg\" \"image/png\" \"image/gif\" \"image/webp\"))))
-
-(fn NAME &key CURL-ARGS (MODELS gptel--openai-models) STREAM KEY REQUEST-PARAMS (HEADER (lambda (_info) (when-let* ((key (gptel--get-api-key))) \\=`((\"Authorization\" \\=\\, (concat \"Bearer \" key)))))) (HOST \"api.openai.com\") (PROTOCOL \"https\") (ENDPOINT \"/v1/responses\"))")
-(function-put 'gptel-make-openai-responses 'lisp-indent-function 1)
-(register-definition-prefixes "gptel-openai-responses" '("gptel--openai-responses-"))
-
-
 ;;; Generated autoloads from gptel-org.el
 
 (autoload 'gptel--convert-markdown->org "gptel-org" "\
