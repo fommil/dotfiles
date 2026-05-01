@@ -23,147 +23,47 @@
 
 ;;; Code:
 (require 'cl-generic)
-(eval-when-compile
-  (require 'cl-lib))
+(eval-when-compile (require 'cl-lib))
 (require 'map)
+(eval-and-compile (require 'gptel-request))
 
-(defvar gptel-model)
-(defvar gptel-stream)
-(defvar gptel-use-curl)
-(defvar gptel-backend)
-(defvar gptel-temperature)
-(defvar gptel-max-tokens)
-(defvar gptel--system-message)
 (defvar json-object-type)
 (defvar gptel-mode)
-(defvar gptel-track-response)
-(defvar gptel-track-media)
-(defvar gptel-use-tools)
-(defvar gptel-tools)
-(defvar gptel--schema)
-(defvar gptel--request-params)
 (declare-function gptel-context--collect-media "gptel-context")
-(declare-function gptel--base64-encode "gptel")
-(declare-function gptel--trim-prefixes "gptel")
-(declare-function gptel--parse-media-links "gptel")
-(declare-function gptel--model-capable-p "gptel")
-(declare-function gptel--model-name "gptel")
-(declare-function gptel--get-api-key "gptel")
-(declare-function gptel--insert-file-string "gptel")
-(declare-function prop-match-value "text-property-search")
-(declare-function text-property-search-backward "text-property-search")
 (declare-function json-read "json")
-(declare-function gptel-prompt-prefix-string "gptel")
-(declare-function gptel-response-prefix-string "gptel")
-(declare-function gptel--merge-plists "gptel")
-(declare-function gptel--model-request-params "gptel")
 (declare-function gptel-context--wrap "gptel-context")
-(declare-function gptel--inject-prompt "gptel")
-(declare-function gptel--parse-tools "gptel")
-(declare-function gptel--parse-schema "gptel")
-(declare-function gptel--preprocess-schema "gptel")
-(declare-function gptel--dispatch-schema-type "gptel")
 
-;; JSON conversion semantics used by gptel
-;; empty object "{}" => empty list '() == nil
-;; null              => :null
-;; false             => :json-false
-
-;; TODO(tool) Except when reading JSON from a string, where null => nil
-
-(defmacro gptel--json-read ()
-  (if (fboundp 'json-parse-buffer)
-      `(json-parse-buffer
-        :object-type 'plist
-        :null-object :null
-        :false-object :json-false)
-    (require 'json)
-    (defvar json-object-type)
-    (defvar json-null)
-    (declare-function json-read "json" ())
-    `(let ((json-object-type 'plist)
-           (json-null :null))
-      (json-read))))
-
-(defmacro gptel--json-read-string (str)
-  (if (fboundp 'json-parse-string)
-      `(json-parse-string ,str
-        :object-type 'plist
-        :null-object nil
-        :false-object :json-false)
-    (require 'json)
-    (defvar json-object-type)
-    (declare-function json-read-from-string "json" ())
-    `(let ((json-object-type 'plist))
-      (json-read-from-string ,str))))
-
-(defmacro gptel--json-encode (object)
-  (if (fboundp 'json-serialize)
-      `(json-serialize ,object
-        :null-object :null
-        :false-object :json-false)
-    (require 'json)
-    (defvar json-false)
-    (defvar json-null)
-    (declare-function json-encode "json" (object))
-    `(let ((json-false :json-false)
-           (json-null  :null))
-      (json-encode ,object))))
-
-(defun gptel--process-models (models)
-  "Convert items in MODELS to symbols with appropriate properties."
-  (let ((models-processed))
-    (dolist (model models)
-      (cl-etypecase model
-        (string (push (intern model) models-processed))
-        (symbol (push model models-processed))
-        (cons
-         (cl-destructuring-bind (name . props) model
-           (setf (symbol-plist name)
-                 ;; MAYBE: Merging existing symbol plists is safer, but makes it
-                 ;; difficult to reset a symbol plist, since removing keys from
-                 ;; it (as opposed to setting them to nil) is more work.
-                 ;;
-                 ;; (map-merge 'plist (symbol-plist name) props)
-                 props)
-           (push name models-processed)))))
-    (nreverse models-processed)))
-
-;;; Common backend struct for LLM support
-(defvar gptel--known-backends nil
-  "Alist of LLM backends known to gptel.
-
-This is an alist mapping user-provided names to backend structs,
-see `gptel-backend'.
-
-You can have more than one backend pointing to the same resource
-with differing settings.")
-
-(defun gptel-get-backend (name)
-  "Return gptel backend with NAME.
-
-Throw an error if there is no match."
-  (or (alist-get name gptel--known-backends nil nil #'equal)
-      (user-error "Backend %s is not known to be defined"
-                  name)))
-
-(gv-define-setter gptel-get-backend (val name)
-  `(setf (alist-get ,name gptel--known-backends
-          nil t #'equal)
-    ,val))
-
-(cl-defstruct
-    (gptel-backend (:constructor gptel--make-backend)
-                   (:copier gptel--copy-backend))
-  name host header protocol stream
-  endpoint key models url request-params
-  curl-args
-  (coding-system nil :documentation "Can be set to `binary' if the backend expects non UTF-8 output."))
-
-;;; OpenAI (ChatGPT)
+;; OpenAI Completions Backend
 (cl-defstruct (gptel-openai (:constructor gptel--make-openai)
                             (:copier nil)
                             (:include gptel-backend)))
+
+;; OpenAI Responses Backend
+(cl-defstruct (gptel-openai-responses (:constructor gptel--make-openai-responses)
+                                      (:copier nil)
+                                      (:include gptel-backend)))
+
+
+(defun gptel--openai-update-tokens (usage info)
+  "Update token usage information from USAGE.
+USAGE is part of the response, INFO is the request plist.
+
+This function accumulates token counts across multiple turns in a
+multi-turn request (e.g., during tool use where results are fed
+back to the LLM)."
+  (when usage
+    (let ((input (or (plist-get usage :prompt_tokens) 0))
+          (output (or (plist-get usage :completion_tokens) 0))
+          (cached (or (map-nested-elt
+                       usage '(:prompt_tokens_details :cached_tokens))
+                      (plist-get usage :prompt_cache_hit_tokens) 
+                      0)))
+      ;; prompt_tokens includes the cached tokens, but we capture and display
+      ;; the two exclusively in the UI.
+      (let ((tokens (list :input (- input cached) :output output :cached cached)))
+        (plist-put info :tokens tokens) ;Tokens for this turn
+        (plist-put info :tokens-full    ;Tokens for full request
+                   (gptel--sum-plists (plist-get info :tokens-full) tokens))))))
 
 ;; How the following function works:
 ;;
@@ -227,6 +127,14 @@ information if the stream contains it."
                                                          (plist-get spec :arguments))))
                      into call-specs
                      finally (plist-put info :tool-use call-specs)))
+                  ;; Update token usage if present
+                  (when-let* ((last-resp (save-excursion
+                                           (forward-line -1)
+                                           (and (re-search-backward "^data:" nil t)
+                                                (goto-char (match-end 0))
+                                                (ignore-errors (gptel--json-read)))))
+                              (usage (plist-get last-resp :usage)))
+                    (gptel--openai-update-tokens usage info))
                   (when (plist-member info :reasoning-chunks) (plist-put info :reasoning-chunks nil)))
               (when-let* ((response (gptel--json-read))
                           (delta (map-nested-elt response '(:choices 0 :delta))))
@@ -281,8 +189,7 @@ Mutate state INFO with response metadata."
          (content (plist-get message :content)))
     (plist-put info :stop-reason
                (plist-get choice0 :finish_reason))
-    (plist-put info :output-tokens
-               (map-nested-elt response '(:usage :completion_tokens)))
+    (gptel--openai-update-tokens (map-nested-elt response '(:usage)) info)
     ;; OpenAI returns either non-blank text content or a tool call, not both.
     ;; However OpenAI-compatible APIs like llama.cpp can include both (#819), so
     ;; we check for both tool calls and responses independently.
@@ -314,13 +221,12 @@ Mutate state INFO with response metadata."
                 :content gptel--system-message)
           prompts))
   (let ((prompts-plist
-         `(:model ,(gptel--model-name gptel-model)
-           :messages [,@prompts]
-           :stream ,(or gptel-stream :json-false)))
-        (reasoning-model-p ; TODO: Embed this capability in the model's properties
-         (memq gptel-model '(o1 o1-preview o1-mini o3-mini o3 o4-mini
-                                gpt-5 gpt-5-mini gpt-5-nano gpt-5.1 gpt-5.2))))
-    (when (and gptel-temperature (not reasoning-model-p))
+         (list :model (gptel--model-name gptel-model)
+               :messages (vconcat prompts)
+               :stream (or gptel-stream :json-false))))
+    (when gptel-stream
+      (plist-put prompts-plist :stream_options '(:include_usage t)))
+    (when gptel-temperature
       (plist-put prompts-plist :temperature gptel-temperature))
     (when gptel-use-tools
       (when (eq gptel-use-tools 'force)
@@ -328,14 +234,11 @@ Mutate state INFO with response metadata."
       (when gptel-tools
         (plist-put prompts-plist :tools
                    (gptel--parse-tools backend gptel-tools))
-        (unless reasoning-model-p
-          (plist-put prompts-plist :parallel_tool_calls t))))
+        (plist-put prompts-plist :parallel_tool_calls t)))
     (when gptel-max-tokens
       ;; HACK: The OpenAI API has deprecated max_tokens, but we still need it
       ;; for OpenAI-compatible APIs like GPT4All (#485)
-      (plist-put prompts-plist
-                 (if reasoning-model-p :max_completion_tokens :max_tokens)
-                 gptel-max-tokens))
+      (plist-put prompts-plist :max_tokens gptel-max-tokens))
     (when gptel--schema
       (plist-put prompts-plist
                  :response_format (gptel--parse-schema backend gptel--schema)))
@@ -356,6 +259,43 @@ Mutate state INFO with response metadata."
 
 ;; NOTE: No `gptel--parse-tools' method required for gptel-openai, since this is
 ;; handled by its defgeneric implementation
+
+(cl-defmethod gptel--inject-tool-call ((_backend gptel-openai) data tool-call new-call)
+  "Replace TOOL-CALL in query DATA with NEW-CALL.
+
+BACKEND is the `gptel-backend'.  See the generic function documentation
+for details.  This implementation handles the OpenAI-compatible
+Completions API."
+  ;; FIXME: We currently assume that the tool call being modified is in the last
+  ;; position in the messages array.
+  (if-let* ((messages (plist-get data :messages))
+            (entry (aref messages (1- (length messages))))
+            (calls (plist-get entry :tool_calls))
+            (id (plist-get tool-call :id))
+            (indexed-call
+             (cl-loop for chunk across calls
+                      for i upfrom 0
+                      if (equal (plist-get chunk :id) id)
+                      return (cons i (plist-get chunk :function))
+                      finally return nil))
+            (index (car indexed-call))
+            (call (cdr indexed-call)))
+      (if (null new-call)               ;delete tool call if new-call is nil
+          (if (= (length calls) 1)      ;only tool call, delete message entirely
+              (plist-put data :messages (substring messages nil -1))
+            ;; delete new-call selectively from parallel tool calls
+            (plist-put entry :tool_calls
+                       (vconcat (substring calls 0 index)
+                                (substring calls (1+ index)))))
+        (when-let* ((args (plist-get new-call :args)))
+          (plist-put call :arguments (gptel--json-encode args)))
+        (when-let* ((name (plist-get new-call :name)))
+          (plist-put call :name name)))
+    (display-warning
+     '(gptel tool-call)
+     (format "Could not inject updated tool-call arguments for tool call %s, %s"
+             (plist-get tool-call :name)
+             (truncate-string-to-width (prin1-to-string new-call) 50 nil nil t)))))
 
 (cl-defmethod gptel--parse-tool-results ((_backend gptel-openai) tool-use)
   "Return a prompt containing tool call results in TOOL-USE."
@@ -383,6 +323,7 @@ If the ID has the format used by a different backend, use as-is."
     (format "call_%s" tool-id)))
 
 (defun gptel--openai-unformat-tool-id (tool-id)
+  "Return the raw tool ID for TOOL-ID."
   (or (and (string-match "call_\\(.+\\)" tool-id)
            (match-string 1 tool-id))
       tool-id))
@@ -529,15 +470,250 @@ Media files, if present, are placed in `gptel-context'."
                    (t current))))
         (plist-get (car prompts) :content))))
 
+(defconst gptel--openai-models
+  '((gpt-5.4-mini
+     :description "Faster, more cost-efficient version of GPT-5.4"
+     :capabilities (media tool-use json url responses-api)
+     :mime-types ("image/jpeg" "image/png" "image/gif" "image/webp")
+     :context-window 400
+     :input-cost 0.75
+     :output-cost 4.50
+     :cutoff-date "2025-08")
+    (gpt-5.4-nano
+     :description "Fastest, cheapest version of GPT-5.4"
+     :capabilities (media tool-use json url responses-api)
+     :mime-types ("image/jpeg" "image/png" "image/gif" "image/webp")
+     :context-window 400
+     :input-cost 0.20
+     :output-cost 1.25
+     :cutoff-date "2025-08")
+    (gpt-5.4
+     :description "The best model for coding and agentic tasks"
+     :capabilities (media tool-use json url responses-api)
+     :mime-types ("image/jpeg" "image/png" "image/gif" "image/webp")
+     :context-window 1050
+     :input-cost 2.50
+     :output-cost 15
+     :cutoff-date "2025-08")
+    (gpt-5.4-pro
+     :description "Maximum performance model for reasoning tasks"
+     :capabilities (media tool-use json url responses-api)
+     :mime-types ("image/jpeg" "image/png" "image/gif" "image/webp")
+     :context-window 1050
+     :input-cost 30
+     :output-cost 180
+     :cutoff-date "2025-08")
+    (gpt-5.5
+     :description "The best model for coding and agentic tasks"
+     :capabilities (media tool-use json url responses-api)
+     :mime-types ("image/jpeg" "image/png" "image/gif" "image/webp")
+     :context-window 1050
+     :input-cost 5
+     :output-cost 30
+     :cutoff-date "2025-12")
+    (gpt-5.5-pro
+     :description "Maximum performance model for reasoning tasks"
+     :capabilities (media tool-use json url responses-api)
+     :mime-types ("image/jpeg" "image/png" "image/gif" "image/webp")
+     :context-window 1050
+     :input-cost 30
+     :output-cost 180
+     :cutoff-date "2025-12")
+    (gpt-5.3-chat-latest
+     :description "Answers right away"
+     :capabilities (media tool-use json url responses-api)
+     :mime-types ("image/jpeg" "image/png" "image/gif" "image/webp")
+     :context-window 400
+     :input-cost 1.75
+     :output-cost 14
+     :cutoff-date "2025-08")
+    (gpt-5.2
+     :description "The best model for coding and agentic tasks"
+     :capabilities (media tool-use json url responses-api)
+     :mime-types ("image/jpeg" "image/png" "image/gif" "image/webp")
+     :context-window 400
+     :input-cost 1.75
+     :output-cost 14
+     :cutoff-date "2025-08")
+    (gpt-5.1
+     :description "The best model for coding and agentic tasks"
+     :capabilities (media tool-use json url responses-api)
+     :mime-types ("image/jpeg" "image/png" "image/gif" "image/webp")
+     :context-window 400
+     :input-cost 1.25
+     :output-cost 10
+     :cutoff-date "2024-09")
+    (gpt-5-mini
+     :description "Faster, more cost-efficient version of GPT-5"
+     :capabilities (media tool-use json url responses-api)
+     :mime-types ("image/jpeg" "image/png" "image/gif" "image/webp")
+     :context-window 400
+     :input-cost 0.25
+     :output-cost 2.0
+     :cutoff-date "2024-09")
+    (gpt-5-nano
+     :description "Fastest, cheapest version of GPT-5"
+     :capabilities (media tool-use json url responses-api)
+     :mime-types ("image/jpeg" "image/png" "image/gif" "image/webp")
+     :context-window 400
+     :input-cost 0.05
+     :output-cost 0.40
+     :cutoff-date "2024-09")
+    (gpt-5
+     :description "Flagship model for coding, reasoning, and agentic tasks across domains"
+     :capabilities (media tool-use json url responses-api)
+     :mime-types ("image/jpeg" "image/png" "image/gif" "image/webp")
+     :context-window 400
+     :input-cost 1.25
+     :output-cost 10
+     :cutoff-date "2024-09")
+    (gpt-4.1-mini
+     :description "Balance between intelligence, speed and cost"
+     :capabilities (media tool-use json url responses-api)
+     :mime-types ("image/jpeg" "image/png" "image/gif" "image/webp")
+     :context-window 1024
+     :input-cost 0.4
+     :output-cost 1.6)
+    (gpt-4.1-nano
+     :description "Fastest, most cost-effective GPT-4.1 model"
+     :capabilities (media tool-use json url responses-api)
+     :mime-types ("image/jpeg" "image/png" "image/gif" "image/webp")
+     :context-window 1024
+     :input-cost 0.10
+     :output-cost 0.40
+     :cutoff-date "2024-05")
+    (gpt-4.1
+     :description "Flagship model for complex tasks"
+     :capabilities (media tool-use json url responses-api)
+     :mime-types ("image/jpeg" "image/png" "image/gif" "image/webp")
+     :context-window 1024
+     :input-cost 2.0
+     :output-cost 8.0
+     :cutoff-date "2024-05")
+    (gpt-4o-mini
+     :description "Cheap model for fast tasks; cheaper & more capable than GPT-3.5 Turbo"
+     :capabilities (media tool-use json url responses-api)
+     :mime-types ("image/jpeg" "image/png" "image/gif" "image/webp")
+     :context-window 128
+     :input-cost 0.15
+     :output-cost 0.60
+     :cutoff-date "2023-10")
+    (gpt-4o
+     :description "Advanced model for complex tasks; cheaper & faster than GPT-Turbo"
+     :capabilities (media tool-use json url responses-api)
+     :mime-types ("image/jpeg" "image/png" "image/gif" "image/webp")
+     :context-window 128
+     :input-cost 2.50
+     :output-cost 10
+     :cutoff-date "2023-10")
+    (gpt-4.5-preview
+     :description "DEPRECATED: Use gpt-4.1 instead"
+     :capabilities (media tool-use url responses-api)
+     :mime-types ("image/jpeg" "image/png" "image/gif" "image/webp")
+     :context-window 128
+     :input-cost 75
+     :output-cost 150
+     :cutoff-date "2023-10")
+    (gpt-4-turbo
+     :description "Previous high-intelligence model"
+     :capabilities (media tool-use url responses-api)
+     :mime-types ("image/jpeg" "image/png" "image/gif" "image/webp")
+     :context-window 128
+     :input-cost 10
+     :output-cost 30
+     :cutoff-date "2023-11")
+    (gpt-4
+     :description "GPT-4 snapshot from June 2023 with improved function calling support"
+     :mime-types ("image/jpeg" "image/png" "image/gif" "image/webp")
+     :capabilities (media url responses-api)
+     :context-window 8.192
+     :input-cost 30
+     :output-cost 60
+     :cutoff-date "2023-11")
+    (o4-mini
+     :description "Fast, effective reasoning with efficient performance in coding and visual tasks"
+     :capabilities (reasoning media tool-use json url responses-api)
+     :mime-types ("image/jpeg" "image/png" "image/gif" "image/webp")
+     :context-window 200
+     :input-cost 1.10
+     :output-cost 4.40
+     :cutoff-date "2024-05")
+    (o3-mini
+     :description "High intelligence at the same cost and latency targets of o1-mini"
+     :context-window 200
+     :input-cost 1.10
+     :output-cost 4.40
+     :cutoff-date "2023-10"
+     :capabilities (reasoning tool-use json responses-api))
+    (o3
+     :description "Well-rounded and powerful model across domains"
+     :capabilities (reasoning media tool-use json url responses-api)
+     :mime-types ("image/jpeg" "image/png" "image/gif" "image/webp")
+     :context-window 200
+     :input-cost 2
+     :output-cost 8
+     :cutoff-date "2024-05")
+    (o3-pro
+     :description "Maximum performance model for reasoning tasks"
+     :capabilities (reasoning media tool-use json url responses-api)
+     :mime-types ("image/jpeg" "image/png" "image/gif" "image/webp")
+     :context-window 200
+     :input-cost 20
+     :output-cost 80
+     :cutoff-date "2024-05")
+    (o1-mini
+     :description "Faster and cheaper reasoning model good at coding, math, and science"
+     :context-window 128
+     :input-cost 1.10
+     :output-cost 4.40
+     :cutoff-date "2023-10"
+     :capabilities (nosystem reasoning responses-api))
+    (o1
+     :description "Reasoning model designed to solve hard problems across domains"
+     :capabilities (media reasoning responses-api)
+     :mime-types ("image/jpeg" "image/png" "image/gif" "image/webp")
+     :context-window 200
+     :input-cost 15
+     :output-cost 60
+     :cutoff-date "2023-10"))
+  "List of available OpenAI models and associated properties.
+
+Each model symbol is associated with the following keys, all optional:
+
+- `:description': a brief description of the model.
+
+- `:capabilities':  a list of capabilities supporte responses-apid by the model.
+
+- `:mime-types': a list of supported MIME types for media files.
+
+- `:context-window': the context window size, in thousands of tokens.
+
+- `:input-cost': the input cost, in US dollars per million tokens.
+
+- `:output-cost': the output cost, in US dollars per million tokens.
+
+- `:cutoff-date': the knowledge cutoff date.
+
+- `:request-params': a plist of additional request parameters to
+  include when using this model.
+
+Information about the OpenAI models was obtained from the following
+sources:
+
+- <https://platform.openai.com/docs/pricing>
+- <https://platform.openai.com/docs/models>")
+
 ;;;###autoload
 (cl-defun gptel-make-openai
-    (name &key curl-args models stream key request-params
+    (name &key curl-args (models gptel--openai-models)
+          stream key request-params
           (header
-           (lambda () (when-let* ((key (gptel--get-api-key)))
-                   `(("Authorization" . ,(concat "Bearer " key))))))
+           (lambda (_info)
+             (when-let* ((key (gptel--get-api-key)))
+               `(("Authorization" . ,(concat "Bearer " key))))))
           (host "api.openai.com")
           (protocol "https")
-          (endpoint "/v1/chat/completions"))
+          endpoint)
   "Register an OpenAI API-compatible backend for gptel with NAME.
 
 Keyword arguments:
@@ -588,20 +764,31 @@ parameters (as plist keys) and values supported by the API.  Use
 these to set parameters that gptel does not provide user options
 for."
   (declare (indent 1))
-  (let ((backend (gptel--make-openai
-                  :curl-args curl-args
-                  :name name
-                  :host host
-                  :header header
-                  :key key
-                  :models (gptel--process-models models)
-                  :protocol protocol
-                  :endpoint endpoint
-                  :stream stream
-                  :request-params request-params
-                  :url (if protocol
-                           (concat protocol "://" host endpoint)
-                         (concat host endpoint)))))
+  (let* ((responses-api (string-match-p "api\\.openai\\.com" host))
+         ;; Use the OpenAI Responses API if required
+         ;; TODO: Find a more reliable way to dispatch.  Checking the host isn't
+         ;; reliable.  For example, it won't work when using the Responses API
+         ;; via a proxy.
+         (constructor (if (not responses-api)
+                          #'gptel--make-openai
+                        (require 'gptel-openai-responses)
+                        #'gptel--make-openai-responses))
+         (endpoint (or endpoint
+                       (if responses-api "/v1/responses"  "/v1/chat/completions")))
+         (backend (funcall constructor
+                           :curl-args curl-args
+                           :name name
+                           :host host
+                           :header header
+                           :key key
+                           :models (gptel--process-models models)
+                           :protocol protocol
+                           :endpoint endpoint
+                           :stream stream
+                           :request-params request-params
+                           :url (if protocol
+                                    (concat protocol "://" host endpoint)
+                                  (concat host endpoint)))))
     (prog1 backend
       (setf (alist-get name gptel--known-backends
                        nil nil #'equal)
@@ -612,7 +799,7 @@ for."
 (cl-defun gptel-make-azure
     (name &key curl-args host
           (protocol "https")
-          (header (lambda () `(("api-key" . ,(gptel--get-api-key)))))
+          (header (lambda (_info) `(("api-key" . ,(gptel--get-api-key)))))
           (key 'gptel-api-key)
           models stream endpoint request-params)
   "Register an Azure backend for gptel with NAME.
