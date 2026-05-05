@@ -45,6 +45,13 @@
                  :category "math")
 
                 (gptel-make-tool
+                 :function #'gptel-fommil-list-buffers
+                 :name "list-buffers"
+                 :description "List all files currently open in Emacs buffers."
+                 :args '()
+                 :category "emacs")
+
+                (gptel-make-tool
                  :name "set_directory"
                  :function #'gptel-fommil-set-directory
                  :description "Set the working directory for subsequent tool calls (git, shell, etc)."
@@ -88,7 +95,7 @@
                  :category "shell"
                  :confirm t)
 
-                ;; tools mostly from https://github.com/karthink/gptel/wiki/Tools-collection
+                ;; from https://github.com/karthink/gptel/wiki/Tools-collection
                 (gptel-make-tool
                  :function (lambda (directory)
                              (mapconcat #'identity
@@ -129,6 +136,23 @@
     (setq gptel-fommil-working-directory (file-name-as-directory expanded))
     (format "Working directory set to %s" gptel-fommil-working-directory)))
 
+(defun gptel-fommil-list-buffers ()
+  (string-join
+   (seq-filter (lambda (f) (not (string-match-p "TAGS$" f)))
+               (delq nil (mapcar #'buffer-file-name (buffer-list))))
+   "\n"))
+
+(defun gptel-fommil-calc-bc (expr)
+  ;; I tried calc-eval but it's really hard to get it to output numbers
+  (message "[gptel-tool] [calc-bc] %S" expr)
+  (when (string-match-p "\\bsystem\\b\\|\\bread\\b" expr)
+    (error "Blocked dangerous bc function in: %S" expr))
+  (string-trim
+   (with-output-to-string
+     (call-process-region
+      (format "scale=20; %s\n" expr) nil
+      "bc" nil standard-output nil "-l"))))
+
 (defun gptel-fommil-git-log (arguments)
   (let ((default-directory (or gptel-fommil-working-directory default-directory)))
     (with-output-to-string
@@ -166,18 +190,6 @@
                       (let ((inhibit-read-only t))
                         (erase-buffer)
                         (insert response "\n\n*** "))))))))
-
-(defun gptel-fommil-calc-bc (expr)
-  ;; I tried calc-eval but it's really hard to get it to output numbers
-  (message "[gptel-tool] [calc-bc] %S" expr)
-  (when (string-match-p "\\bsystem\\b\\|\\bread\\b" expr)
-    (error "Blocked dangerous bc function in: %S" expr))
-  (message (""))
-  (string-trim
-   (with-output-to-string
-     (call-process-region
-      (format "scale=20; %s\n" expr) nil
-      "bc" nil standard-output nil "-l"))))
 
 (use-package mcp
   :ensure t
