@@ -101,7 +101,29 @@
                                      :description "Literal string to search for"))
                  :category "emacs")
 
-                ;; TODO access to man pages and lisp docs might be useful
+                (gptel-make-tool
+                 :function #'gptel-fommil-find-tag
+                 :name "find_tag"
+                 :description "Find definitions of a symbol using the project's TAGS file (ctags/etags). Returns file:line locations. Does not require confirmation."
+                 :args (list '(:name "symbol" :type string :description "The symbol/tag name to look up")
+                             '(:name "context" :type string :description "Any file or directory in the project"))
+                 :category "emacs")
+
+                (gptel-make-tool
+                 :name "man"
+                 :function #'gptel-fommil-man
+                 :description "Query a UNIX man page for an installed tool. Does not require confirmation."
+                 :args '((:name "page" :type string :description "Man page topic, e.g. \"grep\" or \"printf\""))
+                 :category "documentation")
+
+                (gptel-make-tool
+                 :name "describe_symbol"
+                 :function #'gptel-fommil-describe-symbol
+                 :description "Look up documentation for an Emacs Lisp symbol (function or variable). Returns signature, docstring, and current value for variables. Does not require confirmation."
+                 :args '((:name "symbol" :type string :description "The Emacs Lisp symbol name, e.g. \"mapcar\" or \"load-path\""))
+                 :category "documentation")
+
+                ;; TODO image support blocked on https://github.com/karthink/gptel/issues/1405
 
                 ;; (gptel-make-tool
                 ;;  :function #'gptel-fommil-context
@@ -245,6 +267,44 @@ LINES is a list (START END) for a line range (1-indexed, inclusive)."
     (let ((buf-name (format "*ag search text:%s dir:%s*" query root)))
       (gptel-fommil-read-buffer buf-name t nil))))
 
+(defun gptel-fommil-find-tag (symbol context)
+  "Find definitions of SYMBOL using the project TAGS file for CONTEXT."
+  (message "[gptel-tool] [find-tag] %S in %S" symbol context)
+  (let* ((default-directory (if (file-directory-p context) context
+                              (file-name-directory context)))
+         (root (projectile-project-root))
+         (tags-file (expand-file-name "TAGS" root))
+         (tags-file-name tags-file)
+         (tags-table-list (list tags-file)))
+    (if (not (file-exists-p tags-file))
+        (format "[ERROR] No TAGS file at %s" tags-file)
+      (let ((xrefs (xref-backend-definitions 'etags symbol)))
+        (if (null xrefs)
+            (format "No tag found for: %s" symbol)
+          (gptel-fommil--truncate
+           (string-join
+            (mapcar (lambda (xref)
+                      (let ((loc (xref-item-location xref)))
+                        (format "%s:%d"
+                                (xref-location-group loc)
+                                (or (xref-location-line loc) 0))))
+                    xrefs)
+            "\n")))))))
+
+(defun gptel-fommil-man (page)
+  "Return the man page for PAGE as plain text using WoMan."
+  (message "[gptel-tool] [man] %S" page)
+  (require 'woman)
+  (condition-case err
+      (let ((file (woman-file-name page)))
+        (if (not file)
+            (format "[ERROR] No man page for: %s" page)
+          (with-temp-buffer
+            (insert-file-contents file)
+            (woman-decode-buffer)
+            (gptel-fommil--truncate (buffer-string)))))
+    (error (format "[ERROR] %s" (error-message-string err)))))
+
 (defun gptel-fommil-context (action filepath)
   (let ((file (expand-file-name filepath)))
     (pcase action
@@ -259,6 +319,26 @@ LINES is a list (START END) for a line range (1-indexed, inclusive)."
        (format "Removed %s from context" file))
       (_
        (format "Unknown action: %s (use \"add\" or \"remove\")" action)))))
+
+(defun gptel-fommil-describe-symbol (symbol)
+  "Return documentation for an Emacs Lisp SYMBOL (function or variable)."
+  ;; intentionally does not return current values, as that can leak
+  ;; sensitive information.
+  (message "[gptel-tool] [describe-symbol] %S" symbol)
+  (let ((sym (intern symbol)))
+    (gptel-fommil--truncate
+     (cond
+      ((fboundp sym)
+       (let ((doc (documentation sym t))
+             (arglist (help-function-arglist sym t)))
+         (format "Function: %s\nSignature: (%s %s)\n\n%s"
+                 symbol symbol
+                 (mapconcat (lambda (a) (format "%s" a)) arglist " ")
+                 (or doc "[no documentation]"))))
+      ((boundp sym)
+       (let ((doc (documentation-property sym 'variable-documentation t)))
+         (format "Variable: %s\n\n%s" symbol (or doc "[no documentation]"))))
+      (t (format "Symbol `%s' is not bound as a function or variable." symbol))))))
 
 (use-package mcp
   :ensure t
@@ -289,8 +369,9 @@ LINES is a list (START END) for a line range (1-indexed, inclusive)."
 
    ;; this is such a hack, connect every second for 10 seconds. There's
    ;; no mcp-hub callback we can attach to.
-   (dotimes (i 10) (run-with-timer (1+ i) nil #'gptel-mcp-connect))
-
+   (dotimes (i 10)
+     (run-with-timer (1+ i) nil
+                     (lambda () (ignore-errors (gptel-mcp-connect)))))
    ))
 
 ;;(setq gptel-log-level 'debug)
