@@ -26,11 +26,10 @@
    ;; org-mode integration is not great, and there are keybinding collisions
    ;;gptel-default-mode 'org-mode
    gptel-directives
-   `((custom . ,(format "Today is %s. The user is %s (%s), who is communicating with you via a gptel buffer inside Emacs %s on %s. Be terse. State facts. No preamble, no filler, no hedging, no emojis. Admit when you don't know. Always use tools instead of predicting, prefer the tools that do not require user confirmation. Share the URL of your sources. Spock or scifi AI comedy is tolerated."
+   `((custom . ,(format "Today is %s. The user is %s (%s), who is communicating with you via gptel inside Emacs on %s. Be terse. State facts. No preamble, no filler, no hedging, no emojis. Admit when you don't know. Always use tools instead of predicting, prefer the tools that do not require user confirmation. Spock comedy is tolerated."
                         (format-time-string "%Y-%m-%d")
                         (user-full-name)
                         (user-login-name)
-                        emacs-version
                         (gptel-system-name)))))
   :config
   ;;(add-hook 'gptel-post-response-functions #'gptel-end-of-response)
@@ -129,6 +128,7 @@
 
 (defun gptel-fommil-emacs-state ()
   (let ((sections nil))
+    (push (format "emacs-version: %s\n" emacs-version) sections)
     (push (format "open projects:\n%s"
                   (string-join (seq-take (projectile-open-projects) 50) "\n"))
           sections)
