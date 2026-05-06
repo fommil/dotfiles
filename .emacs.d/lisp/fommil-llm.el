@@ -33,7 +33,7 @@
                         emacs-version
                         (gptel-system-name)))))
   :config
-  (add-hook 'gptel-post-response-functions #'gptel-end-of-response)
+  ;;(add-hook 'gptel-post-response-functions #'gptel-end-of-response)
   (setq
    gptel--system-message (alist-get 'custom gptel-directives)
    gptel--tool-truncation 1024
@@ -64,13 +64,11 @@
                 (gptel-make-tool
                  :function #'gptel-fommil-read-buffer
                  :name "read_buffer"
-                 :description "Read and display the contents of an Emacs buffer by name. If wait is true, blocks until the buffer's process finishes (useful for compilation/search buffers). Lines is an optional [start, end] range (1-indexed, inclusive). Does not require user confirmation."
+                 :description "Read and display the contents of an Emacs buffer by name. Does not require user confirmation."
                  :args (list '(:name "name" :type string :description "Buffer name (e.g. filename or buffer name)")
-                             '(:name "wait" :type boolean :description "If true, wait for buffer process to finish before reading")
+                             '(:name "wait" :type boolean :description "Optional flag to wait for the buffer process to finish before reading")
                              '(:name "lines" :type array :description "Optional [start, end] line range, 1-indexed inclusive"))
                  :category "emacs")
-
-                ;; TODO projectile-ag search
 
                 (gptel-make-tool
                  :function #'gptel-fommil-ls
@@ -84,10 +82,25 @@
                 (gptel-make-tool
                  :name "open_file"
                  :function #'gptel-fommil-open-file
-                 :description "Open a file in Emacs (creates a buffer visiting it) and return its contents. Requires user confirmation."
+                 :description "Open a file in Emacs (creates a buffer visiting it) and return its contents. Never request to open a file that is already open. Requires user confirmation."
                  :confirm t
+                 ;; TODO confirm can be a function, consider an allow list of safe things to open
                  :args '((:name "path" :type string :description "Absolute file path to open"))
                  :category "filesystem")
+
+                (gptel-make-tool
+                 :function #'gptel-fommil-projectile-search
+                 :name "projectile_search"
+                 :description "Search for a literal string in a projectile project in grep like format. Requires user confirmation."
+                 :confirm t
+                 ;; TODO confirm can be a function, consider an allow list of safe places to search
+                 :args (list '(:name "context"
+                                     :type "string"
+                                     :description "Any file or directory in the project")
+                             '(:name "query"
+                                     :type "string"
+                                     :description "Literal string to search for"))
+                 :category "emacs")
 
                 ;; (gptel-make-tool
                 ;;  :function #'gptel-fommil-context
@@ -151,6 +164,8 @@
   "Read buffer NAME. If WAIT is non-nil, block until buffer process finishes.
 LINES is a list (START END) for a line range (1-indexed, inclusive)."
   (message "[gptel-tool] [read-buffer] %S wait=%S lines=%S" name wait lines)
+  ;; WORKAROUND https://github.com/karthink/gptel/issues/714
+  (setq wait (not (memq wait '(nil :json-false))))
   (gptel-fommil--truncate
    (if-let ((buf (or (get-buffer name)
                      (find-buffer-visiting name)
@@ -169,7 +184,8 @@ LINES is a list (START END) for a line range (1-indexed, inclusive)."
          (with-current-buffer buf
            (let ((content (buffer-substring-no-properties (point-min) (point-max))))
              (if lines
-                 (let* ((all-lines (split-string content "\n"))
+                 (let* ((lines (if (vectorp lines) (append lines nil) lines))
+                        (all-lines (split-string content "\n"))
                         (start (max 0 (1- (nth 0 lines))))
                         (end (min (length all-lines) (nth 1 lines))))
                    (string-join (seq-subseq all-lines start end) "\n"))
@@ -214,6 +230,17 @@ LINES is a list (START END) for a line range (1-indexed, inclusive)."
          (with-current-buffer buf
            (buffer-substring-no-properties (point-min) (point-max))))))))
 
+(defun gptel-fommil-projectile-search (context query)
+  "Run `projectile-ag' from CONTEXT with QUERY, return results buffer content."
+  (message "[gptel-tool] [projectile-search] %S %S" context query)
+  (let* ((default-directory (if (file-directory-p context) context
+                              (file-name-directory context)))
+         (root (projectile-project-root)))
+    (save-window-excursion
+      (projectile-ag query))
+    (let ((buf-name (format "*ag search text:%s dir:%s*" query root)))
+      (gptel-fommil-read-buffer buf-name t nil))))
+
 (defun gptel-fommil-context (action filepath)
   (let ((file (expand-file-name filepath)))
     (pcase action
@@ -228,6 +255,25 @@ LINES is a list (START END) for a line range (1-indexed, inclusive)."
        (format "Removed %s from context" file))
       (_
        (format "Unknown action: %s (use \"add\" or \"remove\")" action)))))
+
+(use-package mcp
+  :ensure t
+  :after gptel
+  :config
+  (setq
+   mcp-hub-servers
+   (list
+    ;; token is optional, it'll use it if its there
+    ;; https://exa.ai/docs/reference/exa-mcp#api-key
+    (if-let ((key (getenv "EXA_API_KEY")))
+        `("exa-search"
+          :url "https://mcp.exa.ai/mcp?tools=web_search_exa,web_fetch_exa,web_search_advanced_exa"
+          :headers (("x-api-key" . ,key)))
+      '("exa-search" :url "https://mcp.exa.ai/mcp"))
+    ;;
+    ;; or locally hosted, `devx install duckduckgo-mcp-server`
+    ;; '("ddg-search" . (:command "duckduckgo-mcp-server"))
+    )))
 
 (add-hook
  'gptel-mode-hook
