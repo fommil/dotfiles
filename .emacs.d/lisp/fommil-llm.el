@@ -102,6 +102,8 @@
                                      :description "Literal string to search for"))
                  :category "emacs")
 
+                ;; TODO access to man pages and lisp docs might be useful
+
                 ;; (gptel-make-tool
                 ;;  :function #'gptel-fommil-context
                 ;;  :name "context"
@@ -237,7 +239,9 @@ LINES is a list (START END) for a line range (1-indexed, inclusive)."
                               (file-name-directory context)))
          (root (projectile-project-root)))
     (save-window-excursion
-      (projectile-ag query))
+      ;; only the filenames and line numbers, limits the blast radius
+      (let ((ag-arguments (cons "-o" ag-arguments)))
+        (projectile-ag "gptel")))
     (let ((buf-name (format "*ag search text:%s dir:%s*" query root)))
       (gptel-fommil-read-buffer buf-name t nil))))
 
