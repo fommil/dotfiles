@@ -26,7 +26,7 @@
    ;; org-mode integration is not great, and there are keybinding collisions
    ;;gptel-default-mode 'org-mode
    gptel-directives
-   `((custom . ,(format "Today is %s. The user is %s (%s), who is communicating with you via a gptel buffer inside Emacs %s on %s. Be terse. State facts. No preamble, no filler, no hedging, no emojis. Admit when you don't know. Always use tools instead of predicting. Share the URL of your sources. Spock or scifi AI comedy is tolerated."
+   `((custom . ,(format "Today is %s. The user is %s (%s), who is communicating with you via a gptel buffer inside Emacs %s on %s. Be terse. State facts. No preamble, no filler, no hedging, no emojis. Admit when you don't know. Always use tools instead of predicting, prefer the tools that do not require user confirmation. Share the URL of your sources. Spock or scifi AI comedy is tolerated."
                         (format-time-string "%Y-%m-%d")
                         (user-full-name)
                         (user-login-name)
@@ -36,156 +36,69 @@
   (add-hook 'gptel-post-response-functions #'gptel-end-of-response)
   (setq
    gptel--system-message (alist-get 'custom gptel-directives)
+   gptel--tool-truncation 1024
    gptel-tools (list
+                ;; I used to have a lot more tools that required permissions
+                ;; (e.g. git and arbitrary shell commands) but the LLM reaches
+                ;; for them far too eagerly, so less is more.
+                ;;
+                ;; It would be interesting to have some agents that we can spawn
+                ;; that have a much more limited set of tools, e.g. to summarise
+                ;; an entire codebase one file at a time, then aggregated into
+                ;; packages, etc. But I need to find a suitable CLI for that.
+
                 (gptel-make-tool
                  :name "calc"
                  :function #'gptel-fommil-calc-bc
-                 :description "Evaluate a math expression with bc -l."
+                 :description "Evaluate a math expression with bc -l. Does not require confirmation."
                  :args '((:name "expr" :type string :description "bc expression"))
                  :category "math")
 
                 (gptel-make-tool
                  :name "emacs_state"
                  :function #'gptel-fommil-emacs-state
-                 :description "Return useful Emacs state: projectile known roots, current project, default-directory, recent files, and key environment variables. Does not require confirmation."
+                 :description "Return the Emacs state: projectile known roots, open files, and key environment variables. Does not require confirmation."
                  :args '()
                  :category "emacs")
 
-                (gptel-make-tool
-                 :function #'gptel-fommil-list-buffers
-                 :name "list-buffers"
-                 :description "List all files currently open in Emacs buffers. This grants a huge amount of insight into the user's current context and does not require a user confirmation."
-                 :args '()
-                 :category "emacs")
-
-                ;; no confirmation needed, if it's open let's assume it's allowed
                 (gptel-make-tool
                  :function #'gptel-fommil-read-buffer
-                 :name "read-buffer"
-                 :description "Read and display the contents of an Emacs buffer by name. This does not require user confirmation and is strongly prefered over read-file tool."
-                 :args (list '(:name "name" :type string :description "Buffer name (e.g. filename or buffer name)"))
+                 :name "read_buffer"
+                 :description "Read and display the contents of an Emacs buffer by name. If wait is true, blocks until the buffer's process finishes (useful for compilation/search buffers). Lines is an optional [start, end] range (1-indexed, inclusive). Does not require user confirmation."
+                 :args (list '(:name "name" :type string :description "Buffer name (e.g. filename or buffer name)")
+                             '(:name "wait" :type boolean :description "If true, wait for buffer process to finish before reading")
+                             '(:name "lines" :type array :description "Optional [start, end] line range, 1-indexed inclusive"))
                  :category "emacs")
 
-                (gptel-make-tool
-                 :function #'gptel-fommil-context
-                 :name "context"
-                 :description "Add or remove a file from the gptel conversation context. Added files are included in every subsequent message without needing to read them again. Only use this if we expect to read the file more than once and the buffer is not available. Remove when we no longer need it."
-                 :args (list '(:name "action" :type string :description "\"add\" or \"remove\"")
-                             '(:name "filepath" :type string :description "Path to the file"))
-                 :confirm t
-                 :category "emacs")
+                ;; TODO projectile-ag search
 
                 (gptel-make-tool
-                 :name "set_directory"
-                 :function #'gptel-fommil-set-directory
-                 :description "Set the working directory for subsequent tool calls."
-                 :args (list '(:name "path"
-                                     :type string
-                                     :description "Path to the directory, e.g. ~/projects/foo"))
-                 :category "context")
-
-                (gptel-make-tool
-                 :name "git"
-                 :function #'gptel-fommil-git
-                 :description "Run a git subcommand. Supported: log, grep, search (pickaxe), diff.
-Examples:
-  subcommand=\"log\", arguments=[\"--oneline\", \"-20\"]
-  subcommand=\"grep\", arguments=[\"-n\", \"defun\", \"--\", \"*.el\"]
-  subcommand=\"search\", arguments=[\"some-function\", \"--\", \"src/\"]
-  subcommand=\"diff\", arguments=[\"HEAD~3\", \"--stat\"]
-  subcommand=\"diff\", arguments=[\"--cached\"]"
-                 :args (list '(:name "subcommand"
-                                     :type string
-                                     :description "One of: log, grep, search, diff")
-                             '(:name "arguments"
-                                     :type array
-                                     :items (:type string)
-                                     :description "Arguments passed to the git subcommand"))
-                 :category "git"
-                 :confirm t)
-
-                (gptel-make-tool
-                 :name "shell_command"
-                 :function #'gptel-fommil-shell-command
-                 :description "Execute a shell command and return stdout+stderr. Do not use if another tool can do it, for example prefer list_directory if you only mean to confirm the existence of a file or the git_ commands for git operations."
-                 :args (list '(:name "command"
-                                     :type string
-                                     :description "The shell command to run"))
-                 :category "shell"
-                 :confirm t)
-
-                ;; from https://github.com/karthink/gptel/wiki/Tools-collection
-                (gptel-make-tool
-                 :function (lambda (directory)
-                             (mapconcat #'identity
-                                        (directory-files directory)
-                                        "\n"))
+                 :function #'gptel-fommil-ls
                  :name "list_directory"
-                 :description "List the contents of a given directory"
-                 :args (list '(:name "directory"
-                                     :type string
-                                     :description "The path to the directory to list"))
+                 :description "List the contents of a given directory (multiple layers deep). Does not require user confirmation."
+                 :args (list '(:name "directory" :type string :description "The path to the directory to list")
+                             '(:name "maxDepth" :type number :description "Maximum depth to recurse (default 3)")
+                             '(:name "suffix" :type string :description "Only include files ending with this suffix, e.g. \".el\" or \".rs\""))
                  :category "filesystem")
 
                 (gptel-make-tool
-                 :function #'gptel-fommil-read-file
-                 :name "read-file"
-                 :description "Read and display the contents of a file. Do not use this if the file can be accessed with read-buffer."
-                 ;; this is one shot, doesn't add to the context
-                 :args (list '(:name "filepath"
-                                     :type string
-                                     :description "Path to the file to read. Supports relative paths and ~."))
+                 :name "open_file"
+                 :function #'gptel-fommil-open-file
+                 :description "Open a file in Emacs (creates a buffer visiting it) and return its contents. Requires user confirmation."
                  :confirm t
+                 :args '((:name "path" :type string :description "Absolute file path to open"))
                  :category "filesystem")
+
+                ;; (gptel-make-tool
+                ;;  :function #'gptel-fommil-context
+                ;;  :name "context"
+                ;;  :description "Add or remove a file from the gptel conversation context. This should be used for large binary files, e.g. for image analysis. Remove when we no longer need it. Requires user confirmation."
+                ;;  :args (list '(:name "action" :type string :description "\"add\" or \"remove\"")
+                ;;              '(:name "filepath" :type string :description "Path to the file"))
+                ;;  :confirm t
+                ;;  :category "emacs")
 
                 )))
-
-(defvar-local gptel-fommil-working-directory nil
-  "Override working directory for gptel tool calls.")
-
-(defvar gptel-fommil-tool-max-chars 80000)
-
-(defun gptel-fommil-set-directory (path)
-  "Set working directory for gptel tools."
-  (let ((expanded (expand-file-name path)))
-    (unless (file-directory-p expanded)
-      (error "Not a directory: %s" expanded))
-    (setq gptel-fommil-working-directory (file-name-as-directory expanded))
-    (format "Working directory set to %s" gptel-fommil-working-directory)))
-
-;; show the working directory in the mode-line
-(add-hook 'gptel-mode-hook
-          (lambda ()
-            (setq mode-line-misc-info
-                  (append mode-line-misc-info
-                          '((:eval (when gptel-fommil-working-directory
-                                     (concat " [" (abbreviate-file-name gptel-fommil-working-directory) "]"))))))))
-
-(defun gptel-fommil-list-buffers ()
-  (string-join
-   (seq-filter (lambda (f) (not (string-match-p "TAGS$" f)))
-               (delq nil (mapcar #'buffer-file-name (buffer-list))))
-   "\n"))
-
-(defun gptel-fommil-emacs-state ()
-  (let ((sections nil))
-    (push (format "default-directory: %s" default-directory) sections)
-    (push (format "working-directory-override: %s"
-                  (or gptel-fommil-working-directory "nil")) sections)
-    (when (bound-and-true-p projectile-known-projects)
-      (push (format "projectile-known-projects:\n%s"
-                    (string-join (seq-take projectile-known-projects 50) "\n"))
-            sections))
-    (let ((env-vars '("HOME")))
-      (push (format "environment:\n%s"
-                    (string-join
-                     (delq nil (mapcar (lambda (v)
-                                         (when-let ((val (getenv v)))
-                                           (format "  %s=%s" v val)))
-                                       env-vars))
-                     "\n"))
-            sections))
-    (string-join (nreverse sections) "\n\n")))
 
 (defun gptel-fommil-calc-bc (expr)
   (message "[gptel-tool] [calc-bc] %S" expr)
@@ -199,56 +112,107 @@ Examples:
     (message "[gptel-tool] [calc-bc] %S => %S" expr result)
     result))
 
+(defun gptel-fommil-emacs-state ()
+  (let ((sections nil))
+    (push (format "open projects:\n%s"
+                  (string-join (seq-take (projectile-open-projects) 50) "\n"))
+          sections)
+    (push (format "projectile-known-projects:\n%s"
+                  (string-join (seq-take projectile-known-projects 50) "\n"))
+          sections)
+    (push (format "open files:\n%s"
+                  (string-join
+                   (seq-filter (lambda (f) (not (string-match-p "TAGS$" f)))
+                               (delq nil (mapcar #'buffer-file-name (buffer-list))))
+                   "\n"))
+          sections)
+    (let ((compilation-bufs
+           (seq-filter
+            (lambda (buf)
+              (with-current-buffer buf
+                (and (not (buffer-file-name))
+                     (derived-mode-p 'compilation-mode))))
+            (buffer-list))))
+      (when compilation-bufs
+        (push (format "compilation buffers:\n%s"
+                      (string-join (mapcar #'buffer-name compilation-bufs) "\n"))
+              sections)))
+    (string-join (nreverse sections) "\n\n")))
+
+(defvar gptel-fommil-tool-max-chars 100000)
 (defun gptel-fommil--truncate (output)
   (if (> (length output) gptel-fommil-tool-max-chars)
-      (format "%s\n\n[TRUNCATED at %d chars — use shell_command with head/tail/sed for portions]"
+      (format "%s\n\n[TRUNCATED at %d chars]"
               (substring output 0 gptel-fommil-tool-max-chars)
               gptel-fommil-tool-max-chars)
     output))
 
-(defun gptel-fommil-git (subcommand arguments)
-  (gptel-fommil--truncate
-   (let ((default-directory (or gptel-fommil-working-directory default-directory))
-         (args (append arguments nil)))
-     (with-temp-buffer
-       (pcase subcommand
-         ("log"    (apply #'call-process "git" nil '(t t) nil "log" args))
-         ("grep"   (apply #'call-process "git" nil '(t t) nil "grep" "-n" "-I" args))
-         ("search" (apply #'call-process "git" nil '(t t) nil
-                          "log" "--oneline" "-p" "-S" args))
-         ("diff"   (apply #'call-process "git" nil '(t t) nil "diff" args))
-         (_        (insert (format "Unknown subcommand: %s. Use log, grep, search, or diff." subcommand))))
-       (buffer-string)))))
-
-(defun gptel-fommil-shell-command (command)
-  (gptel-fommil--truncate
-   (let ((default-directory (or gptel-fommil-working-directory default-directory)))
-     (with-temp-buffer
-       (call-process "/bin/sh" nil '(t t) nil "-c" command)
-       (buffer-string)))))
-
-(defun gptel-fommil-read-buffer (name)
-  ;; as a precaution, this only allows reading buffers with a backing file
-  ;; so it doesn't expose transient buffers that might leak information.
-  (message "[gptel-tool] [read-buffer] %S" name)
+(defun gptel-fommil-read-buffer (name &optional wait lines)
+  "Read buffer NAME. If WAIT is non-nil, block until buffer process finishes.
+LINES is a list (START END) for a line range (1-indexed, inclusive)."
+  (message "[gptel-tool] [read-buffer] %S wait=%S lines=%S" name wait lines)
   (gptel-fommil--truncate
    (if-let ((buf (or (get-buffer name)
-                     (find-buffer-visiting name))))
-       (if (buffer-file-name buf)
-           (with-current-buffer buf
-             (buffer-substring-no-properties (point-min) (point-max)))
-         (format "Buffer %s has no backing file" name))
+                     (find-buffer-visiting name)
+                     (string-prefix-p "*ag search text:" name))))
+       (progn
+         (when wait
+           (let ((proc (get-buffer-process buf))
+                 (timeout 30)
+                 (elapsed 0))
+             (while (and proc (process-live-p proc) (< elapsed timeout))
+               (sleep-for 0.5)
+               (setq elapsed (+ elapsed 0.5))
+               (setq proc (get-buffer-process buf)))
+             (when (>= elapsed timeout)
+               (message "[gptel-tool] [read-buffer] timed out waiting for process"))))
+         (with-current-buffer buf
+           (let ((content (buffer-substring-no-properties (point-min) (point-max))))
+             (if lines
+                 (let* ((all-lines (split-string content "\n"))
+                        (start (max 0 (1- (nth 0 lines))))
+                        (end (min (length all-lines) (nth 1 lines))))
+                   (string-join (seq-subseq all-lines start end) "\n"))
+               content))))
      (format "No buffer named %s" name))))
 
-(defun gptel-fommil-read-file (filepath)
-  (gptel-fommil--truncate
-   (let* ((file (expand-file-name filepath))
-          (attrs (file-attributes file)))
-     (unless attrs
-       (error "File not found: %s" file))
-     (with-temp-buffer
-       (insert-file-contents file)
-       (buffer-string)))))
+(defun gptel-fommil-ls (dir &optional max-depth suffix)
+  "List DIR recursively to MAX-DEPTH (default 3), optionally filtering by SUFFIX."
+  (message "[gptel-tool] [ls] %S depth=%S suffix=%S" dir max-depth suffix)
+  (let* ((root (file-name-as-directory (expand-file-name dir))))
+    (if (not (file-directory-p root))
+        (format "[ERROR] Not a directory: %s" root)
+      (let* ((max-depth (or max-depth 3))
+             (max-files 1024)
+             (count 0)
+             (pred (lambda (d)
+                     (let ((rel (file-relative-name d root)))
+                       (< (length (split-string rel "/" t)) max-depth))))
+             (regexp (if suffix (regexp-quote suffix) ""))
+             (files (catch 'too-many
+                      (let ((result nil))
+                        (mapc (lambda (f)
+                                (setq count (1+ count))
+                                (when (> count max-files)
+                                  (throw 'too-many 'overflow))
+                                (push (file-relative-name f root) result))
+                              (directory-files-recursively root regexp t pred))
+                        (nreverse result)))))
+        (gptel-fommil--truncate
+         (if (eq files 'overflow)
+             (format "[ERROR] Directory too dense: exceeded %d entries. Use a suffix filter or lower max-depth." max-files)
+           (string-join files "\n")))))))
+
+(defun gptel-fommil-open-file (path)
+  "Open PATH in Emacs and return its contents."
+  (message "[gptel-tool] [open-file] %S" path)
+  (let ((expanded (expand-file-name path)))
+    (if (not (file-readable-p expanded))
+        (format "[ERROR] Cannot read: %s" expanded)
+      (let ((buf (find-file-noselect expanded)))
+        (gptel-fommil--truncate
+         (with-current-buffer buf
+           (buffer-substring-no-properties (point-min) (point-max))))))))
 
 (defun gptel-fommil-context (action filepath)
   (let ((file (expand-file-name filepath)))
@@ -264,56 +228,6 @@ Examples:
        (format "Removed %s from context" file))
       (_
        (format "Unknown action: %s (use \"add\" or \"remove\")" action)))))
-
-;; don't forget to (gptel-context-remove-all) if you want to remove attachments
-(defun gptel-fommil-compact ()
-  (interactive)
-  (let* ((context-alist (gptel-context--alist))
-         (context-files (mapcar #'car context-alist))
-         (context-info (when context-files
-                         (format "\n\nContext files that were attached (now removed):\n%s"
-                                 (string-join
-                                  (mapcar (lambda (f) (format "- %s" f)) context-files)
-                                  "\n"))))
-         (content (buffer-substring-no-properties (point-min) (point-max)))
-         (buf (current-buffer))
-         (gptel-use-tools nil)
-         (gptel-stream nil)
-         (gptel-max-tokens 8000))
-    (gptel-context-remove-all)
-    (message "[compact] sending %d chars, removed %d context files"
-             (length content) (length context-files))
-    (gptel-request
-        content
-      :buffer buf
-      :system "Summarize this conversation tersely. Preserve decisions and open questions. Drop pleasantries and dead ends. Output the summary only."
-      :callback (lambda (response info)
-                  (message "[compact] cb: %S" (if (stringp response) (length response) response))
-                  (when (stringp response)
-                    (with-current-buffer (plist-get info :buffer)
-                      (let ((inhibit-read-only t))
-                        (erase-buffer)
-                        (insert response)
-                        (when context-info (insert context-info))
-                        (insert "\n\n*** "))))))))
-
-(use-package mcp
-  :ensure t
-  :after gptel
-  :config
-  (setq
-   mcp-hub-servers (list
-                    ;; token is optional, it'll use it if its there
-                    ;; https://exa.ai/docs/reference/exa-mcp#api-key
-                    (if-let ((key (getenv "EXA_API_KEY")))
-                        `("exa-search"
-                          :url "https://mcp.exa.ai/mcp?tools=web_search_exa,web_fetch_exa,web_search_advanced_exa"
-                          :headers (("x-api-key" . ,key)))
-                      '("exa-search" :url "https://mcp.exa.ai/mcp"))
-                    ;;
-                    ;; or locally hosted, `devx install duckduckgo-mcp-server`
-                    ;; '("ddg-search" . (:command "duckduckgo-mcp-server"))
-                    )))
 
 (add-hook
  'gptel-mode-hook
