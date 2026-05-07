@@ -12,7 +12,8 @@
 ;; bypass user auth). As much as possible, everything is done in Emacs for
 ;; transparency (e.g. the LLM can only open files in Emacs, and cannot close
 ;; them). The LLM cannot run arbitrary code and cannot create or edit project
-;; files.
+;; files. The only way the LLM can edit files in your project is by proposing
+;; diffs.
 ;;
 ;; The biggest compromise is web search and fetch, which is provided through an
 ;; MCP (exa or ddg).
@@ -27,6 +28,8 @@
 ;; at a time, then aggregated into packages, etc. But I need to find a suitable
 ;; CLI for that. It is not too hard to write standalone / one-shot scripts that
 ;; can use the upstream LLM API (e.g. bedrock) directly.
+
+;; FIXME add examples of adding claude / chatgpt / aws backends
 
 ;; TODO image support blocked on https://github.com/karthink/gptel/issues/1405
 
@@ -44,30 +47,23 @@
     ".toml" ".conf" ".cfg" ".ini" ".properties"
     ".html" ".css" ".js"))
 
-;; TODO improve this calculator, prefer not to shell out. Emacs calc isn't great
-;; but maybe we can make it work or find an alternative impl
-(defun gptel-fommil-calc-bc ()
+(defun gptel-fommil-calc ()
   (gptel-make-tool
    :name "calc"
-   :description "Evaluate a math expression with bc -l."
-   :args '((:name "expr" :type string :description "bc expression"))
+   :description "Evaluate a math expression using Emacs Calc. Supports arithmetic, algebra, units, and scientific functions. Uses radian angles."
+   :args '((:name "expr" :type string :description "Algebraic expression, e.g. \"2^10\", \"sin(pi/4)\", \"1+2/3\""))
    :category "math"
    :function
    (lambda (expr)
-     ;;(message "[gptel-tool] [calc-bc] %S" expr)
-     (when (string-match-p "\\bsystem\\b\\|\\bread\\b" expr)
-       (error "Blocked dangerous bc function in: %S" expr))
-     (let ((result (string-trim
-                    (with-temp-buffer
-                      (insert (format "scale=20; %s\n" expr))
-                      (call-process-region (point-min) (point-max) "bc" t t nil "-l")
-                      (buffer-string)))))
-       ;;(message "[gptel-tool] [calc-bc] %S => %S" expr result)
-       result))))
+     (message "[gptel-tool] [calc] %S" expr)
+     (require 'calc)
+     (condition-case err
+         (calc-eval (list (format "evalvn(%s)" expr) 'calc-angle-mode 'rad))
+       (error (format "[ERROR] %s" (error-message-string err)))))))
 
 (defun gptel-fommil-emacs-state ()
   (gptel-make-tool
-   :name "emacs_state"
+   :name "emacs-state"
    :description "Return the Emacs state: projectile known roots, open files, and key environment variables."
    :args '()
    :category "emacs"
@@ -84,22 +80,30 @@
              sections)
        (push (format "open files:\n%s"
                      (string-join
-                      (seq-filter (lambda (f) (not (string-match-p "TAGS$" f)))
-                                  (delq nil (mapcar #'buffer-file-name (buffer-list))))
+                      (mapcar #'buffer-file-name (gptel-fommil--file-buffer-list))
                       "\n"))
              sections)
-       (let ((compilation-bufs
-              (seq-filter
-               (lambda (buf)
-                 (with-current-buffer buf
-                   (and (not (buffer-file-name))
-                        (derived-mode-p 'compilation-mode))))
-               (buffer-list))))
+       (let ((compilation-bufs (gptel-fommil--compilation-buffer-list)))
          (when compilation-bufs
            (push (format "compilation buffers:\n%s"
                          (string-join (mapcar #'buffer-name compilation-bufs) "\n"))
                  sections)))
        (string-join (nreverse sections) "\n\n")))))
+
+(defun gptel-fommil--file-buffer-list ()
+  "Return file-visiting buffers, excluding TAGS files."
+  (seq-filter (lambda (buf)
+                (let ((f (buffer-file-name buf)))
+                  (and f (not (string-match-p "TAGS$" f)))))
+              (buffer-list)))
+
+(defun gptel-fommil--compilation-buffer-list ()
+  "Return non-file buffers in compilation-mode."
+  (seq-filter (lambda (buf)
+                (with-current-buffer buf
+                  (and (not (buffer-file-name))
+                       (derived-mode-p 'compilation-mode))))
+              (buffer-list)))
 
 (defvar gptel-fommil-tool-max-chars 100000)
 (defun gptel-fommil--truncate (output)
@@ -111,7 +115,7 @@
 
 (defun gptel-fommil-read-buffer ()
   (gptel-make-tool
-   :name "read_buffer"
+   :name "read-buffer"
    :description "Read and display the contents of an Emacs buffer by name."
    :args (list '(:name "name" :type string :description "Buffer name (e.g. filename or buffer name)")
                '(:name "wait" :type boolean :description "Optional flag to wait for the buffer process to finish before reading")
@@ -151,7 +155,7 @@
 
 (defun gptel-fommil-ls ()
   (gptel-make-tool
-   :name "list_directory"
+   :name "ls"
    :description "List the contents of a given directory (multiple layers deep)."
    :args (list '(:name "directory" :type string :description "The path to the directory to list")
                '(:name "maxDepth" :type number :description "Maximum depth to recurse (default 3)")
@@ -187,7 +191,7 @@
 
 (defun gptel-fommil-open-file ()
   (gptel-make-tool
-   :name "open_file"
+   :name "open-file"
    :description "Open a file in Emacs (creates a buffer visiting it) and return its contents. Never use this if the file is already opened in a buffer. Requires user confirmation."
    :args '((:name "path" :type string :description "Absolute file path to open")
            (:name "lines" :type array :description "Optional [start, end] line range, 1-indexed inclusive"))
@@ -210,9 +214,35 @@
          (let ((buf (find-file-noselect expanded)))
            (gptel-fommil--read-buffer (buffer-name buf) nil lines)))))))
 
+(defun gptel-fommil-buffer-search ()
+  (gptel-make-tool
+   :name "buffer-search"
+   :description "Search for a literal string in all open file-visiting buffers. Returns matches in grep-like format (file:line:content). Prefer this over projectile_search when the relevant files are already open."
+   :args '((:name "query" :type string :description "Literal string to search for"))
+   :category "emacs"
+   :function
+   (lambda (query)
+     ;;(message "[gptel-tool] [buffer-search] %S" query)
+     (let ((results nil))
+       (dolist (buf (gptel-fommil--file-buffer-list))
+         (when-let ((file (buffer-file-name buf)))
+           (with-current-buffer buf
+             (save-excursion
+               (goto-char (point-min))
+               (while (search-forward query nil t)
+                 (push (format "%s:%d:%s"
+                               (file-name-nondirectory file)
+                               (line-number-at-pos (point))
+                               (string-trim (thing-at-point 'line t)))
+                       results))))))
+       (gptel-fommil--truncate
+        (if results
+            (string-join (nreverse results) "\n")
+          (format "No matches for: %s" query)))))))
+
 (defun gptel-fommil-projectile-search ()
   (gptel-make-tool
-   :name "projectile_search"
+   :name "project-search"
    :description "Search for a literal string in a projectile project in grep like format. Requires user confirmation."
 
    :args (list '(:name "context"
@@ -250,7 +280,7 @@
 
 (defun gptel-fommil-find-tag ()
   (gptel-make-tool
-   :name "find_tag"
+   :name "find-tag"
    :description "Find definitions of a symbol using the project's TAGS file (ctags/etags). Returns file:line locations."
    :args (list '(:name "symbol" :type string :description "The symbol/tag name to look up")
                '(:name "context" :type string :description "Any file or directory in the project"))
@@ -299,9 +329,9 @@
                (gptel-fommil--truncate (buffer-string)))))
        (error (format "[ERROR] %s" (error-message-string err)))))))
 
-(defun gptel-fommil-describe-symbol ()
+(defun gptel-fommil-describe-emacs-symbol ()
   (gptel-make-tool
-   :name "describe_symbol"
+   :name "describe-emacs-symbol"
    :description "Look up documentation for an Emacs Lisp symbol (function or variable). Returns signature, docstring, and current value for variables."
    :args '((:name "symbol" :type string :description "The Emacs Lisp symbol name, e.g. \"mapcar\" or \"load-path\""))
    :category "documentation"
@@ -370,8 +400,8 @@
 
 (defun gptel-fommil-diff-propose ()
   (gptel-make-tool
-   :name "diff_apply"
-   :description "Propose changes to a file via a list of search-and-replace operations. Each operation finds the first occurrence of SEARCH in the (progressively modified) file content and replaces it with REPLACE. Operations are applied in order. This is best for changes that span more than 10 lines."
+   :name "diff-propose"
+   :description "Propose changes to a file via a list of search-and-replace operations. Each operation finds the first occurrence of SEARCH in the (progressively modified) file content and replaces it with REPLACE. Operations are applied in order. This is best for changes that span more than 10 lines. Never call this more than once per file per response, always bundle the changes into one call."
    :args '((:name "path"
                   :type string
                   :description "Absolute path of the target file")
@@ -432,9 +462,47 @@
                  (let ((buf (find-file-noselect tmp-patch)))
                    (with-current-buffer buf
                      (diff-mode)
-                     (setq-local default-directory (file-name-directory expanded)))
+                     (setq-local default-directory (file-name-directory expanded))
+                     (setq buffer-read-only t)
+                     (let ((map (make-sparse-keymap)))
+                       (set-keymap-parent map (current-local-map))
+                       (define-key map (kbd "A") #'gptel-fommil-diff-apply-all)
+                       (define-key map (kbd "a") #'gptel-fommil-diff-apply-hunk-next)
+                       (define-key map (kbd "n") #'gptel-fommil-diff-skip-hunk-next)
+                       (define-key map (kbd "q") #'gptel-fommil-diff-quit)
+                       (use-local-map map)))
                    (display-buffer buf)
-                   (format "Diff opened in diff-mode. Apply hunks with C-c C-a.")))))))))))
+                   (format "The proposal is available as a diff-mode window. Use `A` to apply all hunks, `a` for one at a time, `n` to skip, or `q` to quit.")))))))))))
+
+(defun gptel-fommil-diff-apply-all ()
+  "Apply all hunks in the current diff buffer, then kill it."
+  (interactive)
+  (let ((inhibit-read-only t))
+    (diff-apply-buffer))
+  (gptel-fommil-diff-quit))
+
+(defun gptel-fommil-diff-apply-hunk-next ()
+  "Apply the current hunk and move to the next."
+  (interactive)
+  (let ((inhibit-read-only t))
+    (diff-apply-hunk))
+  (condition-case nil
+      (diff-hunk-next)
+    (error (gptel-fommil-diff-quit))))
+
+(defun gptel-fommil-diff-skip-hunk-next ()
+  "Skip the current hunk and move to the next."
+  (interactive)
+  (condition-case nil
+      (diff-hunk-next)
+    (error (gptel-fommil-diff-quit))))
+
+(defun gptel-fommil-diff-quit ()
+  "Kill the diff buffer and delete the temp file."
+  (interactive)
+  (let ((f buffer-file-name))
+    (kill-buffer)
+    (when f (delete-file f))))
 
 (use-package gptel
   ;;:ensure t
@@ -453,15 +521,16 @@
    gptel--system-message (alist-get 'custom gptel-directives)
    gptel--tool-truncation 1024 ;; requires https://github.com/karthink/gptel/pull/1401
    gptel-tools (list
-                (gptel-fommil-calc-bc)
+                (gptel-fommil-calc)
                 (gptel-fommil-emacs-state)
                 (gptel-fommil-read-buffer)
                 (gptel-fommil-ls)
                 (gptel-fommil-open-file)
+                (gptel-fommil-buffer-search)
                 (gptel-fommil-projectile-search)
                 (gptel-fommil-find-tag)
                 (gptel-fommil-man)
-                (gptel-fommil-describe-symbol)
+                (gptel-fommil-describe-emacs-symbol)
                 (gptel-fommil-memory)
                 (gptel-fommil-diff-propose)
                 )))
@@ -488,18 +557,8 @@
  'gptel-mode-hook
  (lambda ()
    (require 'gptel-integrations)
-
-   ;; possibly not necessary anymore
-   ;;(mcp-hub-start-all-server)
-
-   ;; this is such a hack, connect every second for 10 seconds. There's
-   ;; no mcp-hub callback we can attach to.
-   ;;
-   ;; FIXME use the callback as per https://github.com/lizqwerscott/mcp.el
-   (dotimes (i 10)
-     (run-with-timer (1+ i) nil
-                     (lambda () (ignore-errors (gptel-mcp-connect)))))
-   ))
+   (mcp-hub-start-all-server
+    (lambda () (ignore-errors (gptel-mcp-connect))))))
 
 ;;(setq gptel-log-level 'debug)
 
