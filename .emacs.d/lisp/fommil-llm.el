@@ -44,35 +44,6 @@
     ".toml" ".conf" ".cfg" ".ini" ".properties"
     ".html" ".css" ".js"))
 
-(use-package gptel
-  ;;:ensure t
-  :ensure nil
-  :load-path "~/Projects/gptel"
-  :config
-  ;;(add-hook 'gptel-post-response-functions #'gptel-end-of-response)
-  (setq
-   ;; org-mode integration is not great, and there are keybinding collisions
-   ;;gptel-default-mode 'org-mode
-   gptel-directives
-   `((custom . ,(format "Today is %s. The user is %s (%s), who is communicating with you via gptel inside Emacs. Be terse. State facts. No preamble. No filler. No hedging. No emojis. Cite your sources. Admit when you don't know. Always use tools instead of predicting. Prefer tools that do not require user confirmation. The user values free and open source software, security and privacy. The user is an experienced developer, your goal is to assist them and to offer code only when requested to do so. Speak like Spock or Data from Star Trek."
-                        (format-time-string "%Y-%m-%d")
-                        (user-full-name)
-                        (user-login-name))))
-   gptel--system-message (alist-get 'custom gptel-directives)
-   gptel--tool-truncation 1024 ;; requires https://github.com/karthink/gptel/pull/1401
-   gptel-tools (list
-                (gptel-fommil-calc-bc)
-                (gptel-fommil-emacs-state)
-                (gptel-fommil-read-buffer)
-                (gptel-fommil-ls)
-                (gptel-fommil-open-file)
-                (gptel-fommil-projectile-search)
-                (gptel-fommil-find-tag)
-                (gptel-fommil-man)
-                (gptel-fommil-describe-symbol)
-                (gptel-fommil-memory)
-                (gptel-fommil-diff-propose))))
-
 ;; TODO improve this calculator, prefer not to shell out. Emacs calc isn't great
 ;; but maybe we can make it work or find an alternative impl
 (defun gptel-fommil-calc-bc ()
@@ -145,8 +116,8 @@
    :args (list '(:name "name" :type string :description "Buffer name (e.g. filename or buffer name)")
                '(:name "wait" :type boolean :description "Optional flag to wait for the buffer process to finish before reading")
                '(:name "lines" :type array :description "Optional [start, end] line range, 1-indexed inclusive"))
-   :category "emacs")
-  :function #'gptel-fommil--read-buffer)
+   :category "emacs"
+   :function #'gptel-fommil--read-buffer))
 
 (defun gptel-fommil--read-buffer (name &optional wait lines)
   ;;(message "[gptel-tool] [read-buffer] %S wait=%S lines=%S" name wait lines)
@@ -217,7 +188,6 @@
 (defun gptel-fommil-open-file ()
   (gptel-make-tool
    :name "open_file"
-   :function #'
    :description "Open a file in Emacs (creates a buffer visiting it) and return its contents. Never use this if the file is already opened in a buffer. Requires user confirmation."
    :args '((:name "path" :type string :description "Absolute file path to open")
            (:name "lines" :type array :description "Optional [start, end] line range, 1-indexed inclusive"))
@@ -255,14 +225,17 @@
 
    :confirm
    (lambda (context _query)
-     (let ((default-directory (if (file-directory-p context) context
-                                (file-name-directory context)))
-           (root (projectile-project-root)))
+     ;;(message "[gptel projectile_search_confirm] %s" context)
+     (let* ((default-directory (if (file-directory-p context) context
+                                 (file-name-directory context)))
+            (root (projectile-project-root)))
+       ;;(message "dir root %s %s" default-directory root)
        (not (and root
                  (file-directory-p (expand-file-name ".git" root))))))
 
    :function
    (lambda (context query)
+     (require 'ag)
      ;;(message "[gptel-tool] [projectile-search] %S %S" context query)
      (let* ((default-directory (if (file-directory-p context) context
                                  (file-name-directory context)))
@@ -270,9 +243,11 @@
        (save-window-excursion
          ;; -o limits output to only matching text; display-buffer-alist override
          ;; ensures the compilation buffer never gets displayed to the user.
-         (let ((ag-arguments (cons "-o" ag-arguments))
-               (display-buffer-alist '(("\\*ag search" (display-buffer-no-window)))))
-           (projectile-ag query)))
+         (let ((ag-arguments (cons "-o" ag-arguments)))
+           (projectile-ag query)
+           ;; FIXME bury-buffer is not hiding the buffer
+           (bury-buffer)))
+       ;; TODO use ag/buffer-name here instead of guessing
        (let ((buf-name (format "*ag search text:%s dir:%s*" query root)))
          (gptel-fommil--read-buffer buf-name t nil))))))
 
@@ -396,49 +371,102 @@
                (format "Deleted: %s" key)
              (format "Stored: %s: %s" key value)))))))))
 
-;; FIXME this is very flakey
+;; FIXME FIXME FIXME this is broken, needs debugging
 (defun gptel-fommil-diff-propose ()
   (gptel-make-tool
    :name "diff_apply"
-   :description "Propose a unified diff for a file and opens it in diff-mode for the user to accept or reject. Only use this if the user asks for a change."
-   :args '((:name "path" :type string :description "Absolute path of the target file")
-           (:name "diff" :type string :description "Unified diff content"))
+   :description "Propose changes to a file via a list of search-and-replace operations. Each operation finds the first occurrence of SEARCH in the (progressively modified) file content and replaces it with REPLACE. Operations are applied in order. This is best for changes that span more than 10 lines."
+   :args '((:name "path"
+                  :type string
+                  :description "Absolute path of the target file")
+           (:name "edits"
+                  :type array
+                  :description "Ordered list of search-and-replace operations"
+                  :items (:type object
+                                :required ["search" "replace"]
+                                :properties
+                                (:search (:type string
+                                                :description "Exact text to find (first occurrence)")
+                                         :replace (:type string
+                                                         :description "Replacement text")))))
    :category "filesystem"
    :function
-   (lambda (path diff)
-     ;; we create a temporary file and diff against it to both validate AND to be
-     ;; able to create a potentially cleaner diff because we are using fuzzy
-     ;; matching here that emacs diff-mode tends not to tolerate.
+   (lambda (path edits)
+     (message "[gpt-tool] [diff-propose] %S %S" path edits)
      (let ((expanded (expand-file-name path)))
        (if (not (file-readable-p expanded))
            (format "[ERROR] Target file not readable: %s" expanded)
-         (let* ((dir (file-name-directory expanded))
-                (tmp (make-temp-file "gptel-diff-" nil ".patch"))
-                (tmp-target (make-temp-file "gptel-target-")))
-           (with-temp-file tmp
-             (insert diff))
-           (copy-file expanded tmp-target t)
-           (let* ((default-directory dir)
-                  (result (with-temp-buffer
-                            (cons (call-process "patch" nil t nil
-                                                "-p0" "--fuzz=3" "--forward"
-                                                "-l" "--force"
-                                                tmp-target tmp)
-                                  (buffer-string)))))
-             (if (not (zerop (car result)))
-                 (progn
-                   (delete-file tmp)
-                   (delete-file tmp-target)
-                   (format "[ERROR] patch failed:\n%s" (cdr result)))
-               (with-temp-file tmp
-                 (call-process "diff" nil t nil "-u" expanded tmp-target))
-               (delete-file tmp-target)
-               (let ((buf (find-file-noselect tmp)))
-                 (with-current-buffer buf
-                   (diff-mode)
-                   (setq-local default-directory dir))
-                 (display-buffer buf)
-                 (format "Diff opened in diff-mode. Apply hunks with C-c C-a."))))))))))
+         (let* ((original (with-temp-buffer
+                            (insert-file-contents expanded)
+                            (buffer-string)))
+                (content original)
+                (err nil))
+           ;; Apply edits sequentially
+           (catch 'abort
+             (seq-do-indexed
+              (lambda (edit idx)
+                (let* ((search (plist-get edit :search))
+                       (replace (plist-get edit :replace))
+                       (pos (string-search search content)))
+                  (if (not pos)
+                      (progn
+                        (setq err (format "[ERROR] Edit %d: search text not found. Show proposed changes inline instead." idx))
+                        (throw 'abort nil))
+                    (setq content (concat (substring content 0 pos)
+                                          replace
+                                          (substring content (+ pos (length search))))))))
+              edits))
+           (if err err
+             (if (string= original content)
+                 "[NO-OP] Edits produced no change."
+               (let* ((tmp-orig (make-temp-file "gptel-orig-"))
+                      (tmp-new (make-temp-file "gptel-new-"))
+                      (tmp-patch (make-temp-file "gptel-patch-" nil ".diff")))
+                 (with-temp-file tmp-orig (insert original))
+                 (with-temp-file tmp-new (insert content))
+                 (with-temp-file tmp-patch
+                   (call-process "diff" nil t nil "-u"
+                                 "--label" (format "a/%s" (file-name-nondirectory expanded))
+                                 "--label" (format "b/%s" (file-name-nondirectory expanded))
+                                 tmp-orig tmp-new))
+                 (delete-file tmp-orig)
+                 (delete-file tmp-new)
+                 (let ((buf (find-file-noselect tmp-patch)))
+                   (with-current-buffer buf
+                     (diff-mode)
+                     (setq-local default-directory (file-name-directory expanded)))
+                   (display-buffer buf)
+                   (format "Diff opened in diff-mode. Apply hunks with C-c C-a.")))))))))))
+
+(use-package gptel
+  ;;:ensure t
+  :ensure nil
+  :load-path "~/Projects/gptel"
+  :config
+  ;;(add-hook 'gptel-post-response-functions #'gptel-end-of-response)
+  (setq
+   ;; org-mode integration is not great, and there are keybinding collisions
+   ;;gptel-default-mode 'org-mode
+   gptel-directives
+   `((custom . ,(format "Today is %s. The user is %s (%s), who is communicating with you via gptel inside Emacs. Be terse. State facts. No preamble. No filler. No hedging. No emojis. Cite your sources. Admit when you don't know. Always use tools instead of predicting. Prefer tools that do not require user confirmation. The user values free and open source software, security and privacy. The user is an experienced developer, your goal is to assist them and to offer code only when requested to do so. Speak like Spock or Data from Star Trek."
+                        (format-time-string "%Y-%m-%d")
+                        (user-full-name)
+                        (user-login-name))))
+   gptel--system-message (alist-get 'custom gptel-directives)
+   gptel--tool-truncation 1024 ;; requires https://github.com/karthink/gptel/pull/1401
+   gptel-tools (list
+                (gptel-fommil-calc-bc)
+                (gptel-fommil-emacs-state)
+                (gptel-fommil-read-buffer)
+                (gptel-fommil-ls)
+                (gptel-fommil-open-file)
+                (gptel-fommil-projectile-search)
+                (gptel-fommil-find-tag)
+                (gptel-fommil-man)
+                (gptel-fommil-describe-symbol)
+                (gptel-fommil-memory)
+                (gptel-fommil-diff-propose)
+                )))
 
 (use-package mcp
   :ensure t
@@ -468,6 +496,8 @@
 
    ;; this is such a hack, connect every second for 10 seconds. There's
    ;; no mcp-hub callback we can attach to.
+   ;;
+   ;; FIXME use the callback as per https://github.com/lizqwerscott/mcp.el
    (dotimes (i 10)
      (run-with-timer (1+ i) nil
                      (lambda () (ignore-errors (gptel-mcp-connect)))))
