@@ -239,17 +239,14 @@
      ;;(message "[gptel-tool] [projectile-search] %S %S" context query)
      (let* ((default-directory (if (file-directory-p context) context
                                  (file-name-directory context)))
-            (root (projectile-project-root)))
-       (save-window-excursion
-         ;; -o limits output to only matching text; display-buffer-alist override
-         ;; ensures the compilation buffer never gets displayed to the user.
-         (let ((ag-arguments (cons "-o" ag-arguments)))
-           (projectile-ag query)
-           ;; FIXME bury-buffer is not hiding the buffer
-           (bury-buffer)))
-       ;; TODO use ag/buffer-name here instead of guessing
-       (let ((buf-name (format "*ag search text:%s dir:%s*" query root)))
-         (gptel-fommil--read-buffer buf-name t nil))))))
+            (root (projectile-project-root))
+            (ag-arguments (cons "-o" ag-arguments)))
+       (cl-letf (((symbol-function 'display-buffer) #'ignore))
+         (projectile-ag query))
+       (let* ((buf-name (ag/buffer-name query root nil))
+              (result (gptel-fommil--read-buffer buf-name t nil)))
+         (kill-buffer buf-name)
+         result)))))
 
 (defun gptel-fommil-find-tag ()
   (gptel-make-tool
@@ -371,7 +368,6 @@
                (format "Deleted: %s" key)
              (format "Stored: %s: %s" key value)))))))))
 
-;; FIXME FIXME FIXME this is broken, needs debugging
 (defun gptel-fommil-diff-propose ()
   (gptel-make-tool
    :name "diff_apply"
@@ -392,7 +388,7 @@
    :category "filesystem"
    :function
    (lambda (path edits)
-     (message "[gpt-tool] [diff-propose] %S %S" path edits)
+     ;;(message "[gpt-tool] [diff-propose] %S %S" path edits)
      (let ((expanded (expand-file-name path)))
        (if (not (file-readable-p expanded))
            (format "[ERROR] Target file not readable: %s" expanded)
@@ -401,7 +397,6 @@
                             (buffer-string)))
                 (content original)
                 (err nil))
-           ;; Apply edits sequentially
            (catch 'abort
              (seq-do-indexed
               (lambda (edit idx)
@@ -419,18 +414,21 @@
            (if err err
              (if (string= original content)
                  "[NO-OP] Edits produced no change."
-               (let* ((tmp-orig (make-temp-file "gptel-orig-"))
-                      (tmp-new (make-temp-file "gptel-new-"))
+               (let* ((tmp-dir (make-temp-file "gptel-diff-" t))
+                      (fname (file-name-nondirectory expanded))
+                      (tmp-orig (expand-file-name (concat fname ".orig") tmp-dir))
+                      (tmp-new (expand-file-name (concat fname ".new") tmp-dir))
                       (tmp-patch (make-temp-file "gptel-patch-" nil ".diff")))
                  (with-temp-file tmp-orig (insert original))
                  (with-temp-file tmp-new (insert content))
                  (with-temp-file tmp-patch
                    (call-process "diff" nil t nil "-u"
-                                 "--label" (format "a/%s" (file-name-nondirectory expanded))
-                                 "--label" (format "b/%s" (file-name-nondirectory expanded))
+                                 "--label" fname
+                                 "--label" fname
                                  tmp-orig tmp-new))
                  (delete-file tmp-orig)
                  (delete-file tmp-new)
+                 (delete-directory tmp-dir)
                  (let ((buf (find-file-noselect tmp-patch)))
                    (with-current-buffer buf
                      (diff-mode)
