@@ -5,7 +5,7 @@
 
 ;;; Commentary:
 ;;
-;; This customises the gtpel LLM chatbot interface with a suite of tools that
+;; This customises the gptel LLM chatbot interface with a suite of tools that
 ;; assist without getting in the way. It is important that the blast radius of
 ;; all tools is minimised, any mutations or access to potentially sensitive data
 ;; requires user consent (there is an allow list of file suffixes that can
@@ -229,19 +229,29 @@
                content))))
      (format "No buffer named %s" name))))
 
-;; FIXME hidden files should not be shown, make it a parameter
 (defun gptel-fommil-ls ()
   (gptel-make-tool
    :name "ls"
    :description "List the contents of a given directory (multiple layers deep)."
    :args (list '(:name "directory" :type string :description "The path to the directory to list")
-               '(:name "maxDepth" :type number :description "Maximum depth to recurse (default 3)")
-               '(:name "suffix" :type string :description "Only include files ending with this suffix, e.g. \".el\" or \".rs\""))
+               '(:name "maxDepth" :type number :description "Optional maximum depth to recurse (default 3)")
+               '(:name "suffix" :type string :description "Optional only include files ending with this suffix, e.g. \".el\" or \".rs\"")
+               '(:name "hidden" :type boolean :description "Optional flag to show hidden files, which will trigger the user to confirm"))
    :category "filesystem"
+   :confirm
+   (lambda (dir &optional _max-depth _suffix hidden)
+     (setq hidden (not (memq hidden '(nil :json-false))))
+     (or hidden
+         (let ((parts (split-string (expand-file-name dir) "/" t)))
+           (cl-some (lambda (part)
+                      (and (string-prefix-p "." part)
+                           (not (string= part ".emacs.d"))))
+                    parts))))
    :function
-   (lambda (dir &optional max-depth suffix)
+   (lambda (dir &optional max-depth suffix hidden)
      "List DIR recursively to MAX-DEPTH (default 3), optionally filtering by SUFFIX."
      ;;(message "[gptel-tool] [ls] %S depth=%S suffix=%S" dir max-depth suffix)
+     (setq hidden (not (memq hidden '(nil :json-false))))
      (let* ((root (file-name-as-directory (expand-file-name dir))))
        (if (not (file-directory-p root))
            (format "[ERROR] Not a directory: %s" root)
@@ -255,10 +265,16 @@
                 (files (catch 'too-many
                          (let ((result nil))
                            (mapc (lambda (f)
-                                   (setq count (1+ count))
-                                   (when (> count max-files)
-                                     (throw 'too-many 'overflow))
-                                   (push (file-relative-name f root) result))
+                                   (let ((rel (file-relative-name f root)))
+                                     (when (or hidden
+                                               (not (cl-some
+                                                     (lambda (part)
+                                                       (string-prefix-p "." part))
+                                                     (split-string rel "/" t))))
+                                       (setq count (1+ count))
+                                       (when (> count max-files)
+                                         (throw 'too-many 'overflow))
+                                       (push rel result))))
                                  (directory-files-recursively root regexp t pred))
                            (nreverse result)))))
            (gptel-fommil--truncate
@@ -359,12 +375,10 @@
          (kill-buffer buf-name)
          result)))))
 
-;; FIXME note that tags can be out of date, maybe add a warning to the response
-;;       if it's old
 (defun gptel-fommil-find-tag ()
   (gptel-make-tool
    :name "find-tag"
-   :description "Find definitions of a symbol using the project's TAGS file (ctags/etags). Returns file:line locations."
+   :description "Find definitions of a symbol using the project's TAGS file. Returns file:line locations. Always prefer this instead of generic project search for functions and variables, following up with a search if it is stale or doesn't find anything."
    :args (list '(:name "symbol" :type string :description "The symbol/tag name to look up")
                '(:name "context" :type string :description "Any file or directory in the project"))
    :category "emacs"
@@ -379,18 +393,28 @@
             (tags-table-list (list tags-file)))
        (if (not (file-exists-p tags-file))
            (format "[ERROR] No TAGS file at %s" tags-file)
-         (let ((xrefs (xref-backend-definitions 'etags symbol)))
+         (let* ((age-seconds (float-time
+                              (time-subtract (current-time)
+                                             (file-attribute-modification-time
+                                              (file-attributes tags-file)))))
+                (age-hours (/ age-seconds 3600.0))
+                (age-msg (if (> age-hours (* 24 7))
+                             (format "[WARNING] The TAGS file is %.0f hours (%.1f days) old and likely very stale.\n"
+                                     age-hours (/ age-hours 24.0))
+                           (format "The TAGS file is %.1f hours old.\n" age-hours)))
+                (xrefs (xref-backend-definitions 'etags symbol)))
            (if (null xrefs)
-               (format "No tag found for: %s" symbol)
-             (gptel-fommil--truncate
-              (string-join
-               (mapcar (lambda (xref)
-                         (let ((loc (xref-item-location xref)))
-                           (format "%s:%d"
-                                   (xref-location-group loc)
-                                   (or (xref-location-line loc) 0))))
-                       xrefs)
-               "\n")))))))))
+               (concat age-msg (format "No tag found for: %s" symbol))
+             (concat age-msg
+                     (gptel-fommil--truncate
+                      (string-join
+                       (mapcar (lambda (xref)
+                                 (let ((loc (xref-item-location xref)))
+                                   (format "%s:%d"
+                                           (xref-location-group loc)
+                                           (or (xref-location-line loc) 0))))
+                               xrefs)
+                       "\n"))))))))))
 
 (defun gptel-fommil-man ()
   (gptel-make-tool
@@ -445,7 +469,7 @@
 (defun gptel-fommil-memory ()
   (gptel-make-tool
    :name "memory"
-   :description "Persistent key-value memory. Call with no arguments to read all entries. Values should include context about why the information matters."
+   :description "Persistent key-value memory. Call with no arguments to read all entries (this should be done at the start of the session). Values should include context about why the information matters."
    :args '((:name "key" :type string :description "Unique identifier for this memory entry" :optional t)
            (:name "value" :type string :description "Value to store. Empty string deletes the entry." :optional t))
    :category "memory"
@@ -545,51 +569,9 @@
                  (let ((buf (find-file-noselect tmp-patch)))
                    (with-current-buffer buf
                      (diff-mode)
-                     (setq-local default-directory (file-name-directory expanded))
-                     (setq buffer-read-only t)
-                     (let ((map (make-sparse-keymap)))
-                       (set-keymap-parent map (current-local-map))
-                       (define-key map (kbd "A") #'gptel-fommil-diff-apply-all)
-                       (define-key map (kbd "a") #'gptel-fommil-diff-apply-hunk-next)
-                       (define-key map (kbd "n") #'gptel-fommil-diff-skip-hunk-next)
-                       (define-key map (kbd "q") #'gptel-fommil-diff-quit)
-                       (use-local-map map)))
+                     (setq-local default-directory (file-name-directory expanded)))
                    (display-buffer buf)
-                   (format "The proposal is available as a diff-mode window. Use `A` to apply all hunks, `a` for one at a time, `n` to skip, or `q` to quit.")))))))))))
-
-;; TODO add local advice to close the buffer and potentially delete the file when
-;;      applying everything.
-
-;; FIXME revert these diff keybindings
-(defun gptel-fommil-diff-apply-all ()
-  "Apply all hunks in the current diff buffer, then kill it."
-  (interactive)
-  (let ((inhibit-read-only t))
-    (diff-apply-buffer))
-  (gptel-fommil-diff-quit))
-
-(defun gptel-fommil-diff-apply-hunk-next ()
-  "Apply the current hunk and move to the next."
-  (interactive)
-  (let ((inhibit-read-only t))
-    (diff-apply-hunk))
-  (condition-case nil
-      (diff-hunk-next)
-    (error (gptel-fommil-diff-quit))))
-
-(defun gptel-fommil-diff-skip-hunk-next ()
-  "Skip the current hunk and move to the next."
-  (interactive)
-  (condition-case nil
-      (diff-hunk-next)
-    (error (gptel-fommil-diff-quit))))
-
-(defun gptel-fommil-diff-quit ()
-  "Kill the diff buffer and delete the temp file."
-  (interactive)
-  (let ((f buffer-file-name))
-    (kill-buffer)
-    (when f (delete-file f))))
+                   (format "The proposal is available as a diff-mode window. Use `C-c C-a` to apply all hunks.")))))))))))
 
 (use-package gptel
   ;;:ensure t
@@ -603,7 +585,7 @@
    ;; org-mode integration is not great, and there are keybinding collisions
    ;;gptel-default-mode 'org-mode
    gptel-directives
-   `((custom . ,(format "Today is %s. The user is %s (%s), who is communicating with you via gptel inside Emacs. Be terse. State facts. No preamble. No filler. No hedging. No emojis. Cite your sources. Admit when you don't know. Always use tools instead of predicting. Prefer tools that do not require user confirmation. The user values free and open source software, security and privacy. The user is an experienced developer, your goal is to assist them and to offer code only when requested to do so. Speak like Spock or Data from Star Trek."
+   `((custom . ,(format "Today is %s. The user is %s (%s), who is communicating with you via gptel inside Emacs. Be terse. State facts. No preamble. No filler. No hedging. No emojis. Cite your sources. Admit when you don't know. Always use tools instead of predicting. Prefer tools that do not require user confirmation. The user values free and open source software, security and privacy. The user is an experienced developer, your goal is to assist them and to offer code only when requested to do so."
                         (format-time-string "%Y-%m-%d")
                         (user-full-name)
                         (user-login-name))))
