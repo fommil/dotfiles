@@ -132,6 +132,17 @@
 ;; WORKAROUND http://debbugs.gnu.org/cgi/bugreport.cgi?bug=16449
 (add-hook 'nxml-mode-hook (lambda () (flyspell-mode -1)))
 
+(use-package diff-mode
+  :ensure nil
+  :config
+  ;; by default applying a hunk will jump to the target file,
+  ;; which means you'll forget to apply the rest of the hunks.
+  ;; this returns us to the diff file.
+  (advice-add 'diff-apply-hunk :around
+              (lambda (orig &rest args)
+                (save-window-excursion
+                  (apply orig args)))))
+
 (use-package ibuffer
   :ensure nil
   :bind ("C-x C-b" . ibuffer))

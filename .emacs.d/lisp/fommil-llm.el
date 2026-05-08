@@ -569,9 +569,10 @@
                  (let ((buf (find-file-noselect tmp-patch)))
                    (with-current-buffer buf
                      (diff-mode)
+                     (setq buffer-read-only t)
                      (setq-local default-directory (file-name-directory expanded)))
                    (display-buffer buf)
-                   (format "The proposal is available as a diff-mode window. Use `C-c C-a` to apply all hunks.")))))))))))
+                   (format "The proposal is available as a diff-mode window. Use `C-c C-a` to apply each hunk.")))))))))))
 
 (use-package gptel
   ;;:ensure t
