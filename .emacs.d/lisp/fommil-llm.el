@@ -28,10 +28,97 @@
 ;; at a time, then aggregated into packages, etc. But I need to find a suitable
 ;; CLI for that. It is not too hard to write standalone / one-shot scripts that
 ;; can use the upstream LLM API (e.g. bedrock) directly.
+;;
+;;
+;; # Backends
+;;
+;; gptel supports many LLM backends see `M-x finder-commentary RET gptel RET`.
+;; However, as a quick start this function defines a few backends. Note that
+;; only one can be used at a time, swap between them with
+;; gptel-fommil-select-model (defined below)
+(defun gptel-fommil-example-backends ()
+  (interactive)
+  ;; 0.6b is just for testing, it's useless
+  ;; ollama pull qwen3:0.6b
+  ;; 3.6 27b really needs a GPU with 24GB+
+  ;; ollama pull qwen3.6:27b
+  ;; and even 8b realistically needs a GPU
+  ;; ollama pull qwen3:8b
+  (require 'gptel-ollama)
+  (let ((models '(qwen3:8b qwen3.6:27b qwen3:0.6b)))
+    (setq
+     gptel-model (car models)
+     gptel-backend (gptel-make-ollama "Ollama"
+                     :host "localhost:11434"
+                     :models models)))
 
-;; FIXME add examples of adding claude / chatgpt / aws backends
+  ;; Anthropic uses your account at platform.claude.com (not claude.ai)
+  ;;
+  ;; Store API keys in ~/.authinfo
+  ;;
+  ;;   machine api.anthropic.com login apikey password sk-ant-...
+  (require 'gptel-anthropic)
+  (let ((models '((claude-sonnet-4-6 :capabilities (media))
+                  (claude-opus-4-7 :capabilities (media)))))
+    (setq
+     gptel-model (caar models)
+     gptel-backend (gptel-make-anthropic "Anthropic"
+                     :key #'gptel-api-key-from-auth-source
+                     :models models)))
 
-;; TODO image support blocked on https://github.com/karthink/gptel/issues/1405
+  ;; OpenAI uses your account at platform.openai.com (not chatgpt.com)
+  ;;
+  ;; Store API keys in ~/.authinfo
+  ;;
+  ;;   machine api.openai.com login apikey password sk-...
+  (let ((models '((gpt-5.5 :capabilities (media))
+                  (gpt-5.4 :capabilities (media))
+                  (gpt-5.4-mini :capabilities (media)))))
+    (setq
+     gptel-model (caar models)
+     gptel-backend (gptel-make-openai "OpenAI"
+                     :stream t
+                     :key #'gptel-api-key-from-auth-source
+                     :models models)))
+
+  ;; AWS Bedrock uses external tools to manage authentication. If you have
+  ;; a personal account you might just be using credential tokens.
+  ;;
+  ;; If your creds are invalidated mid session and you refresh them externally,
+  ;; clear the gptel cache:
+  ;;
+  ;;   (setq gptel-bedrock--aws-profile-cache nil)
+  ;;
+  ;; TODO image support blocked https://github.com/karthink/gptel/issues/1405
+  (let ((models '((claude-opus-4-7 :capabilities (media))
+                  (claude-sonnet-4-6 :capabilities (media)))))
+    (setq
+     gptel-model (caar models)
+     gptel-backend (gptel-make-bedrock "Bedrock"
+                     :region "us-east-1"
+                     ;;:aws-profile "my-profile-name"
+                     :models models
+                     :model-region 'us)))
+  )
+
+(defun gptel-fommil-select-backend-model ()
+  "Switch gptel backend and model via `completing-read'."
+  (interactive)
+  (let* ((choices
+          (cl-loop for (name . backend) in gptel--known-backends
+                   nconc (cl-loop for model in (gptel-backend-models backend)
+                                  collect (cons (format "%s:%s" name (gptel--model-name model))
+                                                (list backend model)))))
+         (selected (completing-read
+                    (format "Model [%s:%s]: "
+                            (gptel-backend-name gptel-backend)
+                            (gptel--model-name gptel-model))
+                    (mapcar #'car choices) nil t))
+         (sel (cdr (assoc selected choices))))
+    (when sel
+      (setq gptel-backend (car sel)
+            gptel-model (cadr sel))
+      (message "gptel: %s" selected))))
 
 ;;; Code:
 
@@ -153,6 +240,7 @@
                content))))
      (format "No buffer named %s" name))))
 
+;; FIXME hidden files should not be shown, make it a parameter
 (defun gptel-fommil-ls ()
   (gptel-make-tool
    :name "ls"
@@ -278,6 +366,8 @@
          (kill-buffer buf-name)
          result)))))
 
+;; FIXME note that tags can be out of date, maybe add a warning to the response
+;;       if it's old
 (defun gptel-fommil-find-tag ()
   (gptel-make-tool
    :name "find-tag"
@@ -474,6 +564,10 @@
                    (display-buffer buf)
                    (format "The proposal is available as a diff-mode window. Use `A` to apply all hunks, `a` for one at a time, `n` to skip, or `q` to quit.")))))))))))
 
+;; TODO add local advice to close the buffer and potentially delete the file when
+;;      applying everything.
+
+;; FIXME revert these diff keybindings
 (defun gptel-fommil-diff-apply-all ()
   "Apply all hunks in the current diff buffer, then kill it."
   (interactive)
@@ -520,6 +614,7 @@
                         (user-login-name))))
    gptel--system-message (alist-get 'custom gptel-directives)
    gptel--tool-truncation 1024 ;; requires https://github.com/karthink/gptel/pull/1401
+   gptel-max-tokens 16000 ;; possibly needs to be set per model
    gptel-tools (list
                 (gptel-fommil-calc)
                 (gptel-fommil-emacs-state)

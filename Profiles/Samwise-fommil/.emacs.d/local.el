@@ -18,20 +18,6 @@
 
 (notmuch)
 
-(defun personal-gptel-settings ()
-  (interactive)
-  ;; 0.6b is just for testing, it's useless
-  ;; ollama pull qwen3:0.6b
-  ;; 3.6 27b really needs a GPU
-  ;; ollama pull qwen3.6:27b
-  ;; ollama pull qwen3:8b
-  (let ((models '(qwen3:8b qwen3.6:27b qwen3:0.6b)))
-   (setq
-    gptel-model (car models)
-    gptel-backend (gptel-make-ollama "qwen"
-                    :host "localhost:11434"
-                    :stream t
-                    :models models))))
 ;;(personal-gptel-settings)
 
 ;; Local Variables:
