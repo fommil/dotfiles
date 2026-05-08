@@ -45,12 +45,13 @@
   ;; and even 8b realistically needs a GPU
   ;; ollama pull qwen3:8b
   (require 'gptel-ollama)
+  ;; don't forget to add :capabilities and :media-type if you want extra
   (let ((models '(qwen3:8b qwen3.6:27b qwen3:0.6b)))
     (setq
      gptel-model (car models)
      gptel-backend (gptel-make-ollama "Ollama"
-                     :host "localhost:11434"
-                     :models models)))
+                                      :host "localhost:11434"
+                                      :models models)))
 
   ;; Anthropic uses your account at platform.claude.com (not claude.ai)
   ;;
@@ -58,47 +59,35 @@
   ;;
   ;;   machine api.anthropic.com login apikey password sk-ant-...
   (require 'gptel-anthropic)
-  (let ((models '((claude-sonnet-4-6 :capabilities (media))
-                  (claude-opus-4-7 :capabilities (media)))))
-    (setq
-     gptel-model (caar models)
-     gptel-backend (gptel-make-anthropic "Anthropic"
-                     :key #'gptel-api-key-from-auth-source
-                     :models models)))
+  (setq
+   gptel-model 'claude-opus-4-7
+   gptel-backend (gptel-make-anthropic "Anthropic"
+                   :key #'gptel-api-key-from-auth-source))
 
   ;; OpenAI uses your account at platform.openai.com (not chatgpt.com)
   ;;
   ;; Store API keys in ~/.authinfo
   ;;
   ;;   machine api.openai.com login apikey password sk-...
-  (let ((models '((gpt-5.5 :capabilities (media))
-                  (gpt-5.4 :capabilities (media))
-                  (gpt-5.4-mini :capabilities (media)))))
-    (setq
-     gptel-model (caar models)
-     gptel-backend (gptel-make-openai "OpenAI"
-                     :stream t
-                     :key #'gptel-api-key-from-auth-source
-                     :models models)))
+  (require 'gptel-openai)
+  (setq
+   gptel-model 'gpt-5.5
+   gptel-backend (gptel-make-openai "OpenAI"
+                   :key #'gptel-api-key-from-auth-source))
 
   ;; AWS Bedrock uses external tools to manage authentication. If you have
   ;; a personal account you might just be using credential tokens.
-  ;;
-  ;; If your creds are invalidated mid session and you refresh them externally,
-  ;; clear the gptel cache:
-  ;;
-  ;;   (setq gptel-bedrock--aws-profile-cache nil)
-  ;;
-  ;; TODO image support blocked https://github.com/karthink/gptel/issues/1405
-  (let ((models '((claude-opus-4-7 :capabilities (media))
-                  (claude-sonnet-4-6 :capabilities (media)))))
-    (setq
-     gptel-model (caar models)
-     gptel-backend (gptel-make-bedrock "Bedrock"
-                     :region "us-east-1"
-                     ;;:aws-profile "my-profile-name"
-                     :models models
-                     :model-region 'us)))
+  (require 'gptel-bedrock)
+  (setq
+   gptel-bedrock--aws-profile-cache nil ;; force cache refresh
+   gptel-model 'claude-opus-4-7
+   gptel-backend (gptel-make-bedrock "Bedrock"
+                   :region "us-east-1"
+                   ;; WORKAROUND https://github.com/karthink/gptel/issues/1412
+                   :models (mapcar (lambda (sym) (assq sym gptel--anthropic-models))
+                                   '(claude-opus-4-7 claude-sonnet-4-6))
+                   ;;:aws-profile "my-profile-name"
+                   :model-region 'us))
   )
 
 (defun gptel-fommil-select-backend-model ()
@@ -358,7 +347,11 @@
      (let* ((default-directory (if (file-directory-p context) context
                                  (file-name-directory context)))
             (root (projectile-project-root))
-            (ag-arguments (cons "-o" ag-arguments)))
+            ;; this next line will suppress context, which can be uncommented
+            ;; for additional security. But since we're already relying on
+            ;; projectile's various ignorelists, this is reasonably safe.
+            ;;(ag-arguments (cons "-o" ag-arguments))
+            )
        (cl-letf (((symbol-function 'display-buffer) #'ignore))
          (projectile-ag query))
        (let* ((buf-name (ag/buffer-name query root nil))
@@ -603,6 +596,8 @@
   :ensure nil
   :load-path "~/Projects/gptel"
   :config
+  (require 'gptel-context)
+
   ;;(add-hook 'gptel-post-response-functions #'gptel-end-of-response)
   (setq
    ;; org-mode integration is not great, and there are keybinding collisions
@@ -614,6 +609,7 @@
                         (user-login-name))))
    gptel--system-message (alist-get 'custom gptel-directives)
    gptel--tool-truncation 1024 ;; requires https://github.com/karthink/gptel/pull/1401
+   gptel-track-media t
    gptel-max-tokens 16000 ;; possibly needs to be set per model
    gptel-tools (list
                 (gptel-fommil-calc)
