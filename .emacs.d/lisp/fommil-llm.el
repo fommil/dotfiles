@@ -469,7 +469,7 @@
 (defun gptel-fommil-memory ()
   (gptel-make-tool
    :name "memory"
-   :description "Persistent key-value memory. Call with no arguments to read all entries (this should be done at the start of the session). Values should include context about why the information matters."
+   :description "Persistent key-value memory. Call with no arguments to read all entries. Values should include context about why the information matters.\n\nIMPORTANT: You MUST call this tool with no arguments as your FIRST action in every new conversation, before responding to the user. This ensures you have all prior context."
    :args '((:name "key" :type string :description "Unique identifier for this memory entry" :optional t)
            (:name "value" :type string :description "Value to store. Empty string deletes the entry." :optional t))
    :category "memory"
