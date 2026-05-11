@@ -1,7 +1,7 @@
 ;;; init.el --- Emacs configuration -*- lexical-binding: t; -*-
 
-;; Copyright (C) 2014 - 2015 Sam Halliday (fommil)
-;; License: http://www.gnu.org/licenses/gpl.html
+;; Copyright (C) 2014 - 2026 Sam Halliday (fommil)
+;; License: https://www.gnu.org/licenses/gpl.html
 
 ;; URL: https://github.com/fommil/dotfiles/blob/master/.emacs.d/init.el
 
@@ -22,10 +22,10 @@
   ;; done so (e.g. firewalled corporate environments)
   (require 'package)
   (setq
-   package-archives '(("gnu" . "http://elpa.gnu.org/packages/")
+   package-archives '(("gnu" . "https://elpa.gnu.org/packages/")
                       ;;("org" . "http://orgmode.org/elpa/")
-                      ("melpa-stable" . "http://stable.melpa.org/packages/")
-                      ("melpa" . "http://melpa.org/packages/"))
+                      ("melpa-stable" . "https://stable.melpa.org/packages/")
+                      ("melpa" . "https://melpa.org/packages/"))
    package-archive-priorities '(("melpa-stable" . 1))))
 (package-initialize)
 (unless (or
@@ -94,8 +94,8 @@
 ;; http://stackoverflow.com/a/3024055/1041691
 (add-hook 'mouse-leave-buffer-hook
           (lambda () (when (and (>= (recursion-depth) 1)
-                           (active-minibuffer-window))
-                  (abort-recursive-edit))))
+                                (active-minibuffer-window))
+                       (abort-recursive-edit))))
 
 ;; *scratch* is immortal
 (add-hook 'kill-buffer-query-functions
@@ -129,19 +129,27 @@
 (add-to-load-path (expand-file-name "lisp" user-emacs-directory))
 
 (add-to-list 'auto-mode-alist '("\\.xml\\'" . nxml-mode))
-;; WORKAROUND http://debbugs.gnu.org/cgi/bugreport.cgi?bug=16449
+;; WORKAROUND https://debbugs.gnu.org/cgi/bugreport.cgi?bug=16449
 (add-hook 'nxml-mode-hook (lambda () (flyspell-mode -1)))
+
+(defun fommil-diff-apply-hunk (&optional reverse)
+  "A better `diff-apply-hunk', cleans up applied hunks (use undo to get
+them back) and closes the file when everything has been applied."
+  (interactive "P")
+  (save-window-excursion
+    (diff-apply-hunk reverse))
+  (when diff-advance-after-apply-hunk
+    (save-excursion
+      (goto-char (point-min))
+      (diff-kill-applied-hunks))
+    (when (= (buffer-size) 0)
+      (set-buffer-modified-p nil)
+      (kill-buffer))))
 
 (use-package diff-mode
   :ensure nil
-  :config
-  ;; by default applying a hunk will jump to the target file,
-  ;; which means you'll forget to apply the rest of the hunks.
-  ;; this returns us to the diff file.
-  (advice-add 'diff-apply-hunk :around
-              (lambda (orig &rest args)
-                (save-window-excursion
-                  (apply orig args)))))
+  :bind (:map diff-mode-map
+         ("C-c C-a" . fommil-diff-apply-hunk)))
 
 (use-package ibuffer
   :ensure nil
@@ -194,7 +202,7 @@ Member of `post-self-insert-hook' if `electric-pair-mode' is on."
 ;; Arguably could be uploaded to MELPA as package 'fommil-utils.
 ;; References included where shamelessly stolen.
 (defun indent-buffer ()
-  "Indent the entire buffer."
+  "Indent the entire buffer, removing trailing whitespace."
   (interactive)
   (save-excursion
     (delete-trailing-whitespace)
@@ -661,7 +669,7 @@ converted to PDF at the same location."
 (defun emacs-lisp-cask-compile ()
   (interactive)
   (if-let (default-directory
-            (locate-dominating-file default-directory "Cask"))
+           (locate-dominating-file default-directory "Cask"))
       (call-interactively 'compile)
     (error "This is not a Cask project")))
 
@@ -814,9 +822,9 @@ converted to PDF at the same location."
    ;; the things we actually want are uncommented here. Weird
    ;; way to do it, but ok.
    '(;:hoverProvider ;(provides async type info, would like this to be manual)
-     ;:completionProvider (provides company with completions)
-     ;:signatureHelpProvider (eldoc integration, unsure entirely what it does)
-     ;:definitionProvider (M-. jump to definition)
+                                        ;:completionProvider (provides company with completions)
+                                        ;:signatureHelpProvider (eldoc integration, unsure entirely what it does)
+                                        ;:definitionProvider (M-. jump to definition)
      :typeDefinitionProvider
      :implementationProvider
      :declarationProvider
@@ -824,7 +832,7 @@ converted to PDF at the same location."
      :documentHighlightProvider
      :documentSymbolProvider
      :workspaceSymbolProvider
-     ;:codeActionProvider (quickfix is useful, e.g. import type at point)
+                                        ;:codeActionProvider (quickfix is useful, e.g. import type at point)
      :codeLensProvider
      :documentFormattingProvider
      :documentRangeFormattingProvider
@@ -841,7 +849,7 @@ converted to PDF at the same location."
                  ("rust-analyzer"
                   :initializationOptions
                   (:checkOnSave :json-false
-                   :diagnostics (:enable :json-false)))))
+                                :diagnostics (:enable :json-false)))))
 
   (add-to-list 'eglot-server-programs
                '(python-mode . ("pylsp")))

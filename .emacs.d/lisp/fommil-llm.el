@@ -5,18 +5,22 @@
 
 ;;; Commentary:
 ;;
-;; This customises the gptel LLM chatbot interface with a suite of tools that
-;; assist without getting in the way. It is important that the blast radius of
-;; all tools is minimised, any mutations or access to potentially sensitive data
-;; requires user consent (there is an allow list of file suffixes that can
-;; bypass user auth). As much as possible, everything is done in Emacs for
-;; transparency (e.g. the LLM can only open files in Emacs, and cannot close
+;; This customises the gptel LLM chatbot interface (M-x gptel) with a suite of
+;; tools that assist without getting in the way. It is important that the blast
+;; radius of all tools is minimised, any mutations or access to potentially
+;; sensitive data requires user consent (there is an allow list of file suffixes
+;; that can bypass user auth). As much as possible, everything is done in Emacs
+;; for transparency (e.g. the LLM can only open files in Emacs, and cannot close
 ;; them). The LLM cannot run arbitrary code and cannot create or edit project
 ;; files. The only way the LLM can edit files in your project is by proposing
 ;; diffs.
 ;;
 ;; The biggest compromise is web search and fetch, which is provided through an
 ;; MCP (exa or ddg).
+;;
+;; Note that Emacs' diff-mode is pretty rubbish by default, and we use it
+;; heavily in this workflow. I recommend customising diff-mode (see my init.el
+;; for my setup).
 ;;
 ;;
 ;; Some thoughts on tooling choice: I used to have a lot more tools that
@@ -94,10 +98,14 @@
   "Switch gptel backend and model via `completing-read'."
   (interactive)
   (let* ((choices
-          (cl-loop for (name . backend) in gptel--known-backends
-                   nconc (cl-loop for model in (gptel-backend-models backend)
-                                  collect (cons (format "%s:%s" name (gptel--model-name model))
-                                                (list backend model)))))
+          (mapcan (lambda (entry)
+                    (let ((name (car entry))
+                          (backend (cdr entry)))
+                      (mapcar (lambda (model)
+                                (cons (format "%s:%s" name (gptel--model-name model))
+                                      (list backend model)))
+                              (gptel-backend-models backend))))
+                  gptel--known-backends))
          (selected (completing-read
                     (format "Model [%s:%s]: "
                             (gptel-backend-name gptel-backend)
@@ -117,7 +125,7 @@
     ".md" ".txt" ".org"
     ".diff" ".patch"
     ".sql"
-    "Makefile"
+    "Makefile" "README"
     ".json" ".yaml" ".yml" ".xml" ".proto"
     ".sh"
     ".toml" ".conf" ".cfg" ".ini" ".properties"
@@ -154,32 +162,61 @@
        (push (format "projectile-known-projects:\n%s"
                      (string-join (seq-take projectile-known-projects 50) "\n"))
              sections)
-       (push (format "open files:\n%s"
+       (push (format "open buffers:\n%s"
                      (string-join
-                      (mapcar #'buffer-file-name (gptel-fommil--file-buffer-list))
+                      (seq-filter
+                       #'identity
+                       (mapcar (lambda (buf)
+                                 (let ((name (buffer-name buf)))
+                                   (unless (or (string-prefix-p " " name)
+                                               (string-match-p "\\`\\*.*\\*\\'" name)
+                                               (string-match-p "TAGS\\'" (or (buffer-file-name buf) "")))
+                                     (let ((file (buffer-file-name buf))
+                                           (safe (gptel-fommil--buffer-safe-p buf)))
+                                       (format "%s %s"
+                                               (or file name)
+                                               (if safe "(safe)" "(requires permission)"))))))
+                               (buffer-list)))
                       "\n"))
              sections)
-       (let ((compilation-bufs (gptel-fommil--compilation-buffer-list)))
-         (when compilation-bufs
-           (push (format "compilation buffers:\n%s"
-                         (string-join (mapcar #'buffer-name compilation-bufs) "\n"))
-                 sections)))
        (string-join (nreverse sections) "\n\n")))))
 
-(defun gptel-fommil--file-buffer-list ()
-  "Return file-visiting buffers, excluding TAGS files."
-  (seq-filter (lambda (buf)
-                (let ((f (buffer-file-name buf)))
-                  (and f (not (string-match-p "TAGS$" f)))))
-              (buffer-list)))
 
-(defun gptel-fommil--compilation-buffer-list ()
-  "Return non-file buffers in compilation-mode."
-  (seq-filter (lambda (buf)
-                (with-current-buffer buf
-                  (and (not (buffer-file-name))
-                       (derived-mode-p 'compilation-mode))))
-              (buffer-list)))
+(defvar gptel-fommil--allowed-buffers nil
+  "List of buffer names the user has approved for reading this session.
+Appended to automatically when the user confirms a read.
+Remove entries manually to retract permission.")
+
+(defun gptel-fommil--buffer-safe-p (buf)
+  "Return non-nil if BUF can be read without confirmation.
+A buffer is safe if:
+- its file has a suffix in `gptel-fommil-safe-suffixes', or
+- it is a compilation-mode buffer, or
+- its name is in `gptel-fommil--allowed-buffers'.
+When BUF is a string that doesn't match any buffer, it is treated as a
+file path and checked by suffix."
+  (let* ((b (if (stringp buf) (or (get-buffer buf) (find-buffer-visiting buf)) buf))
+         (name (and b (buffer-name b)))
+         (file (and b (buffer-file-name b))))
+    (or (member name gptel-fommil--allowed-buffers)
+        (and (stringp buf) (member buf gptel-fommil--allowed-buffers))
+        (and b (with-current-buffer b
+                 (derived-mode-p 'compilation-mode)))
+        (and file
+             (let ((ext (file-name-extension file t)))
+               (or (member ext gptel-fommil-safe-suffixes)
+                   (member (file-name-nondirectory file) gptel-fommil-safe-suffixes))))
+        ;; fallback: buf is a string path not yet visiting a buffer
+        (and (stringp buf) (not b)
+             (let ((ext (file-name-extension buf t)))
+               (or (member ext gptel-fommil-safe-suffixes)
+                   (member (file-name-nondirectory buf) gptel-fommil-safe-suffixes)))))))
+
+;; could consider persisting this to disk, but perhaps its best to seek explicit permission
+(defun gptel-fommil--approve-buffer (name)
+  (unless (or (member name gptel-fommil--allowed-buffers)
+              (gptel-fommil--buffer-safe-p name))
+    (push name gptel-fommil--allowed-buffers)))
 
 (defvar gptel-fommil-tool-max-chars 100000)
 (defun gptel-fommil--truncate (output)
@@ -189,25 +226,32 @@
               gptel-fommil-tool-max-chars)
     output))
 
-(defun gptel-fommil-read-buffer ()
+(defun gptel-fommil-read ()
   (gptel-make-tool
-   :name "read-buffer"
-   :description "Read and display the contents of an Emacs buffer by name."
+   :name "read"
+   :description "Read and display the contents of an Emacs buffer by name. If no buffer exists but the name is a readable file path, the file is opened automatically. Requires user confirmation for files not in the safe-suffixes list."
    :args (list '(:name "name" :type string :description "Buffer name (e.g. filename or buffer name)")
                '(:name "wait" :type boolean :description "Optional flag to wait for the buffer process to finish before reading")
                '(:name "lines" :type array :description "Optional [start, end] line range, 1-indexed inclusive"))
    :category "emacs"
-   :function #'gptel-fommil--read-buffer))
+   :confirm
+   (lambda (name &optional _wait _lines)
+     (not (gptel-fommil--buffer-safe-p name)))
+   :function #'gptel-fommil--read))
 
-(defun gptel-fommil--read-buffer (name &optional wait lines)
-  ;;(message "[gptel-tool] [read-buffer] %S wait=%S lines=%S" name wait lines)
+(defun gptel-fommil--read (name &optional wait lines)
+  ;;(message "[gptel-tool] [read] %S wait=%S lines=%S" name wait lines)
   ;; WORKAROUND https://github.com/karthink/gptel/issues/714
   (setq wait (not (memq wait '(nil :json-false))))
   (gptel-fommil--truncate
    (if-let ((buf (or (get-buffer name)
                      (find-buffer-visiting name)
-                     (string-prefix-p "*ag search text:" name))))
+                     ;; open the file if it exists on disk
+                     (and (stringp name)
+                          (file-readable-p (expand-file-name name))
+                          (find-file-noselect (expand-file-name name))))))
        (progn
+         (gptel-fommil--approve-buffer (buffer-name buf))
          (when wait
            (let ((proc (get-buffer-process buf))
                  (timeout 30)
@@ -217,7 +261,7 @@
                (setq elapsed (+ elapsed 0.5))
                (setq proc (get-buffer-process buf)))
              (when (>= elapsed timeout)
-               (message "[gptel-tool] [read-buffer] timed out waiting for process"))))
+               (message "[gptel-tool] [read] timed out waiting for process"))))
          (with-current-buffer buf
            (let ((content (buffer-substring-no-properties (point-min) (point-max))))
              (if lines
@@ -243,10 +287,10 @@
      (setq hidden (not (memq hidden '(nil :json-false))))
      (or hidden
          (let ((parts (split-string (expand-file-name dir) "/" t)))
-           (cl-some (lambda (part)
-                      (and (string-prefix-p "." part)
-                           (not (string= part ".emacs.d"))))
-                    parts))))
+           (seq-some (lambda (part)
+                       (and (string-prefix-p "." part)
+                            (not (string= part ".emacs.d"))))
+                     parts))))
    :function
    (lambda (dir &optional max-depth suffix hidden)
      "List DIR recursively to MAX-DEPTH (default 3), optionally filtering by SUFFIX."
@@ -267,7 +311,7 @@
                            (mapc (lambda (f)
                                    (let ((rel (file-relative-name f root)))
                                      (when (or hidden
-                                               (not (cl-some
+                                               (not (seq-some
                                                      (lambda (part)
                                                        (string-prefix-p "." part))
                                                      (split-string rel "/" t))))
@@ -282,30 +326,7 @@
                 (format "[ERROR] Directory too dense: exceeded %d entries. Use a suffix filter or lower max-depth." max-files)
               (string-join files "\n")))))))))
 
-(defun gptel-fommil-open-file ()
-  (gptel-make-tool
-   :name "open-file"
-   :description "Open a file in Emacs (creates a buffer visiting it) and return its contents. Never use this if the file is already opened in a buffer. Requires user confirmation."
-   :args '((:name "path" :type string :description "Absolute file path to open")
-           (:name "lines" :type array :description "Optional [start, end] line range, 1-indexed inclusive"))
-   :category "filesystem"
 
-   :confirm
-   (lambda (path &optional _lines)
-     (message "[gptel-fommil-open-file-confirm-p] %S" path)
-     (let ((expanded (expand-file-name path))
-           (suffix (file-name-extension path t)))
-       (not (or (find-buffer-visiting expanded)
-                (member suffix gptel-fommil-safe-suffixes)))))
-
-   :function
-   (lambda (path &optional lines)
-     ;;(message "[gptel-tool] [open-file] %S" path lines)
-     (let ((expanded (expand-file-name path)))
-       (if (not (file-readable-p expanded))
-           (format "[ERROR] Cannot read: %s" expanded)
-         (let ((buf (find-file-noselect expanded)))
-           (gptel-fommil--read-buffer (buffer-name buf) nil lines)))))))
 
 (defun gptel-fommil-buffer-search ()
   (gptel-make-tool
@@ -317,14 +338,15 @@
    (lambda (query)
      ;;(message "[gptel-tool] [buffer-search] %S" query)
      (let ((results nil))
-       (dolist (buf (gptel-fommil--file-buffer-list))
-         (when-let ((file (buffer-file-name buf)))
+       (dolist (buf (buffer-list))
+         (when (and (buffer-file-name buf)
+                    (gptel-fommil--buffer-safe-p buf))
            (with-current-buffer buf
              (save-excursion
                (goto-char (point-min))
                (while (search-forward query nil t)
                  (push (format "%s:%d:%s"
-                               (file-name-nondirectory file)
+                               (file-name-nondirectory (buffer-file-name buf))
                                (line-number-at-pos (point))
                                (string-trim (thing-at-point 'line t)))
                        results))))))
@@ -349,12 +371,10 @@
    :confirm
    (lambda (context _query)
      ;;(message "[gptel projectile_search_confirm] %s" context)
-     (let* ((default-directory (if (file-directory-p context) context
-                                 (file-name-directory context)))
-            (root (projectile-project-root)))
-       ;;(message "dir root %s %s" default-directory root)
-       (not (and root
-                 (file-directory-p (expand-file-name ".git" root))))))
+     (let ((dir (if (file-directory-p context)
+                    context
+                  (file-name-directory context))))
+       (not (projectile-project-root dir))))
 
    :function
    (lambda (context query)
@@ -363,15 +383,12 @@
      (let* ((default-directory (if (file-directory-p context) context
                                  (file-name-directory context)))
             (root (projectile-project-root))
-            ;; this next line will suppress context, which can be uncommented
-            ;; for additional security. But since we're already relying on
-            ;; projectile's various ignorelists, this is reasonably safe.
-            ;;(ag-arguments (cons "-o" ag-arguments))
-            )
+            ;; suppress context for privacy
+            (ag-arguments (cons "-o" ag-arguments)))
        (cl-letf (((symbol-function 'display-buffer) #'ignore))
          (projectile-ag query))
        (let* ((buf-name (ag/buffer-name query root nil))
-              (result (gptel-fommil--read-buffer buf-name t nil)))
+              (result (gptel-fommil--read buf-name t nil)))
          (kill-buffer buf-name)
          result)))))
 
@@ -567,10 +584,13 @@
                  (delete-file tmp-new)
                  (delete-directory tmp-dir)
                  (let ((buf (find-file-noselect tmp-patch)))
+                   (delete-file tmp-patch)
                    (with-current-buffer buf
+                     (set-buffer-modified-p nil)
                      (diff-mode)
                      (setq buffer-read-only t)
-                     (setq-local default-directory (file-name-directory expanded)))
+                     (setq-local default-directory (file-name-directory expanded))
+                     (rename-buffer (format "*diff: %s*" fname) t))
                    (display-buffer buf)
                    (format "The proposal is available as a diff-mode window. Use `C-c C-a` to apply each hunk.")))))))))))
 
@@ -597,9 +617,8 @@
    gptel-tools (list
                 (gptel-fommil-calc)
                 (gptel-fommil-emacs-state)
-                (gptel-fommil-read-buffer)
+                (gptel-fommil-read)
                 (gptel-fommil-ls)
-                (gptel-fommil-open-file)
                 (gptel-fommil-buffer-search)
                 (gptel-fommil-projectile-search)
                 (gptel-fommil-find-tag)
