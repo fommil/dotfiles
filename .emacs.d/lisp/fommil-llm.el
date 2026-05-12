@@ -77,7 +77,7 @@
   (setq
    gptel-model 'gpt-5.5
    gptel-backend (gptel-make-openai "OpenAI"
-                   :key #'gptel-api-key-from-auth-source))
+                                    :key #'gptel-api-key-from-auth-source))
 
   ;; AWS Bedrock uses external tools to manage authentication. If you have
   ;; a personal account you might just be using credential tokens.
@@ -380,17 +380,18 @@ file path and checked by suffix."
    (lambda (context query)
      (require 'ag)
      ;;(message "[gptel-tool] [projectile-search] %S %S" context query)
-     (let* ((default-directory (if (file-directory-p context) context
-                                 (file-name-directory context)))
-            (root (projectile-project-root))
-            ;; suppress context for privacy
-            (ag-arguments (cons "-o" ag-arguments)))
-       (cl-letf (((symbol-function 'display-buffer) #'ignore))
-         (projectile-ag query))
-       (let* ((buf-name (ag/buffer-name query root nil))
-              (result (gptel-fommil--read buf-name t nil)))
-         (kill-buffer buf-name)
-         result)))))
+     (save-window-excursion
+       (let* ((default-directory (if (file-directory-p context) context
+                                   (file-name-directory context)))
+              (root (projectile-project-root))
+              ;; suppress context for privacy
+              (ag-arguments (cons "-o" ag-arguments)))
+         (cl-letf (((symbol-function 'display-buffer) #'ignore))
+           (projectile-ag query))
+         (let* ((buf-name (ag/buffer-name query root nil))
+                (result (gptel-fommil--read buf-name t nil)))
+           (kill-buffer buf-name)
+           result))))))
 
 (defun gptel-fommil-find-tag ()
   (gptel-make-tool
@@ -613,6 +614,7 @@ file path and checked by suffix."
    gptel--system-message (alist-get 'custom gptel-directives)
    gptel--tool-truncation 1024 ;; requires https://github.com/karthink/gptel/pull/1401
    gptel-track-media t
+   gptel-include-tool-results nil
    gptel-max-tokens 16000 ;; possibly needs to be set per model
    gptel-tools (list
                 (gptel-fommil-calc)
