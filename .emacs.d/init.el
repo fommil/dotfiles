@@ -858,8 +858,12 @@ converted to PDF at the same location."
 
   (add-to-list 'eglot-server-programs
                '((java-ts-mode java-mode) .
-                 ("jdtls"
+                 ("jdtls" ;; https://download.eclipse.org/jdtls/milestones/
+                  ;; TODO add lsp-java-add-import (it's the only one I'd want)
+                  ;; https://github.com/emacs-lsp/lsp-java#refactoring
                   ;; TODO add emacs handler support for classFileContentsSupport
+                  ;;
+                  ;; TODO implement jump-to-source in deps https://github.com/eclipse-jdtls/eclipse.jdt.ls/issues/3534
                   :initializationOptions
                   (:extendedClientCapabilities
                    (:classFileContentsSupport :json-false)))))
