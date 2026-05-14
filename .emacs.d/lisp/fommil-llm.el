@@ -125,7 +125,7 @@
     ".md" ".txt" ".org"
     ".diff" ".patch"
     ".sql"
-    "Makefile" "README"
+    "Makefile" "README" "NEWS"
     ".json" ".yaml" ".yml" ".xml" ".proto"
     ".sh"
     ".toml" ".conf" ".cfg" ".ini" ".properties"
@@ -597,6 +597,18 @@ file path and checked by suffix."
                    (display-buffer buf)
                    (format "The proposal is available as a diff-mode window. Use `C-c C-a` to apply each hunk.")))))))))))
 
+(defun gptel-fommil--mark-history-read-only (_beg _end)
+  (when gptel-mode
+    (let ((inhibit-read-only t))
+      (save-excursion
+        (goto-char (point-max))
+        (when (search-backward (gptel-prompt-prefix-string) nil t)
+          (let ((end (point)))
+            (when (> end (point-min))
+              (put-text-property (point-min) end 'read-only t)
+              (put-text-property (1- end) end
+                                 'rear-nonsticky '(read-only)))))))))
+
 (use-package gptel
   ;;:ensure t
   :ensure nil
@@ -605,6 +617,8 @@ file path and checked by suffix."
   (require 'gptel-context)
 
   ;;(add-hook 'gptel-post-response-functions #'gptel-end-of-response)
+  (add-hook 'gptel-post-response-functions #'gptel-fommil--mark-history-read-only)
+  (push '(markdown-mode . "> ") gptel-prompt-prefix-alist)
   (setq
    ;; org-mode integration is not great, and there are keybinding collisions
    ;;gptel-default-mode 'org-mode
