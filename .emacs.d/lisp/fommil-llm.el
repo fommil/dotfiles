@@ -229,15 +229,16 @@ file path and checked by suffix."
 (defun gptel-fommil-read ()
   (gptel-make-tool
    :name "read"
-   :description "Read and display the contents of an Emacs buffer by name. If no buffer exists but the name is a readable file path, the file is opened automatically. Requires user confirmation for files not in the safe-suffixes list."
-   :args (list '(:name "name" :type string :description "Buffer name (e.g. filename or buffer name)")
-               '(:name "wait" :type boolean :description "Optional flag to wait for the buffer process to finish before reading")
+   :description "Read the contents of a file or Emacs buffer."
+   :args (list '(:name "name" :type string :description "Buffer name (e.g. absolute filename or buffer name)")
                '(:name "lines" :type array :description "Optional [start, end] line range, 1-indexed inclusive"))
    :category "emacs"
    :confirm
-   (lambda (name &optional _wait _lines)
+   (lambda (name &optional _lines)
      (not (gptel-fommil--buffer-safe-p name)))
-   :function #'gptel-fommil--read))
+   :function
+   (lambda (name &optional lines)
+     (gptel-fommil--read name t lines))))
 
 (defun gptel-fommil--read (name &optional wait lines)
   ;;(message "[gptel-tool] [read] %S wait=%S lines=%S" name wait lines)
@@ -254,7 +255,7 @@ file path and checked by suffix."
          (gptel-fommil--approve-buffer (buffer-name buf))
          (when wait
            (let ((proc (get-buffer-process buf))
-                 (timeout 30)
+                 (timeout 10)
                  (elapsed 0))
              (while (and proc (process-live-p proc) (< elapsed timeout))
                (sleep-for 0.5)
