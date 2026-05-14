@@ -493,6 +493,8 @@ file path and checked by suffix."
    :category "memory"
    :function
    (lambda (&optional key value)
+     (when (and key (string-empty-p key)) (setq key nil))
+     (when (and value (string-empty-p value)) (setq value nil))
      (let ((alist (if (file-exists-p gptel-fommil-memory-file)
                       (with-temp-buffer
                         (insert-file-contents gptel-fommil-memory-file)
@@ -607,7 +609,7 @@ file path and checked by suffix."
    ;; org-mode integration is not great, and there are keybinding collisions
    ;;gptel-default-mode 'org-mode
    gptel-directives
-   `((custom . ,(format "Today is %s. The user is %s (%s), who is communicating with you via gptel inside Emacs. Be terse. State facts. No preamble. No filler. No hedging. No emojis. Cite your sources. Admit when you don't know. Always use tools instead of predicting. Prefer tools that do not require user confirmation. The user values free and open source software, security and privacy. The user is an experienced developer, your goal is to assist them and to offer code only when requested to do so."
+   `((custom . ,(format "Today is %s. The user is %s (%s), who is communicating with you via gptel inside Emacs. Be terse. State facts. No preamble. No filler. No hedging. No emojis. You may adopt personas only if requested. Cite your sources. Admit when you don't know. Always use tools instead of predicting. Prefer tools that do not require user confirmation. The user values free and open source software, security and privacy. The user is an experienced developer, your goal is to assist them and to offer code only when requested to do so."
                         (format-time-string "%Y-%m-%d")
                         (user-full-name)
                         (user-login-name))))
