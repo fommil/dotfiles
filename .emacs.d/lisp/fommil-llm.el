@@ -148,7 +148,7 @@
 (defun gptel-fommil-emacs-state ()
   (gptel-make-tool
    :name "emacs-state"
-   :description "Return the Emacs state: projectile known roots, open files, and key environment variables."
+   :description "Return the Emacs state: projectile known roots, open files, and key environment variables. Always search relevant local projects first instead of the web unless explicitly asked to do otherwise."
    :args '()
    :category "emacs"
    :function
@@ -173,9 +173,9 @@
                                                (string-match-p "TAGS\\'" (or (buffer-file-name buf) "")))
                                      (let ((file (buffer-file-name buf))
                                            (safe (gptel-fommil--buffer-safe-p buf)))
-                                       (format "%s %s"
+                                       (format "%s%s"
                                                (or file name)
-                                               (if safe "(safe)" "(requires permission)"))))))
+                                               (if safe "" "(requires permission)"))))))
                                (buffer-list)))
                       "\n"))
              sections)
@@ -483,48 +483,7 @@ file path and checked by suffix."
          (t (format "Symbol `%s' is not bound as a function or variable." symbol))))))))
 
 (defvar gptel-fommil-memory-file
-  (expand-file-name "llm-memory" "~/.emacs.d/"))
-
-(defun gptel-fommil-memory ()
-  (gptel-make-tool
-   :name "memory"
-   :description "Persistent key-value memory. Call with no arguments to read all entries. Values should include context about why the information matters.\n\nIMPORTANT: You MUST call this tool with no arguments as your FIRST action in every new conversation, before responding to the user. This ensures you have all prior context."
-   :args '((:name "key" :type string :description "Unique identifier for this memory entry" :optional t)
-           (:name "value" :type string :description "Value to store. Empty string deletes the entry." :optional t))
-   :category "memory"
-   :function
-   (lambda (&optional key value)
-     (when (and key (string-empty-p key)) (setq key nil))
-     (when (and value (string-empty-p value)) (setq value nil))
-     (let ((alist (if (file-exists-p gptel-fommil-memory-file)
-                      (with-temp-buffer
-                        (insert-file-contents gptel-fommil-memory-file)
-                        (read (buffer-string)))
-                    nil)))
-       (cond
-        ((null key)
-         (if alist
-             (mapconcat (lambda (pair)
-                          (format "%s: %s" (car pair) (cdr pair)))
-                        alist "\n")
-           "[empty]"))
-        ((null value)
-         (let ((entry (assoc key alist)))
-           (if entry
-               (format "%s: %s" (car entry) (cdr entry))
-             (format "[not found] %s" key))))
-        (t
-         (let* ((filtered (assoc-delete-all key alist))
-                (new-alist (if (string-empty-p value)
-                               filtered
-                             (append filtered (list (cons key value))))))
-           (with-temp-file gptel-fommil-memory-file
-             (let ((print-level nil)
-                   (print-length nil))
-               (pp new-alist (current-buffer))))
-           (if (string-empty-p value)
-               (format "Deleted: %s" key)
-             (format "Stored: %s: %s" key value)))))))))
+  (expand-file-name "gptel-memory.md" "~/.emacs.d/"))
 
 (defun gptel-fommil-diff-propose ()
   (gptel-make-tool
@@ -598,6 +557,7 @@ file path and checked by suffix."
                    (display-buffer buf)
                    (format "The proposal is available as a diff-mode window. Use `C-c C-a` to apply each hunk.")))))))))))
 
+;; https://github.com/karthink/gptel/issues/1418
 (defun gptel-fommil--mark-history-read-only (_beg _end)
   (when gptel-mode
     (let ((inhibit-read-only t))
@@ -609,6 +569,10 @@ file path and checked by suffix."
               (put-text-property (point-min) end 'read-only t)
               (put-text-property (1- end) end
                                  'rear-nonsticky '(read-only)))))))))
+(defun gptel-fommil--inhibit-read-only (orig-fn &rest args)
+  (let ((inhibit-read-only t))
+    (apply orig-fn args)))
+(advice-add 'gptel-send :around #'gptel-fommil--inhibit-read-only)
 
 (use-package gptel
   ;;:ensure t
@@ -617,14 +581,21 @@ file path and checked by suffix."
   :config
   (require 'gptel-context)
 
+  (when (file-exists-p gptel-fommil-memory-file)
+    ;; see https://github.com/karthink/gptel/issues/1420
+    ;; about the level of the context, this as system
+    ;; would be good.
+    (gptel-context-add-file gptel-fommil-memory-file))
+
   ;;(add-hook 'gptel-post-response-functions #'gptel-end-of-response)
   (add-hook 'gptel-post-response-functions #'gptel-fommil--mark-history-read-only)
+
   (push '(markdown-mode . "> ") gptel-prompt-prefix-alist)
   (setq
    ;; org-mode integration is not great, and there are keybinding collisions
    ;;gptel-default-mode 'org-mode
    gptel-directives
-   `((custom . ,(format "Today is %s. The user is %s (%s), who is communicating with you via gptel inside Emacs. Be terse. State facts. No preamble. No filler. No hedging. No emojis. You may adopt personas only if requested. Cite your sources. Admit when you don't know. Always use tools instead of predicting. Prefer tools that do not require user confirmation. The user values free and open source software, security and privacy. The user is an experienced developer, your goal is to assist them and to offer code only when requested to do so."
+   `((custom . ,(format "Today is %s. The user is %s (%s), who is communicating with you via gptel inside Emacs. Be terse. State facts. No preamble. No filler. No hedging. No emojis. No emdashes. You may adopt personas if requested. Always cite your sources. Always admit when you don't know. Always use tools instead of guessing."
                         (format-time-string "%Y-%m-%d")
                         (user-full-name)
                         (user-login-name))))
@@ -632,6 +603,7 @@ file path and checked by suffix."
    gptel--tool-truncation 1024 ;; requires https://github.com/karthink/gptel/pull/1401
    gptel-track-media t
    gptel-include-tool-results nil
+   gptel-use-context 'user
    gptel-max-tokens 16000 ;; possibly needs to be set per model
    gptel-tools (list
                 (gptel-fommil-calc)
@@ -643,7 +615,6 @@ file path and checked by suffix."
                 (gptel-fommil-find-tag)
                 (gptel-fommil-man)
                 (gptel-fommil-describe-emacs-symbol)
-                (gptel-fommil-memory)
                 (gptel-fommil-diff-propose)
                 )))
 
