@@ -435,6 +435,22 @@ file path and checked by suffix."
                                xrefs)
                        "\n"))))))))))
 
+(defun gptel-fommil-project-files ()
+  (gptel-make-tool
+   :name "project-files"
+   :description "List all files in a projectile project (respects .gitignore). Returns a flat newline-separated list of paths relative to the project root."
+   :args (list '(:name "context" :type string :description "Any file or directory in the project"))
+   :category "filesystem"
+   :function
+   (lambda (context)
+     (let* ((default-directory (if (file-directory-p context) context
+                                 (file-name-directory context)))
+            (root (projectile-project-root)))
+       (if (not root)
+           (format "[ERROR] No projectile project found for: %s" context)
+         (gptel-fommil--truncate
+          (string-join (projectile-project-files root) "\n")))))))
+
 (defun gptel-fommil-man ()
   (gptel-make-tool
    :name "man"
@@ -616,6 +632,7 @@ file path and checked by suffix."
                 (gptel-fommil-man)
                 (gptel-fommil-describe-emacs-symbol)
                 (gptel-fommil-diff-propose)
+                (gptel-fommil-project-files)
                 )))
 
 (use-package mcp
