@@ -73,6 +73,7 @@
  compilation-scroll-output 'first-error
  compilation-ask-about-save nil
  native-comp-async-report-warnings-errors nil
+ warning-suppress-types '(undo discard-info)
  source-directory (getenv "EMACS_SOURCE")
  org-confirm-babel-evaluate nil
  nxml-slash-auto-complete-flag t

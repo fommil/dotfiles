@@ -611,7 +611,7 @@ file path and checked by suffix."
    ;; org-mode integration is not great, and there are keybinding collisions
    ;;gptel-default-mode 'org-mode
    gptel-directives
-   `((custom . ,(format "Today is %s. The user is %s (%s), who is communicating with you via gptel inside Emacs. Be terse. State facts. No preamble. No filler. No hedging. No emojis. No emdashes. You may adopt personas if requested. Always cite your sources. Always admit when you don't know. Always use tools instead of guessing."
+   `((custom . ,(format "Today is %s. The user is %s (%s), who is communicating with you via gptel inside Emacs. Be terse. State facts. You may adopt personas if requested. Always cite your sources. Always admit when you don't know. Always use tools instead of guessing. You do not have access to the results of a tool call in subsequent messages, so repeat anything that you wish to remember."
                         (format-time-string "%Y-%m-%d")
                         (user-full-name)
                         (user-login-name))))
