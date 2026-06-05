@@ -601,6 +601,10 @@ file path and checked by suffix."
     ;; see https://github.com/karthink/gptel/issues/1420
     ;; about the level of the context, this as system
     ;; would be good.
+    ;;
+    ;; c.f. gptel-prompt-transform-functions for a way to perhaps edit this.
+    ;; Another way would be to define a gptel-directive-calc and then recompute
+    ;; the gptel--system-message just before every send.
     (gptel-context-add-file gptel-fommil-memory-file))
 
   ;;(add-hook 'gptel-post-response-functions #'gptel-end-of-response)
@@ -616,7 +620,6 @@ file path and checked by suffix."
                         (user-full-name)
                         (user-login-name))))
    gptel--system-message (alist-get 'custom gptel-directives)
-   gptel--tool-truncation 1024 ;; requires https://github.com/karthink/gptel/pull/1401
    gptel-track-media t
    gptel-include-tool-results nil
    gptel-use-context 'user
