@@ -597,16 +597,6 @@ file path and checked by suffix."
   :config
   (require 'gptel-context)
 
-  (when (file-exists-p gptel-fommil-memory-file)
-    ;; see https://github.com/karthink/gptel/issues/1420
-    ;; about the level of the context, this as system
-    ;; would be good.
-    ;;
-    ;; c.f. gptel-prompt-transform-functions for a way to perhaps edit this.
-    ;; Another way would be to define a gptel-directive-calc and then recompute
-    ;; the gptel--system-message just before every send.
-    (gptel-context-add-file gptel-fommil-memory-file))
-
   ;;(add-hook 'gptel-post-response-functions #'gptel-end-of-response)
   (add-hook 'gptel-post-response-functions #'gptel-fommil--mark-history-read-only)
 
@@ -615,10 +605,14 @@ file path and checked by suffix."
    ;; org-mode integration is not great, and there are keybinding collisions
    ;;gptel-default-mode 'org-mode
    gptel-directives
-   `((custom . ,(format "Today is %s. The user is %s (%s), who is communicating with you via gptel inside Emacs. Be terse. State facts. You may adopt personas if requested. Always cite your sources. Always admit when you don't know. Always use tools instead of guessing. You do not have access to the results of a tool call in subsequent messages, so repeat anything that you wish to remember."
-                        (format-time-string "%Y-%m-%d")
-                        (user-full-name)
-                        (user-login-name))))
+   `((custom . ,(lambda () (with-temp-buffer
+                        (insert (format "Today is %s. The user is %s (%s), who is communicating with you via gptel inside Emacs. Be terse. State facts. You may adopt personas if requested. Always cite your sources. Always admit when you don't know. Always use tools instead of guessing. You do not have access to the results of a tool call in subsequent messages, so repeat anything that you wish to remember.\n\nRequest context:\n"
+                                        (format-time-string "%Y-%m-%d")
+                                        (user-full-name)
+                                        (user-login-name)))
+                        (when (file-exists-p gptel-fommil-memory-file)
+                          (insert-file-contents gptel-fommil-memory-file))
+                        (buffer-string)))))
    gptel--system-message (alist-get 'custom gptel-directives)
    gptel-track-media t
    gptel-include-tool-results nil
