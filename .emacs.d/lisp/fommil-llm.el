@@ -146,41 +146,34 @@
        (error (format "[ERROR] %s" (error-message-string err)))))))
 
 (defun gptel-fommil-emacs-state ()
-  (gptel-make-tool
-   :name "emacs-state"
-   :description "Return the Emacs state: projectile known roots, open files, and key environment variables. Always search relevant local projects first instead of the web unless explicitly asked to do otherwise."
-   :args '()
-   :category "emacs"
-   :function
-   (lambda ()
-     (let ((sections nil))
-       (push (format "system-type: %s\n" (symbol-name system-type)) sections)
-       (push (format "emacs-version: %s\n" emacs-version) sections)
-       (push (format "open projects:\n%s"
-                     (string-join (seq-take (projectile-open-projects) 50) "\n"))
-             sections)
-       (push (format "projectile-known-projects:\n%s"
-                     (string-join (seq-take projectile-known-projects 50) "\n"))
-             sections)
-       (push (format "open buffers:\n%s"
-                     (string-join
-                      (seq-filter
-                       #'identity
-                       (mapcar (lambda (buf)
-                                 (let ((name (buffer-name buf)))
-                                   (unless (or (string-prefix-p " " name)
-                                               (string-match-p "\\`\\*.*\\*\\'" name)
-                                               (string-match-p "TAGS\\'" (or (buffer-file-name buf) "")))
-                                     (let ((file (buffer-file-name buf))
-                                           (safe (gptel-fommil--buffer-safe-p buf)))
-                                       (format "%s%s"
-                                               (or file name)
-                                               (if safe "" "(requires permission)"))))))
-                               (buffer-list)))
-                      "\n"))
-             sections)
-       (string-join (nreverse sections) "\n\n")))))
-
+  (let ((sections nil))
+    (push (format "system-type: %s" (symbol-name system-type)) sections)
+    (push (format "emacs-version: %s" emacs-version) sections)
+    (push (format "open projects:\n%s"
+                  (string-join (seq-take (projectile-open-projects) 50) "\n"))
+          sections)
+    (push (format "projectile-known-projects:\n%s"
+                  (string-join (seq-take projectile-known-projects 50) "\n"))
+          sections)
+    (push (format "open buffers:\n%s"
+                  (string-join
+                   (seq-filter
+                    #'identity
+                    (mapcar (lambda (buf)
+                              (let ((name (buffer-name buf)))
+                                (unless (or (string-prefix-p " " name)
+                                            (string-match-p "\\`\\*.*\\*\\'" name)
+                                            (with-current-buffer buf (derived-mode-p 'dired-mode))
+                                            (string-match-p "TAGS\\'" (or (buffer-file-name buf) "")))
+                                  (let ((file (buffer-file-name buf))
+                                        (safe (gptel-fommil--buffer-safe-p buf)))
+                                    (format "%s%s"
+                                            (or file name)
+                                            (if safe "" " (requires permission)"))))))
+                            (buffer-list)))
+                   "\n"))
+          sections)
+    (string-join (nreverse sections) "\n")))
 
 (defvar gptel-fommil--allowed-buffers nil
   "List of buffer names the user has approved for reading this session.
@@ -218,7 +211,7 @@ file path and checked by suffix."
               (gptel-fommil--buffer-safe-p name))
     (push name gptel-fommil--allowed-buffers)))
 
-(defvar gptel-fommil-tool-max-chars 100000)
+(defvar gptel-fommil-tool-max-chars 1000000)
 (defun gptel-fommil--truncate (output)
   (if (> (length output) gptel-fommil-tool-max-chars)
       (format "%s\n\n[TRUNCATED at %d chars]"
@@ -611,7 +604,11 @@ file path and checked by suffix."
                                         (user-full-name)
                                         (user-login-name)))
                         (when (file-exists-p gptel-fommil-memory-file)
-                          (insert-file-contents gptel-fommil-memory-file))
+                          (insert-file-contents gptel-fommil-memory-file)
+                          (goto-char (point-max)))
+                        (insert
+                         "\n\nEmacs context:"
+                         (gptel-fommil-emacs-state))
                         (buffer-string)))))
    gptel--system-message (alist-get 'custom gptel-directives)
    gptel-track-media t
@@ -620,7 +617,6 @@ file path and checked by suffix."
    gptel-max-tokens 16000 ;; possibly needs to be set per model
    gptel-tools (list
                 (gptel-fommil-calc)
-                (gptel-fommil-emacs-state)
                 (gptel-fommil-read)
                 (gptel-fommil-ls)
                 (gptel-fommil-buffer-search)
