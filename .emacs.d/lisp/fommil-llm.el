@@ -611,7 +611,6 @@ file path and checked by suffix."
                          (gptel-fommil-emacs-state))
                         (buffer-string)))))
    gptel--system-message (alist-get 'custom gptel-directives)
-   gptel-track-media t
    gptel-include-tool-results nil
    gptel-use-context 'user
    gptel-max-tokens 16000 ;; possibly needs to be set per model
