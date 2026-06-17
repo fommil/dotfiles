@@ -1049,7 +1049,7 @@ converted to PDF at the same location."
   ((spice-mode . font-lock-mode))
   :config
   (set-face-attribute 'spice-title-face nil :inherit 'default
-                      :weight 'normal :foreground 'unspecified
+                      :weight 'bold :foreground 'unspecified
                       :background 'unspecified :underline nil))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
