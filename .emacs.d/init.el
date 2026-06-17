@@ -1045,7 +1045,12 @@ converted to PDF at the same location."
 
 (use-package spice-mode
   :mode "\\.spice\\'"
-  :hook ((spice-mode . font-lock-mode)))
+  :hook
+  ((spice-mode . font-lock-mode))
+  :config
+  (set-face-attribute 'spice-title-face nil :inherit 'default
+                      :weight 'normal :foreground 'unspecified
+                      :background 'unspecified :underline nil))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; OS specific
