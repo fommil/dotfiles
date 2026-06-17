@@ -390,7 +390,7 @@ Inspired by `org-combine-plists'."
   (setq
    clean-buffer-list-kill-regexps '("^[*].*")
    clean-buffer-list-kill-never-regexps
-   '("^\\([#]\\|[*]\\(scratch\\|Messages\\)\\).*")))
+   '("^\\([#]\\|[*]\\(scratch\\|Messages\\|Mickey\\)\\).*")))
 
 (use-package persistent-scratch
   :config
@@ -1042,6 +1042,10 @@ converted to PDF at the same location."
    (rust-mode . yas-minor-mode)
    (rust-mode . eglot-ensure)
    (rust-mode . company-mode)))
+
+(use-package spice-mode
+  :mode "\\.spice\\'"
+  :hook ((spice-mode . font-lock-mode)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; OS specific

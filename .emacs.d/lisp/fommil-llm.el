@@ -166,10 +166,20 @@
                                             (with-current-buffer buf (derived-mode-p 'dired-mode))
                                             (string-match-p "TAGS\\'" (or (buffer-file-name buf) "")))
                                   (let ((file (buffer-file-name buf))
-                                        (safe (gptel-fommil--buffer-safe-p buf)))
-                                    (format "%s%s"
+                                        (safe (gptel-fommil--buffer-safe-p buf))
+                                        (win (get-buffer-window buf t)))
+                                    (format "%s%s%s"
                                             (or file name)
-                                            (if safe "" " (requires permission)"))))))
+                                            (if safe "" " (requires permission)")
+                                            (if win
+                                                (with-selected-window win
+                                                  (format " [visible lines %d-%d]"
+                                                          (line-number-at-pos (window-start win))
+                                                          (line-number-at-pos (max (window-start win)
+                                                                           (1- (window-end win t))))))
+                                              (with-current-buffer buf
+                                                (format " [point at line %d]"
+                                                        (line-number-at-pos (point))))))))))
                             (buffer-list)))
                    "\n"))
           sections)

@@ -31,3 +31,8 @@ export PATH="$GOPATH/bin:$PATH"
 
 # some useful things in here like netlistsvg
 export PATH="$HOME/node_modules/.bin:$PATH"
+
+
+# zero to asic
+export DOCKER_TAG=2025.07
+export DESIGNS=$HOME/Projects/asic/
