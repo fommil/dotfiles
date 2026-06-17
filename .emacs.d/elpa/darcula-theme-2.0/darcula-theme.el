@@ -92,13 +92,13 @@
  ;; http://www.gnu.org/software/emacs/manual/html_node/elisp/Faces-for-Font-Lock.html
  '(font-lock-warning-face ((t (:underline (:style wave :color "orange" :inherit 'default)))))
                                         ;for a construct that is peculiar, or that greatly changes the meaning of other text.
- '(font-lock-function-name-face ((t (:foreground "#fec66c" :inherit 'default))))
+ '(font-lock-function-name-face ((t (:foreground "#fec66c" :weight normal :inherit 'default))))
                                         ;for the name of a function being defined or declared.
  '(font-lock-variable-name-face ((t (:inherit 'default))))
                                         ;for the name of a variable being defined or declared.
- '(font-lock-keyword-face ((t (:foreground "#cc7832" :inherit 'default))))
+ '(font-lock-keyword-face ((t (:foreground "#cc7832" :weight normal :inherit 'default))))
                                         ;for a keyword with special syntactic significance, like ‘for’ and ‘if’ in C.
- '(font-lock-comment-face ((t (:foreground "#808080" :inherit 'default))))
+ '(font-lock-comment-face ((t (:foreground "#808080" :slant normal :inherit 'default))))
                                         ;for comments.
  '(font-lock-comment-delimiter-face ((t (:inherit 'font-lock-comment-face))))
                                         ;for comments delimiters, like ‘/*’ and ‘*/’ in C.
@@ -110,7 +110,7 @@
                                         ;for the names of built-in functions.
  '(font-lock-preprocessor-face ((t (:inherit 'font-lock-builtin-face))))
                                         ;for preprocessor commands.
- '(font-lock-string-face ((t (:foreground "#a6c25c" :inherit 'default))))
+ '(font-lock-string-face ((t (:foreground "#a6c25c" :weight normal :inherit 'default))))
                                         ;for string constants.
  '(font-lock-doc-face ((t (:foreground "#629755" :inherit 'font-lock-comment-face))))
                                         ;for documentation strings in the code.
