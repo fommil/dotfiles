@@ -14,7 +14,7 @@ update-desktop-database ~/.local/share/applications
 gsettings set org.gtk.Settings.FileChooser show-hidden false
 
 # needed for some apps (e.g. rpi-imager) to gain privileged access
-lxpolkit &
+#lxpolkit &
 
 # auto disk mounting (under /media/<user>)
 devmon &
