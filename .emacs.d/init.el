@@ -48,6 +48,7 @@
  column-number-mode t
  scroll-error-top-bottom t
  scroll-margin 15
+ trusted-content '("~/.emacs.d/" "~/Projects/")
  gc-cons-threshold 20000000
  large-file-warning-threshold 100000000
  user-full-name "Sam Halliday")

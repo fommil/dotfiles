@@ -609,8 +609,8 @@ file path and checked by suffix."
    ;;gptel-default-mode 'org-mode
    gptel-directives
    `((custom . ,(lambda () (with-temp-buffer
-                        (insert (format "Today is %s. The user is %s (%s), who is communicating with you via gptel inside Emacs. Be terse. State facts. Always cite your sources. Always admit when you don't know. Always use tools instead of guessing. You do not have access to the results of a tool call in subsequent messages, so repeat anything that you wish to remember.\n\nRequest context:\n"
-                                        (format-time-string "%Y-%m-%d")
+                        (insert (format "The current date and time is %s. The user is %s (%s), who is communicating with you via gptel inside Emacs. Be terse. State facts. Always cite your sources. Always admit when you don't know. Always use tools instead of guessing. You do not have access to the results of a tool call in subsequent messages, so repeat anything that you wish to remember.\n\nRequest context:\n"
+                                        (format-time-string "%Y-%m-%d %H:%M:%S %Z")
                                         (user-full-name)
                                         (user-login-name)))
                         (when (file-exists-p gptel-fommil-memory-file)
