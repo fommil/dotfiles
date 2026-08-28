@@ -94,6 +94,42 @@
                    :model-region 'us))
   )
 
+;; TODO would be good to have the > continue automatically when writing prompts (double return going back to bare)
+
+(defvar gptel-fommil-session-directory
+  (expand-file-name "gptel" user-emacs-directory))
+
+(defun gptel-fommil--save-session ()
+  "Archive the current buffer if it is an unsaved `gptel-mode' session."
+  (when (and (bound-and-true-p gptel-mode)
+             (buffer-modified-p)
+             (> (buffer-size) 10))
+    (with-demoted-errors "gptel session save failed: %S"
+      (if buffer-file-name
+          (save-buffer)
+        (make-directory gptel-fommil-session-directory t)
+        (let* ((ext (if (derived-mode-p 'org-mode) ".org" ".md"))
+               (stamp (format-time-string "%Y-%m-%d_%H%M"))
+               (file (expand-file-name (concat stamp ext)
+                                       gptel-fommil-session-directory))
+               (n 1))
+          (while (file-exists-p file)
+            (setq file (expand-file-name (format "%s-%d%s" stamp n ext)
+                                         gptel-fommil-session-directory)
+                  n (1+ n)))
+          (let ((before-save-hook (remq #'gptel--save-state before-save-hook)))
+            (write-file file nil)))))))
+
+(defun gptel-fommil--save-all-sessions ()
+  "Archive every `gptel-mode' buffer, for `kill-emacs-hook'."
+  (dolist (buf (buffer-list))
+    (with-current-buffer buf
+      (gptel-fommil--save-session))))
+
+;; `kill-buffer-hook' is not run by `kill-emacs', hence both hooks.
+(add-hook 'kill-buffer-hook #'gptel-fommil--save-session)
+(add-hook 'kill-emacs-hook #'gptel-fommil--save-all-sessions)
+
 (defun gptel-fommil-select-backend-model ()
   "Switch gptel backend and model via `completing-read'."
   (interactive)
@@ -121,7 +157,9 @@
 
 (defvar gptel-fommil-safe-suffixes
   '(".el" ".scala" ".sbt" ".java" ".rs" ".py" ".hs" ".cabal"
-    ".c" ".h" ".cpp" ".hpp" ".go"
+    ".c" ".h" ".cpp" ".hpp"
+    ".go"
+    ".v"
     ".md" ".txt" ".org"
     ".diff" ".patch"
     ".sql"
@@ -149,6 +187,7 @@
   (let ((sections nil))
     (push (format "system-type: %s" (symbol-name system-type)) sections)
     (push (format "emacs-version: %s" emacs-version) sections)
+    (push (format "chat history: %s" gptel-fommil-session-directory) sections)
     (push (format "open projects:\n%s"
                   (string-join (seq-take (projectile-open-projects) 50) "\n"))
           sections)
