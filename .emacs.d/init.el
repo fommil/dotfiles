@@ -436,6 +436,8 @@ Inspired by `org-combine-plists'."
   (define-key projectile-mode-map (kbd "C-c p") 'projectile-command-map)
   ;; allows using TAGS even if M-. is overruled
   (define-key projectile-command-map (kbd "j") 'xref-find-definitions)
+  ;; forces a full refresh of whatever etags-regen may have done
+  (define-key projectile-command-map (kbd "R") 'fommil-regenerate-tags)
   (projectile-mode 1)
   :bind
   (("s-f" . projectile-find-file)
@@ -445,6 +447,27 @@ Inspired by `org-combine-plists'."
       (lambda ()
         (and (projectile-project-p)
              (projectile-expand-root "TAGS"))))
+
+;; removed upstream https://github.com/bbatsov/projectile/pull/2041 the
+;; intention is for etags to control TAGS but sometimes ctags supports languages
+;; that etags doesn't and also this forces a full refresh.
+(defvar-local fommil-tags-command "ctags -Re -f \"%s\" \"%s\""
+  "The command used to generate a TAGS file.")
+(defun fommil-regenerate-tags ()
+  "Regenerate the project's TAGS file."
+  (interactive)
+  (let* ((command-format fommil-tags-command)
+         (default-directory (projectile-acquire-root))
+         (tags-file (expand-file-name "TAGS"))
+         (command (format command-format (or (file-remote-p tags-file 'localname) tags-file) "."))
+         shell-output exit-code)
+    (with-temp-buffer
+      (setq exit-code (process-file-shell-command command nil (current-buffer))
+            shell-output (string-trim (buffer-string))))
+    (unless (zerop exit-code)
+      (error "%s" shell-output))
+    ;;(visit-tags-table tags-file)
+    (message "Regenerated %s" tags-file)))
 
 (use-package etags-regen
   :ensure nil
