@@ -656,7 +656,8 @@ converted to PDF at the same location."
 (global-set-key (kbd "C-<backspace>") 'contextual-backspace)
 (global-set-key (kbd "RET") 'newline-and-indent)
 (global-set-key (kbd "M-.") 'xref-find-definitions)
-(global-set-key (kbd "M-,") 'xref-go-back)
+;;(global-set-key (kbd "M-,") 'xref-go-back)
+(global-set-key (kbd "M-,") 'pop-tag-mark)
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; This section is for defining commonly invoked commands that deserve
@@ -979,27 +980,15 @@ converted to PDF at the same location."
   ;; Make sure to install dependencies:
   ;;
   ;; go install golang.org/x/tools/cmd/goimports@latest
-  ;; go install github.com/rogpeppe/godef@latest
-  ;; go install github.com/stamblerre/gocode@latest
   ;; go install honnef.co/go/tools/cmd/staticcheck@latest
-  ;;
   ;; go install golang.org/x/tools/gopls@latest
   ;;
-  ;; Note: gocode and godef is unmaintained but it should be possible to write a
-  ;; gopls (non-lsp) based company/go-to-definition/eldoc backend. e.g. use the
-  ;; `gopls references ast.go:87:6' feature, lookup each of the entries, and
-  ;; retain the lines that are OOP methods. We could also use grep on the local
-  ;; mod dir (assuming it has been tided) to fuzzy find type methods (which
-  ;; could be cross referenced with gopls references or fqn of types confirmed).
-  ;; We could also use the `go doc` tool to list contents of a package, again
-  ;; needing package name lookup. TODO gopls backends
-  ;; TODO https://github.com/golang/go/issues/52069
+  ;; eglot has a built-in `gopls' entry for `go-mode'. Diagnostics come from
+  ;; flycheck/staticcheck, since eglot is told to stay out of flymake.
   ;;
   ;; go install github.com/pquerna/ffjson@latest
   ;; https://yalantis.com/blog/speed-up-json-encoding-decoding/
   ;;
-  ;; TODO is there something like hoogle for Go?
-  ;; TODO can https://github.com/haya14busa/gosum be ressurected?
   ;; TODO collapse trivial error handling code blocks
   ;; TODO snippets for trivial error handling
   :config
@@ -1012,8 +1001,7 @@ converted to PDF at the same location."
    go-mode-map
    ("C-c e" . next-error)
    ("C-c C-r f" . gofmt)
-   ("C-c C-i t" . godef-describe)
-   ("M-." . godef-jump)
+   ("C-c c" . compile-with-directory)
    ("M-<delete>" . paredit-unwrap))
   :hook
   (;;(go-mode . abbrev-mode)
@@ -1021,18 +1009,15 @@ converted to PDF at the same location."
    (go-mode . electric-pair-local-mode)
    (go-mode . yas-minor-mode)
    (go-mode . flycheck-mode)
+   (go-mode . eglot-ensure)
    (go-mode . company-mode)))
-(use-package company-go
-  :config
-  (setq company-go-show-annotation t
-        company-go-insert-arguments t))
 
 (add-hook
  'go-mode-hook
  (lambda ()
-   (setq-local flycheck-checker 'go-staticcheck)
-   (setq-local company-backends '(company-files company-go (company-dabbrev-code company-etags)))
-   ))
+   (setq-local flycheck-checker 'go-staticcheck
+               compile-with-directory-file "go.mod"
+               compile-command "go build ./...")))
 
 (use-package rust-mode
   :init
@@ -1042,8 +1027,8 @@ converted to PDF at the same location."
         ;; rust-mode-treesitter-derive t
         )
   :config
-  (setq compile-with-directory-file "Cargo.toml"
-        compile-command "cargo fmt && cargo build")
+  (setq-local compile-with-directory-file "Cargo.toml"
+              compile-command "cargo fmt && cargo build")
   :bind
   (:map rust-mode-map
         ("C-c e" . next-error)
