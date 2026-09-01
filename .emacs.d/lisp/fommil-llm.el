@@ -87,9 +87,6 @@
    gptel-model 'claude-opus-4-7
    gptel-backend (gptel-make-bedrock "Bedrock"
                    :region "us-east-1"
-                   ;; WORKAROUND https://github.com/karthink/gptel/issues/1412
-                   :models (mapcar (lambda (sym) (assq sym gptel--anthropic-models))
-                                   '(claude-opus-4-7 claude-sonnet-4-6))
                    ;;:aws-profile "my-profile-name"
                    :model-region 'us))
   )

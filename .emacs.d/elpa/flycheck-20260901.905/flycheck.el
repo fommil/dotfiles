@@ -10,8 +10,8 @@
 ;;             Bozhidar Batsov <bozhidar@batsov.dev>
 ;; URL: https://github.com/flycheck/flycheck
 ;; Keywords: convenience, languages, tools
-;; Package-Version: 20260821.1002
-;; Package-Revision: 7074b82cc82b
+;; Package-Version: 20260901.905
+;; Package-Revision: 7512d191ffdb
 ;; Package-Requires: ((emacs "28.1") (seq "2.24"))
 
 ;; This file is not part of GNU Emacs.
@@ -96,7 +96,7 @@
 ;; Tell the byte compiler about autoloaded functions from packages
 (declare-function org-lint "org-lint" (&optional arg))
 ;; Emacs 30 and newer; guarded with `fboundp' where it is called
-(declare-function trusted-content-p "subr" ())
+(declare-function trusted-content-p "files" ())
 (declare-function xref-push-marker-stack "xref" (&optional m))
 
 
@@ -257,7 +257,8 @@
     yaml-yamllint
     ;; Only ever selected when `flycheck-eglot-mode' is on (see its predicate).
     eglot-check
-    ;; Only ever selected when `flycheck-lsp-mode' is on (see its predicate).
+    ;; Selected when `flycheck-lsp-mode' is on, or when
+    ;; `flycheck-lsp-prefer-server' stands it in for a command checker.
     flycheck-lsp)
   "Syntax checkers available for automatic selection.
 
@@ -1011,6 +1012,21 @@ See `flycheck-navigation-minimum-level' and
                 (const :tag "Errors" error)
                 (symbol :tag "Custom error level")))
 
+(defcustom flycheck-navigation-scope 'buffer
+  "The scope of error navigation.
+
+With `buffer' (the default), `flycheck-next-error' and
+`flycheck-previous-error' move within the current buffer, as they
+always have.  With `project', navigation that runs out of errors in the
+buffer continues by a single step into the project's other diagnostics
+- the same set the error list shows in its project scope - opening the
+next file at its first error, or the previous file at its last."
+  :group 'flycheck
+  :type '(choice (const :tag "Current buffer" buffer)
+                 (const :tag "Whole project" project))
+  :safe (lambda (value) (memq value '(buffer project)))
+  :package-version '(flycheck . "40"))
+
 (defcustom flycheck-navigation-minimum-level nil
   "The minimum level of errors to navigate.
 
@@ -1311,6 +1327,7 @@ Eglot renders the same LSP tag."
     (define-key map "c"         #'flycheck-buffer)
     (define-key map "C"         #'flycheck-clear)
     (define-key map (kbd "C-c") #'flycheck-compile)
+    (define-key map "P"         #'flycheck-check-project)
     (define-key map "n"         #'flycheck-next-error)
     (define-key map "p"         #'flycheck-previous-error)
     (define-key map "l"         #'flycheck-list-errors)
@@ -1523,6 +1540,7 @@ Only has effect when variable `global-flycheck-mode' is non-nil."
                   (seq-find #'flycheck-checker-supports-major-mode-p
                             flycheck-checkers))]
      ["Check current buffer" flycheck-buffer flycheck-mode]
+     ["Check whole project" flycheck-check-project t]
      ["Clear errors in buffer" flycheck-clear t]
      ["Run checker as compile command" flycheck-compile flycheck-mode]
      "---"
@@ -1696,13 +1714,22 @@ to a number and return it.  Otherwise return nil."
   "Expand FILENAME against DIRECTORY, honoring a remote DIRECTORY.
 
 Like `expand-file-name', but when DIRECTORY is remote and
-FILENAME is a host-local path -- as a checker running on the
-remote host over TRAMP reports -- the result names the file on
+FILENAME is a host-local path, as a checker running on the
+remote host over TRAMP reports, the result names the file on
 that host, so it compares against the remote temporary files and
 opens the right file when jumped to."
   (if-let* ((remote (and (not (file-remote-p filename))
                          (file-remote-p directory))))
-      (concat remote (expand-file-name filename (file-local-name directory)))
+      (let ((expanded (expand-file-name filename (file-local-name directory))))
+        (concat remote
+                ;; On Windows `expand-file-name' stamps the current drive
+                ;; onto an absolute path.  This path belongs to the remote
+                ;; host, which has no such drive, so drop a letter that was
+                ;; not in FILENAME to begin with.
+                (if (and (not (string-match-p "\\`[a-zA-Z]:" filename))
+                         (string-match "\\`[a-zA-Z]:\\(.*\\)" expanded))
+                    (match-string 1 expanded)
+                  expanded)))
     (expand-file-name filename directory)))
 
 (defun flycheck-buffer-file-local-name (&optional fallback)
@@ -2643,16 +2670,21 @@ nil otherwise."
          (flycheck-may-enable-checker checker)
          (or (null predicate) (funcall predicate)))))
 
+(defun flycheck--next-checker-level-passes-p (next-checker)
+  "Whether NEXT-CHECKER's error-level condition holds right now.
+
+NEXT-CHECKER is a cons (LEVEL . CHECKER) or a plain checker
+symbol, which continues unconditionally."
+  (let ((level (if (consp next-checker) (car next-checker) t)))
+    (or (eq level t)
+        (flycheck-has-max-current-errors-p level))))
+
 (defun flycheck-may-use-next-checker (next-checker)
   "Determine whether NEXT-CHECKER may be used."
-  (when (symbolp next-checker)
-    (push t next-checker))
-  (let ((level (car next-checker))
-        (next-checker (cdr next-checker)))
-    (and (or (eq level t)
-             (flycheck-has-max-current-errors-p level))
-         (flycheck-registered-checker-p next-checker)
-         (flycheck-may-use-checker next-checker))))
+  (let ((checker (flycheck--get-next-checker-symbol next-checker)))
+    (and (flycheck--next-checker-level-passes-p next-checker)
+         (flycheck-registered-checker-p checker)
+         (flycheck-may-use-checker checker))))
 
 
 ;;; Help for generic syntax checkers
@@ -3504,14 +3536,36 @@ nil otherwise."
   (if flycheck-checker
       (when (flycheck-may-use-checker flycheck-checker)
         flycheck-checker)
-    (seq-find #'flycheck-may-use-checker flycheck-checkers)))
+    (when-let* ((checker (seq-find #'flycheck-may-use-checker
+                                   flycheck-checkers)))
+      ;; Only here, so a checker the user selected is never stood in for.
+      (or (flycheck-lsp--substitute checker) checker))))
 
 (defun flycheck-get-next-checker-for-buffer (checker)
-  "Get the checker to run after CHECKER for the current buffer."
-  (let ((next (seq-find #'flycheck-may-use-next-checker
-                        (flycheck-checker-get checker 'next-checkers))))
-    (when next
-      (if (symbolp next) next (cdr next)))))
+  "Get the checker to run after CHECKER for the current buffer.
+
+A next checker that cannot run here - disabled with
+`flycheck-disable-checker', not installed - does not cut the chain
+short: the checkers following it are considered in its place, so
+disabling one link keeps the rest of the chain reachable.  The
+unusable checker's error-level condition still gates the descent,
+since a chain that would not continue through it usable does not
+continue through it unusable either."
+  (let ((visited (list checker))
+        (queue (flycheck-checker-get checker 'next-checkers))
+        (found nil))
+    (while (and queue (not found))
+      (let* ((entry (pop queue))
+             (next (flycheck--get-next-checker-symbol entry)))
+        (when (and (not (memq next visited))
+                   (flycheck--next-checker-level-passes-p entry))
+          (push next visited)
+          (if (and (flycheck-registered-checker-p next)
+                   (flycheck-may-use-checker next))
+              (setq found next)
+            (setq queue (append (flycheck-checker-get next 'next-checkers)
+                                queue))))))
+    found))
 
 (defun flycheck-select-checker (checker)
   "Select CHECKER for the current buffer.
@@ -3605,13 +3659,23 @@ A fix a checker suggests carries this tick (see `flycheck--make-fix')
 so `flycheck-apply-fix' can tell whether the buffer has changed since
 the checker read it, and thus whether the fix's positions are stale.")
 
+(defvar-local flycheck--syntax-check-start-time nil
+  "When the current check started, as a Lisp timestamp.
+
+The tick above covers the fixes for this buffer.  A check can also
+suggest a fix for another file it read from disk, which no tick of this
+buffer describes; that fix is good only as long as the file has not been
+written since this time (see `flycheck--check-fix-file-state').")
+
 (defun flycheck-start-current-syntax-check (checker)
   "Start a syntax check in the current buffer with CHECKER.
 
 Set `flycheck-current-syntax-check' accordingly."
   ;; Remember the buffer's modification state, so a fix this check produces
-  ;; can be refused later if the buffer has changed in the meantime.
-  (setq flycheck--syntax-check-modified-tick (buffer-chars-modified-tick))
+  ;; can be refused later if the buffer has changed in the meantime, and the
+  ;; time, which is what a fix for another file answers to instead.
+  (setq flycheck--syntax-check-modified-tick (buffer-chars-modified-tick)
+        flycheck--syntax-check-start-time (current-time))
   ;; Allocate the current syntax check *before* starting it.  This allows for
   ;; synchronous checks, which call the status callback immediately in their
   ;; start function.
@@ -4900,6 +4964,26 @@ nothing, when an edit's coordinates make no sense or the edits overlap."
           (goto-char beg)
           (insert (or replacement "")))))))
 
+(defun flycheck--apply-fix-in (fix buffer &optional guard)
+  "Apply FIX's edits in BUFFER as a single undoable change.
+
+GUARD, when given, is called with FIX in BUFFER before anything is
+applied and signals when the fix must not be applied.  What makes a fix
+stale depends on where it came from: a fix for the buffer that was
+checked compares modification ticks (see `flycheck--check-fix-tick'),
+while a fix for a file the checker read from disk has no tick to compare
+and its caller checks the file instead (see
+`flycheck--check-fix-file-state')."
+  (unless (buffer-live-p buffer)
+    (user-error "Cannot apply a fix: its buffer is gone"))
+  (with-current-buffer buffer
+    (when buffer-read-only
+      (user-error "Cannot apply a fix in a read-only buffer"))
+    (when guard (funcall guard fix))
+    (save-restriction
+      (widen)
+      (flycheck--apply-edits (flycheck-fix-edits fix)))))
+
 (defun flycheck-apply-fix (fix &optional buffer)
   "Apply FIX in BUFFER, defaulting to the current buffer.
 
@@ -4912,16 +4996,8 @@ or read-only, when the buffer has changed since the check that
 produced the fix (its line and column numbers would be stale), or
 when the fix's own edits overlap -- so a fix can never silently
 corrupt the buffer."
-  (let ((buffer (or buffer (current-buffer))))
-    (unless (buffer-live-p buffer)
-      (user-error "Cannot apply a fix: its buffer is gone"))
-    (with-current-buffer buffer
-      (when buffer-read-only
-        (user-error "Cannot apply a fix in a read-only buffer"))
-      (flycheck--check-fix-tick fix)
-      (save-restriction
-        (widen)
-        (flycheck--apply-edits (flycheck-fix-edits fix))))))
+  (flycheck--apply-fix-in fix (or buffer (current-buffer))
+                          #'flycheck--check-fix-tick))
 
 (defun flycheck--fix-span (fix)
   "Return the buffer region (BEG . END) that FIX's edits span.
@@ -4931,6 +5007,46 @@ FIX's edits, resolved in the current buffer."
   (let ((regions (mapcar #'flycheck--fix-edit-region (flycheck-fix-edits fix))))
     (cons (apply #'min (mapcar #'car regions))
           (apply #'max (mapcar #'cdr regions)))))
+
+(defun flycheck--apply-fixes-in (fixes buffer &optional guard)
+  "Apply as many of FIXES together in BUFFER as do not conflict.
+
+GUARD, when given, is called with FIXES in BUFFER before anything is
+applied and signals when they must not be applied; see
+`flycheck--apply-fix-in'.  Return the number of fixes applied."
+  (unless (buffer-live-p buffer)
+    (user-error "Cannot apply fixes: their buffer is gone"))
+  (with-current-buffer buffer
+    (when buffer-read-only
+      (user-error "Cannot apply fixes in a read-only buffer"))
+    (when guard (funcall guard fixes))
+    ;; Ignore fixes with no edits: they contribute nothing and would trip
+    ;; up `flycheck--fix-span'.  In practice every live fix has edits.
+    (setq fixes (seq-filter #'flycheck-fix-edits fixes))
+    (save-restriction
+      (widen)
+      ;; Greedily select a non-overlapping subset, bottom-up: process the
+      ;; fixes lowest in the buffer first and keep a fix only if its whole
+      ;; span sits at or above every fix already selected below it.
+      (let ((spanned (mapcar (lambda (fix)
+                               (cons (flycheck--fix-span fix) fix))
+                             fixes))
+            (boundary most-positive-fixnum)
+            (selected nil))
+        ;; Sort by span start, latest in the buffer first, and keep a fix
+        ;; when its whole span ends at or before every fix already kept
+        ;; below it.  Sorting by start (not end) maximizes the number of
+        ;; fixes applied: it is the classic interval-scheduling greedy, so
+        ;; one wide-span fix can't crowd out several small ones.
+        (setq spanned (sort spanned (lambda (a b) (> (caar a) (caar b)))))
+        (pcase-dolist (`((,beg . ,end) . ,fix) spanned)
+          (when (<= end boundary)
+            (push fix selected)
+            (setq boundary (min boundary beg))))
+        (when selected
+          (flycheck--apply-edits
+           (apply #'append (mapcar #'flycheck-fix-edits selected))))
+        (length selected)))))
 
 (defun flycheck-apply-fixes (fixes &optional buffer)
   "Apply as many of FIXES together in BUFFER as do not conflict.
@@ -4945,40 +5061,9 @@ applied.
 Signal a `user-error', touching nothing, when BUFFER is not live or
 read-only, or when any fix is stale -- the buffer changed since it was
 computed."
-  (let ((buffer (or buffer (current-buffer))))
-    (unless (buffer-live-p buffer)
-      (user-error "Cannot apply fixes: their buffer is gone"))
-    (with-current-buffer buffer
-      (when buffer-read-only
-        (user-error "Cannot apply fixes in a read-only buffer"))
-      (mapc #'flycheck--check-fix-tick fixes)
-      ;; Ignore fixes with no edits: they contribute nothing and would trip
-      ;; up `flycheck--fix-span'.  In practice every live fix has edits.
-      (setq fixes (seq-filter #'flycheck-fix-edits fixes))
-      (save-restriction
-        (widen)
-        ;; Greedily select a non-overlapping subset, bottom-up: process the
-        ;; fixes lowest in the buffer first and keep a fix only if its whole
-        ;; span sits at or above every fix already selected below it.
-        (let ((spanned (mapcar (lambda (fix)
-                                 (cons (flycheck--fix-span fix) fix))
-                               fixes))
-              (boundary most-positive-fixnum)
-              (selected nil))
-          ;; Sort by span start, latest in the buffer first, and keep a fix
-          ;; when its whole span ends at or before every fix already kept
-          ;; below it.  Sorting by start (not end) maximizes the number of
-          ;; fixes applied: it is the classic interval-scheduling greedy, so
-          ;; one wide-span fix can't crowd out several small ones.
-          (setq spanned (sort spanned (lambda (a b) (> (caar a) (caar b)))))
-          (pcase-dolist (`((,beg . ,end) . ,fix) spanned)
-            (when (<= end boundary)
-              (push fix selected)
-              (setq boundary (min boundary beg))))
-          (when selected
-            (flycheck--apply-edits
-             (apply #'append (mapcar #'flycheck-fix-edits selected))))
-          (length selected))))))
+  (flycheck--apply-fixes-in fixes (or buffer (current-buffer))
+                            (lambda (fixes)
+                              (mapc #'flycheck--check-fix-tick fixes))))
 
 (defun flycheck--error-fix-buffer (err)
   "Return the live buffer in which ERR's fix may be applied, or nil.
@@ -4995,6 +5080,208 @@ edited -- cannot be fixed in place."
                   (and buffer-file-name
                        (flycheck-same-files-p filename buffer-file-name))))
         buffer))))
+
+(defun flycheck--error-fix-target (err &optional visit)
+  "Return the live buffer in which ERR's fix is to be applied, or nil.
+
+For an error about the file its own buffer visits that is the buffer
+itself (see `flycheck--error-fix-buffer').  For a cross-file error, one
+a whole-project checker reported about a file no buffer was checked for,
+it is a buffer visiting that file; with VISIT non-nil the file is opened
+when nothing visits it yet, and otherwise such an error resolves to nil."
+  (or (flycheck--error-fix-buffer err)
+      (when-let* ((filename (flycheck-error-filename err))
+                  ((file-regular-p filename)))
+        (or (find-buffer-visiting filename)
+            (and visit (find-file-noselect filename))))))
+
+(defun flycheck--fix-bound (err)
+  "Return what says which state of its file ERR's fix describes.
+
+That is the symbol `now' for a lazy fix provider (see
+`flycheck-error-fix'), which computes the fix against the file as it is
+when asked; the time of the check that produced a fix Flycheck already
+holds; or nil when nothing says, in which case the fix is not applied to
+another file at all."
+  (cond
+   ((functionp (flycheck-error-fix err)) 'now)
+   ;; A buffer check can report a fix for another file it read (rustc names
+   ;; a suggestion in a second crate file this way).  The buffer's tick
+   ;; says nothing about that file, but the time its check started does.
+   ((when-let* ((buffer (flycheck-error-buffer err))
+                ((buffer-live-p buffer)))
+      (buffer-local-value 'flycheck--syntax-check-start-time buffer)))
+   (t (flycheck--project-error-time err))))
+
+(defun flycheck--fix-file-current-p (file checked)
+  "Whether FILE can still hold what a fix bounded by CHECKED describes.
+
+CHECKED is a bound as `flycheck--fix-bound' returns one."
+  (pcase checked
+    ('nil nil)
+    ('now t)
+    (time
+     ;; A file on another host is stamped by that host's clock, which ours
+     ;; has no business comparing against: a machine running a few seconds
+     ;; ahead would refuse every fix.
+     (or (file-remote-p file)
+         (when-let* ((written (file-attribute-modification-time
+                               (file-attributes file))))
+           (not (time-less-p time written)))))))
+
+(defun flycheck--check-fix-file-state (buffer checked)
+  "Signal a `user-error' when BUFFER no longer holds what CHECKED describes.
+
+A fix for a file other than the checked one carries no modification tick
+to compare against (see `flycheck-apply-fix'): its line and column
+numbers describe the file as its checker read it from disk.  So the file
+must still be what was read, which it is not once the buffer has unsaved
+changes, the file changed under it, or it was written after the check
+that produced the fix.  CHECKED is that check, as `flycheck--fix-bound'
+reports it; a fix nothing bounds is refused rather than applied at
+positions that may describe an older file."
+  (let ((name (file-name-nondirectory (or (buffer-file-name buffer)
+                                          (buffer-name buffer)))))
+    (when (buffer-modified-p buffer)
+      (user-error "%s has unsaved changes; save it and check again" name))
+    (unless (verify-visited-file-modtime buffer)
+      (user-error "%s changed on disk; revert it and check again" name))
+    (unless checked
+      (user-error "Nothing says which state of %s this fix is for; \
+check again" name))
+    (unless (flycheck--fix-file-current-p (buffer-file-name buffer) checked)
+      (user-error "%s was written since the check; check again" name))))
+
+(defun flycheck--apply-error-fix (err &optional visit)
+  "Apply ERR's fix in the buffer whose text it edits.
+
+That is ERR's own buffer, or, for an error about another file, a buffer
+visiting that file, opened when VISIT is non-nil and nothing visits it
+yet.  Return a cons of the applied fix and the buffer it was applied in,
+or nil when the checker turns out to have no fix after all (see
+`flycheck-error-resolve-fix').  Signal a `user-error', touching nothing,
+when the fix cannot be applied safely."
+  (let* ((in-place (flycheck--error-fix-buffer err))
+         (bound (unless in-place (flycheck--fix-bound err)))
+         (buffer (or in-place (flycheck--error-fix-target err visit))))
+    (unless buffer
+      (user-error "Cannot apply this fix: %s"
+                  (let ((filename (flycheck-error-filename err)))
+                    (cond
+                     ((null filename) "the buffer of this error is gone")
+                     ((not (file-regular-p filename))
+                      (format "there is no file at %s any more" filename))
+                     (t (format "no buffer visits %s" filename))))))
+    (when-let* ((fix (with-current-buffer buffer
+                       (flycheck-error-resolve-fix err))))
+      (if in-place
+          (flycheck-apply-fix fix buffer)
+        (flycheck--check-fix-file-state buffer bound)
+        (flycheck--apply-fix-in fix buffer))
+      (cons fix buffer))))
+
+(defun flycheck--fix-file-to-open (err)
+  "Return the file that fixing ERR would have to open, or nil.
+
+That is the file of an error whose fix is still good for it and that no
+live buffer visits.  A file whose state already rules the fix out is not
+one to open: a project's results go stale together, and opening every
+file of one only to refuse them all leaves nothing but buffers behind."
+  (when-let* (((flycheck-error-fix err))
+              ((null (flycheck--error-fix-target err)))
+              (filename (flycheck-error-filename err))
+              ((file-regular-p filename))
+              ((flycheck--fix-file-current-p filename
+                                             (flycheck--fix-bound err))))
+    filename))
+
+(defun flycheck--fix-target-to-open (err)
+  "Return the buffer to apply ERR's fix in, opening its file if worthwhile.
+
+Like `flycheck--error-fix-target' asked to visit, except that it opens
+only the files `flycheck--fix-file-to-open' names."
+  (or (flycheck--error-fix-target err)
+      (when-let* ((filename (flycheck--fix-file-to-open err)))
+        (find-file-noselect filename))))
+
+(defun flycheck--fix-files-to-open (errors)
+  "Return the files fixing ERRORS would have to open, deduplicated.
+
+They come in the order the errors do; see `flycheck--fix-file-to-open'."
+  (seq-uniq (delq nil (mapcar #'flycheck--fix-file-to-open errors))
+            #'flycheck-same-files-p))
+
+(defun flycheck--fix-errors-across-files (errors)
+  "Apply the fixes of ERRORS in the files those errors belong to.
+
+The errors are grouped by the buffer their fix edits (see
+`flycheck--error-fix-target'), which for a cross-file error means
+opening the file it names.  Each file is fixed as a single undoable
+change and left unsaved, so the change can be reviewed and undone.  A
+file whose fixes cannot be applied safely, because it changed since the
+check or its buffer is read-only, is skipped whole rather than aborting
+the rest.
+
+Return a list (APPLIED FILES SKIPPED): how many fixes were applied, in
+how many buffers, and how many were left unapplied."
+  (let ((groups nil) (applied 0) (files 0) (skipped 0))
+    (dolist (err errors)
+      (when (flycheck-error-fix err)
+        ;; Opening a file can fail on its own (unreadable, a file name
+        ;; another handler chokes on); that is this one error's problem,
+        ;; not the whole run's.
+        (if-let* ((target (ignore-errors (flycheck--fix-target-to-open err))))
+            (let ((group (assq target groups)))
+              (unless group
+                (setq group (list target))
+                (push group groups))
+              (setcdr group (cons err (cdr group))))
+          (setq skipped (1+ skipped)))))
+    (pcase-dolist (`(,buffer . ,group) (nreverse groups))
+      (let* ((errs (nreverse group))
+             (count (length errs)))
+        (condition-case nil
+            ;; Ask each lazy provider once, in the buffer the fix belongs
+            ;; to, and keep the error beside the fix it produced: which
+            ;; guard a fix answers to depends on where its error came from.
+            (let* ((pairs (delq nil
+                                (mapcar
+                                 (lambda (err)
+                                   (when-let*
+                                       ((fix (with-current-buffer buffer
+                                               (flycheck-error-resolve-fix
+                                                err))))
+                                     (cons err fix)))
+                                 errs)))
+                   (cross (seq-remove
+                           (lambda (pair)
+                             (eq (flycheck--error-fix-buffer (car pair))
+                                 buffer))
+                           pairs)))
+              (when cross
+                ;; The strictest bound among them decides: nothing bounds
+                ;; the group as soon as one of its fixes is unbounded, and
+                ;; the oldest check otherwise, since a write after that one
+                ;; leaves every fix from it stale.
+                (let* ((bounds (mapcar (lambda (pair)
+                                         (flycheck--fix-bound (car pair)))
+                                       cross))
+                       (times (seq-remove #'symbolp bounds)))
+                  (flycheck--check-fix-file-state
+                   buffer (cond ((memq nil bounds) nil)
+                                (times (car (sort times #'time-less-p)))
+                                (t 'now)))))
+              (with-current-buffer buffer
+                (dolist (pair pairs)
+                  (unless (memq pair cross)
+                    (flycheck--check-fix-tick (cdr pair)))))
+              (let ((n (flycheck--apply-fixes-in
+                        (mapcar #'cdr pairs) buffer)))
+                (setq applied (+ applied n)
+                      skipped (+ skipped (- count n)))
+                (when (> n 0) (setq files (1+ files)))))
+          (user-error (setq skipped (+ skipped count))))))
+    (list applied files skipped)))
 
 (defun flycheck-error-format-snippet (err &optional max-length)
   "Extract the text that ERR refers to from the buffer.
@@ -5171,13 +5458,19 @@ Use Emacs' project (see `project-current') when a project is
 found, so diagnostics from any file in the project aggregate
 together; otherwise fall back to `default-directory', which
 matches how a checker's working directory groups a multi-file
-check.  The result is an expanded directory name."
-  (file-name-as-directory
-   (expand-file-name
-    (or (and (require 'project nil 'noerror)
-             (when-let* ((project (project-current nil)))
-               (project-root project)))
-        default-directory))))
+check.  The result is the directory's true name, so buffers
+visiting the project under different spellings - a symlinked
+path, a Windows short name - agree on the key."
+  (let ((dir (file-name-as-directory
+              (expand-file-name
+               (or (and (require 'project nil 'noerror)
+                        (when-let* ((project (project-current nil)))
+                          (project-root project)))
+                   default-directory)))))
+    (if (file-remote-p dir)
+        dir
+      (file-name-as-directory
+       (or (ignore-errors (file-truename dir)) dir)))))
 
 (defun flycheck--project-key-prefixes (project-key)
   "Return the directory prefixes that place a file under PROJECT-KEY.
@@ -5193,9 +5486,35 @@ would otherwise never match what the server says about it."
         (list project-key truename)
       (list project-key))))
 
+(defvar flycheck--truenames (make-hash-table :test 'equal)
+  "True names of local paths Flycheck compares against each other, memoized.
+Global, unlike the buffer's `flycheck--file-truename': these are the
+paths stores, servers and the error list compare, whoever named them.
+A path's true name does not change over a session short of retargeting
+a symbolic link, and the same paths come up on every aggregation.")
+
+(defun flycheck--memoized-truename (path)
+  "Return the true name of PATH, or PATH itself when it has none.
+
+Memoized in `flycheck--truenames': the same paths come up on every
+aggregation, and each lookup is a `file-truename' walk."
+  (or (gethash path flycheck--truenames)
+      (puthash path
+               (or (ignore-errors (file-truename path)) path)
+               flycheck--truenames)))
+
 (defun flycheck--path-under-prefixes-p (path prefixes)
-  "Whether the absolute PATH extends one of the directory PREFIXES."
-  (seq-some (lambda (prefix) (string-prefix-p prefix path)) prefixes))
+  "Whether the absolute PATH extends one of the directory PREFIXES.
+
+The prefixes are true names (see `flycheck--project-directory'), while
+PATH may come from a server or a buffer in another spelling of the
+same place - a symlinked directory, macOS's /tmp; its true name is
+tried when the spelling as given does not match."
+  (or (seq-some (lambda (prefix) (string-prefix-p prefix path)) prefixes)
+      (let ((truename (flycheck--memoized-truename path)))
+        (and (not (equal truename path))
+             (seq-some (lambda (prefix) (string-prefix-p prefix truename))
+                       prefixes)))))
 
 (defun flycheck--project-storable-errors (errors)
   "Return the subset of ERRORS worth recording project-wide.
@@ -5277,11 +5596,12 @@ retried on every redisplay."
   "Return `flycheck-count-errors' over PROJECT-KEY's diagnostics.
 
 Cached against `flycheck--project-diagnostics-generation', so the mode
-line does not aggregate on every redisplay.  The cache key includes the
-buffer-local bridge modes, which gate what the aggregation includes."
+line does not aggregate on every redisplay.  The cache key includes what
+gates the aggregation: the Eglot bridge, and whether the native client
+serves this buffer (see `flycheck-lsp--serving-p')."
   (let* ((key (list project-key
                     (and (bound-and-true-p flycheck-eglot-mode) t)
-                    (and (bound-and-true-p flycheck-lsp-mode) t)))
+                    (flycheck-lsp--serving-p)))
          (cached (gethash key flycheck--project-counts-cache)))
     (if (and cached (= (car cached) flycheck--project-diagnostics-generation))
         (cdr cached)
@@ -5317,7 +5637,8 @@ Each function is called with the project key (see
 contributed to the project, and returns a list of `flycheck-error'
 objects for files of that project that no buffer's check reported --
 e.g. the diagnostics an LSP server pushed about files that are not
-visited.  The LSP bridges register here.  The results pass the same
+visited, or what a project checker's run found.  The LSP bridges and
+the project-checker runs register here.  The results pass the same
 filter as recorded errors (see `flycheck--project-storable-errors') and
 deduplicate against the buffers' contributions; each error should carry
 a file name, or identical diagnostics from different contributors
@@ -5395,6 +5716,331 @@ the file changed without running a check."
                    (flycheck--project-extra-errors project-key buffers owner))))
     result))
 
+(defvar flycheck--project-checkers nil
+  "Alist of the defined project checkers, in definition order.
+Each entry maps the checker symbol to its property plist; see
+`flycheck-define-project-checker'.")
+
+(defun flycheck-define-project-checker (symbol docstring &rest properties)
+  "Define SYMBOL as a project checker with DOCSTRING and PROPERTIES.
+
+A project checker runs a tool once over a whole project, on demand
+via `flycheck-check-project', and its diagnostics join the
+project-wide error store behind the error list's project scope and
+the mode line's project counts.  It is not a syntax checker: it
+never runs automatically and takes no part in buffer checks.
+
+The following PROPERTIES constitute a project checker:
+
+`:command (EXECUTABLE ARG ...)'
+     The command to run in the project's root directory, on the host
+     that directory is on, as a list of strings.  It must name no file
+     on this machine, and the tool has to be installed there.
+
+`:parser FUNCTION'
+     A function called with the command's output as a string, the
+     checker symbol and the project directory, returning the
+     diagnostics as a list of `flycheck-error' objects whose file
+     names are absolute.  An error the function signals becomes the
+     run's failure message, so a parser that recognizes the tool
+     saying \"this project needs setting up\" can say so.
+
+`:enabled FUNCTION'
+     A function called with the project directory, returning
+     non-nil when the checker applies to that project - say, when
+     files the tool reads are there.
+
+Defining a checker with the SYMBOL of an existing one replaces it."
+  (declare (indent 1) (doc-string 2))
+  (dolist (prop '(:command :parser :enabled))
+    (unless (plist-get properties prop)
+      (error "Project checker %s misses %s" symbol prop)))
+  (if-let* ((cell (assq symbol flycheck--project-checkers)))
+      (setcdr cell (plist-put (copy-sequence properties)
+                              :docstring docstring))
+    (setq flycheck--project-checkers
+          (append flycheck--project-checkers
+                  (list (cons symbol
+                              (plist-put (copy-sequence properties)
+                                         :docstring docstring))))))
+  symbol)
+
+(defvar flycheck--project-check-functions nil
+  "Functions checking a project on demand besides the project checkers.
+
+Each is called by `flycheck-check-project' with the project key (see
+`flycheck--project-directory'), starts whatever it can for that
+project - an LSP server pulling its workspace's diagnostics, say - and
+returns the names of what it started, as strings, or nil.  What they
+find reaches the project view through
+`flycheck--project-extra-errors-functions'.")
+
+(defvar flycheck--project-clear-functions nil
+  "Functions dropping what `flycheck--project-check-functions' found.
+Each is called with the project key when `flycheck-check-project' is
+asked to drop a project's results.")
+
+(defvar flycheck--project-runs (make-hash-table :test 'equal)
+  "State of the project-checker runs, keyed by (PROJECT-KEY . CHECKER).
+Each value is a plist of `:process', the run still under way if any,
+`:errors', what the last completed run reported, and `:time', when that
+run started.  The errors reflect the project as of that run; they stay
+until the next `flycheck-check-project' there replaces or clears them.
+The time is what tells a fix for one of those errors whether the file it
+edits has been written since (see `flycheck--check-fix-file-state').")
+
+(defun flycheck--project-run-extra-errors (project-key _buffers)
+  "Return what project-checker runs reported for PROJECT-KEY."
+  (let (result)
+    (maphash (lambda (key state)
+               (when (equal (car key) project-key)
+                 (setq result (append (plist-get state :errors) result))))
+             flycheck--project-runs)
+    result))
+
+(add-hook 'flycheck--project-extra-errors-functions
+          #'flycheck--project-run-extra-errors)
+
+(defun flycheck--project-error-time (err)
+  "Return when the project-checker run that reported ERR started, or nil.
+
+Errors from a buffer check are not in these results; what bounds their
+fixes is the check of the buffer that reported them, see
+`flycheck--fix-bound'."
+  (catch 'time
+    (maphash (lambda (_key state)
+               (when (memq err (plist-get state :errors))
+                 (throw 'time (plist-get state :time))))
+             flycheck--project-runs)
+    nil))
+
+(defun flycheck--project-runs-forget (project-key)
+  "Drop the run results and kill the running checks of PROJECT-KEY."
+  (let (stale)
+    (maphash (lambda (key state)
+               (when (equal (car key) project-key)
+                 (when-let* ((proc (plist-get state :process)))
+                   (when (process-live-p proc)
+                     (delete-process proc)))
+                 (push key stale)))
+             flycheck--project-runs)
+    (dolist (key stale)
+      (remhash key flycheck--project-runs))))
+
+(defun flycheck--project-run-finish (proc)
+  "Collect what the finished project-checker process PROC produced."
+  (let ((status (process-status proc))
+        (stdout (process-buffer proc))
+        (stderr (process-get proc 'flycheck-stderr)))
+    (when (memq status '(exit signal))
+      (let* ((root (process-get proc 'flycheck-project-root))
+             (checker (process-get proc 'flycheck-project-checker))
+             (key (cons root checker))
+             (state (gethash key flycheck--project-runs)))
+        ;; A killed process was replaced or cleared; only the current
+        ;; one's normal exit reports
+        (when (and (eq status 'exit)
+                   (eq proc (plist-get state :process)))
+          (let* ((output (if (buffer-live-p stdout)
+                             (with-current-buffer stdout (buffer-string))
+                           ""))
+                 (failure nil)
+                 (errors (condition-case err
+                             ;; In a temp buffer, so a parser building
+                             ;; an error without a file name cannot pick
+                             ;; up whichever buffer is current now
+                             (with-temp-buffer
+                               (funcall (process-get proc 'flycheck-parser)
+                                        output checker root))
+                           (error (setq failure (error-message-string err))
+                                  nil))))
+            (puthash key (list :process nil :errors errors
+                               :time (plist-get state :time))
+                     flycheck--project-runs)
+            (flycheck--project-diagnostics-changed)
+            (flycheck-error-list-refresh)
+            (cond
+             (failure (message "%s: %s" checker failure))
+             (errors (message "%s reported %d project diagnostic%s"
+                              checker (length errors)
+                              (if (= (length errors) 1) "" "s")))
+             ((zerop (process-exit-status proc))
+              (message "%s found nothing to report" checker))
+             (t (message "%s failed%s" checker
+                         (let ((hint (and (buffer-live-p stderr)
+                                          (car (split-string
+                                                (with-current-buffer stderr
+                                                  (buffer-string))
+                                                "\n" t)))))
+                           (if hint (concat ": " hint) ""))))))))
+      (when-let* ((pipe (and (buffer-live-p stderr)
+                             (get-buffer-process stderr))))
+        (delete-process pipe))
+      (when (buffer-live-p stdout) (kill-buffer stdout))
+      (when (buffer-live-p stderr) (kill-buffer stderr)))))
+
+(defun flycheck--project-run (root checker props)
+  "Start the project checker CHECKER with PROPS over the project at ROOT."
+  (let* ((key (cons root checker))
+         (state (gethash key flycheck--project-runs)))
+    ;; A fresher run replaces one still under way
+    (when-let* ((proc (plist-get state :process)))
+      (when (process-live-p proc)
+        (delete-process proc)))
+    (let* ((default-directory root)
+           (stdout (generate-new-buffer
+                    (format " *flycheck-project-%s*" checker)))
+           (stderr (generate-new-buffer
+                    (format " *flycheck-project-%s-stderr*" checker)))
+           (proc (condition-case err
+                     (make-process
+                      :name (format "flycheck-project-%s" checker)
+                      :buffer stdout
+                      :stderr stderr
+                      :command (plist-get props :command)
+                      ;; Run where the project is: without this the
+                      ;; process ignores a remote `default-directory' and
+                      ;; runs on this machine instead, against files it
+                      ;; cannot see.
+                      :file-handler t
+                      :noquery t
+                      :sentinel (lambda (proc _event)
+                                  (flycheck--project-run-finish proc)))
+                   ;; A tool gone missing between the executable check
+                   ;; and here must not silence the other checkers
+                   (error
+                    (kill-buffer stdout)
+                    (kill-buffer stderr)
+                    (message "%s could not start: %s" checker
+                             (error-message-string err))
+                    nil))))
+      (when proc
+        ;; The hidden pipe process feeding the stderr buffer would
+        ;; write a "finished" line of its own into it, polluting the
+        ;; failure hint the buffer is kept for
+        (when-let* ((pipe (get-buffer-process stderr)))
+          (set-process-sentinel pipe #'ignore))
+        (process-put proc 'flycheck-project-root root)
+        (process-put proc 'flycheck-project-checker checker)
+        (process-put proc 'flycheck-parser (plist-get props :parser))
+        (process-put proc 'flycheck-stderr stderr)
+        (puthash key (list :process proc
+                           :errors (plist-get
+                                    (gethash key flycheck--project-runs)
+                                    :errors)
+                           :time (current-time))
+                 flycheck--project-runs)))))
+
+(defun flycheck-check-project (&optional clear)
+  "Check the whole project with every applicable project checker.
+
+A project checker runs its tool once over the project - see
+`flycheck-define-project-checker' - for the problems no single
+buffer's check can see, and its diagnostics show alongside the
+recorded buffer checks in the error list's project scope (see
+`flycheck-error-list-scope') and the mode line's project counts.
+
+The results reflect the project as of the run and stay until the
+next run here; with prefix argument CLEAR, drop them instead of
+checking again."
+  (interactive "P")
+  (let ((root (or (flycheck--buffer-project-key)
+                  (user-error "Cannot tell which project this buffer is in"))))
+    (if clear
+        (progn
+          (flycheck--project-runs-forget root)
+          (dolist (fn flycheck--project-clear-functions)
+            (funcall fn root))
+          (flycheck--project-diagnostics-changed)
+          (flycheck-error-list-refresh)
+          (message "Project check results dropped"))
+      (let* ((probed
+              ;; Both filters ask the project's host: `:enabled' stats
+              ;; files there and the executable search reads its
+              ;; `exec-path', which both need the directory bound rather
+              ;; than a flag.  A host that cannot be reached signals from
+              ;; deep inside TRAMP, so say which project is unreachable
+              ;; instead of surfacing that.
+              (condition-case err
+                  (let ((default-directory root))
+                    (let ((applicable
+                           (seq-filter (lambda (entry)
+                                         (funcall (plist-get (cdr entry)
+                                                             :enabled)
+                                                  root))
+                                       flycheck--project-checkers)))
+                      (cons applicable
+                            (seq-filter
+                             (lambda (entry)
+                               (executable-find
+                                (car (plist-get (cdr entry) :command))
+                                (file-remote-p root)))
+                             applicable))))
+                (file-error
+                 (user-error "Cannot reach %s: %s"
+                             (abbreviate-file-name root)
+                             (error-message-string err)))))
+             (applicable (car probed))
+             (runnable (cdr probed))
+             ;; Other sources start their work as they are asked
+             (others (apply #'append
+                            (mapcar (lambda (fn) (funcall fn root))
+                                    flycheck--project-check-functions)))
+             (names (append (mapcar (lambda (entry) (symbol-name (car entry)))
+                                    runnable)
+                            others)))
+        (cond
+         (names
+          (dolist (entry runnable)
+            (flycheck--project-run root (car entry) (cdr entry)))
+          ;; A checker whose tool is missing is worth a word even when
+          ;; something else runs
+          (dolist (entry applicable)
+            (unless (memq entry runnable)
+              (message "No %s executable; %s does not run"
+                       (car (plist-get (cdr entry) :command)) (car entry))))
+          (message "Checking project %s with %s..."
+                   (abbreviate-file-name root)
+                   (mapconcat #'identity names ", ")))
+         (applicable
+          (user-error "No %s executable to check this project with"
+                      (mapconcat
+                       (lambda (entry)
+                         (car (plist-get (cdr entry) :command)))
+                       applicable " or ")))
+         (t
+          (user-error "No project checker applies to %s"
+                      (abbreviate-file-name root))))))))
+
+(defun flycheck--project-expand-error-files (errors directory)
+  "Resolve the file names of ERRORS against DIRECTORY.
+
+Tools run over a project report paths relative to where they ran;
+the project store wants them absolute, and spelled by their true
+names so identical findings collapse against the buffer checks'.
+An error without a file name is dropped: the project view keys
+everything by file.  Returns the errors kept."
+  (let ((truenames (make-hash-table :test 'equal)))
+    (cl-flet ((resolve (file)
+                (or (gethash file truenames)
+                    (puthash file
+                             (let ((absolute (flycheck--expand-file-name file directory)))
+                               ;; A remote true name costs a round trip per
+                               ;; path, and the remote spelling is already
+                               ;; exact, as the project keys assume.
+                               (or (and (not (file-remote-p absolute))
+                                        (ignore-errors (file-truename absolute)))
+                                   absolute))
+                             truenames))))
+      (dolist (err errors)
+        (when-let* ((file (flycheck-error-filename err)))
+          (setf (flycheck-error-filename err) (resolve file)))
+        (dolist (relation (flycheck-error-relations err))
+          (when-let* ((file (flycheck-related-location-filename relation)))
+            (setf (flycheck-related-location-filename relation)
+                  (resolve file)))))))
+  (seq-filter #'flycheck-error-filename errors))
+
 (defun flycheck-fill-and-expand-error-file-names (errors directory)
   "Fill and expand file names in ERRORS relative to DIRECTORY.
 
@@ -5408,7 +6054,7 @@ Return ERRORS, modified in-place."
               (when-let* ((filename (flycheck-related-location-filename
                                      relation)))
                 (setf (flycheck-related-location-filename relation)
-                      (expand-file-name filename directory))))
+                      (flycheck--expand-file-name filename directory))))
             (setf (flycheck-error-filename err)
                   (if-let* ((filename (flycheck-error-filename err)))
                       (flycheck--expand-file-name filename directory)
@@ -5423,9 +6069,12 @@ Return ERRORS, modified in-place."
          flycheck-relevant-error-other-file-show
          (or (null buffer-file-name)
              (not (flycheck-same-files-p buffer-file-name file-name)))
-         (<= (flycheck-error-level-severity
-              flycheck-relevant-error-other-file-minimum-level)
-             (flycheck-error-level-severity (flycheck-error-level err))))))
+         ;; nil means every level, which is not the same as the severity
+         ;; of nil: that is 0, and `info' sits below it.
+         (or (null flycheck-relevant-error-other-file-minimum-level)
+             (<= (flycheck-error-level-severity
+                  flycheck-relevant-error-other-file-minimum-level)
+                 (flycheck-error-level-severity (flycheck-error-level err)))))))
 
 (defun flycheck-relevant-error-p (err)
   "Determine whether ERR is relevant for the current buffer.
@@ -6549,13 +7198,24 @@ RESET is non-nil."
                                  (flycheck--error-start-positions)))))
      (t pos))))
 
+(defvar flycheck--project-navigation-cursor nil
+  "Where project navigation last continued to, or nil.
+
+A list (ORIGIN POINT FILE LINE COLUMN): the buffer and point the
+continuation stepped from, and where it landed.  `next-error' keeps
+its session in the origin buffer, whose point the continuation never
+moves, so a repeated step from the very same spot advances from the
+landing point rather than recomputing the same target.")
+
 (defun flycheck-next-error-function (n reset)
   "Visit the N-th error from the current point.
 
 N is the number of errors to advance by, where a negative N
 advances backwards.  With non-nil RESET, advance from the
 beginning of the buffer, otherwise advance from the current
-position.
+position.  When `flycheck-navigation-scope' is `project' and the
+buffer has no further error, continue by a single step into the
+project's other diagnostics.
 
 Intended for use with `next-error-function'."
   (if-let* ((pos (flycheck-next-error-pos n reset))
@@ -6570,7 +7230,111 @@ Intended for use with `next-error-function'."
                                (flycheck-overlays-at pos))
                      (get-char-property pos 'flycheck-error))))
       (flycheck-jump-to-error err)
-    (user-error "No more Flycheck errors")))
+    (let ((continue
+           ;; Continue into the project only when the buffer is truly
+           ;; exhausted: with a larger N and errors still left here,
+           ;; refuse rather than silently skip them, as buffer scope does
+           (and (eq flycheck-navigation-scope 'project)
+                (not (zerop (or n 1)))
+                (buffer-file-name)
+                (not (flycheck-next-error-pos
+                      (if (> (or n 1) 0) 1 -1) reset)))))
+      (if-let* ((err (and continue
+                          (flycheck--next-project-error (or n 1)))))
+          (let ((origin (current-buffer))
+                (opoint (point)))
+            (flycheck-jump-to-error err)
+            ;; The next-error session stays with the origin buffer,
+            ;; whose point never moves; remember where this step landed
+            ;; so a repeated step from the same spot advances instead
+            ;; of jumping to the same error forever
+            (setq flycheck--project-navigation-cursor
+                  (list origin opoint
+                        (flycheck-error-filename err)
+                        (flycheck-error-line err)
+                        (or (flycheck-error-column err) 1))))
+        (user-error "No more Flycheck errors%s"
+                    (if continue " in the project" ""))))))
+
+
+(defun flycheck--next-project-error (n)
+  "Return the project error navigation continues to, or nil.
+
+The project's diagnostics - the same set the error list shows in its
+project scope - ordered by file and position; with positive N the
+nearest one after point, which may still be in the current file when
+its check has not caught up with what the store knows, otherwise the
+next file's first; with negative N the nearest one before.  Files
+order by their true names, so different spellings of the same place -
+symlinked paths, Windows short names - sort together.  Filtered to
+the navigable levels; an error whose file is gone is passed over; a
+buffer without a file stays within itself."
+  (unless (zerop n)
+    (when-let* ((file (buffer-file-name))
+                (key (flycheck--buffer-project-key)))
+      (let* ((forward (> n 0))
+             (line (line-number-at-pos))
+             (column (1+ (- (point) (line-beginning-position))))
+             (truenames (make-hash-table :test 'equal))
+             (file-key
+              ;; Sort files by their true names, memoized per file:
+              ;; the buffer, the store and the cursor may each spell
+              ;; the same place differently - symlinked paths, Windows
+              ;; short names - and mixed spellings break the
+              ;; lexicographic order below
+              (lambda (name)
+                (or (gethash name truenames)
+                    (puthash name
+                             (if (file-remote-p name)
+                                 name
+                               (or (ignore-errors (file-truename name))
+                                   name))
+                             truenames))))
+             (reference
+              ;; A repeated step from the same origin spot continues
+              ;; from where the last one landed
+              (pcase flycheck--project-navigation-cursor
+                ((and `(,origin ,opoint ,cfile ,cline ,ccolumn)
+                      (guard (and (eq origin (current-buffer))
+                                  (= opoint (point)))))
+                 (list (funcall file-key cfile) cline ccolumn))
+                (_ (list (funcall file-key file) line column))))
+             (keyed
+              ;; (FILE LINE COLUMN) sort keys
+              (delq nil
+                    (mapcar
+                     (lambda (err)
+                       (when-let* ((other (flycheck-error-filename err))
+                                   (eline (flycheck-error-line err)))
+                         (when (flycheck-error-level-interesting-p err)
+                           (list (list (funcall file-key other)
+                                       eline
+                                       (or (flycheck-error-column err) 1))
+                                 err))))
+                     (flycheck--project-errors key))))
+             (after-p (lambda (a b)
+                        ;; Lexicographic (FILE LINE COLUMN) order
+                        (pcase-let ((`(,fa ,la ,ca) a) (`(,fb ,lb ,cb) b))
+                          (or (string-lessp fa fb)
+                              (and (string= fa fb)
+                                   (or (< la lb)
+                                       (and (= la lb) (< ca cb))))))))
+             (sorted (seq-sort (lambda (a b) (funcall after-p (car a) (car b)))
+                               keyed))
+             (candidates
+              (if forward
+                  (seq-filter (lambda (entry)
+                                (funcall after-p reference (car entry)))
+                              sorted)
+                (nreverse
+                 (seq-filter (lambda (entry)
+                               (funcall after-p (car entry) reference))
+                             sorted)))))
+        (seq-some (lambda (entry)
+                    (let ((err (cadr entry)))
+                      (and (file-exists-p (flycheck-error-filename err))
+                           err)))
+                  candidates)))))
 
 (defun flycheck-next-error (&optional n reset)
   "Visit the N-th error from the current point.
@@ -6686,6 +7450,9 @@ displayed; see `flycheck-error-list--update-format'.")
     (flycheck--error-list-compute-msg-offset flycheck-error-list-format)
   "Amount of space to use in `flycheck-flush-multiline-message'.")
 
+(defconst flycheck-error-list--file-column-max 40
+  "How wide the File column of the error list may get, in columns.")
+
 (defun flycheck-error-list--column-widths (errors)
   "Compute the File and ID column widths for ERRORS.
 
@@ -6697,7 +7464,8 @@ Return a cons cell (FILE-WIDTH . ID-WIDTH)."
                               (length (file-name-nondirectory file)))))
       (when-let* ((id (flycheck-error-id err)))
         (setq id-width (max id-width (length (format "%s" id))))))
-    (cons (min file-width 40) (min id-width 24))))
+    (cons (min file-width flycheck-error-list--file-column-max)
+          (min id-width 24))))
 
 (defun flycheck-error-list--set-column-width (format name width)
   "Set the width of the column NAME in FORMAT to WIDTH.
@@ -6713,10 +7481,15 @@ ignored."
 
 (defun flycheck-error-list--update-format ()
   "Fit the File and ID column widths to the displayed errors."
-  (pcase-let ((`(,file-width . ,id-width)
-               (flycheck-error-list--column-widths
-                (flycheck-error-list-apply-filter
-                 (flycheck-error-list-current-errors)))))
+  (let* ((errors (flycheck-error-list-apply-filter
+                  (flycheck-error-list-current-errors)))
+         (widths (flycheck-error-list--column-widths errors))
+         (file-width
+          (min flycheck-error-list--file-column-max
+               (max (car widths)
+                       (flycheck-error-list--group-header-width
+                        errors (flycheck-error-list--grouping-dimensions)))))
+         (id-width (cdr widths)))
     (let ((format (copy-sequence flycheck-error-list-format)))
       (flycheck-error-list--set-column-width format "File" file-width)
       (flycheck-error-list--set-column-width format "ID" id-width)
@@ -7058,15 +7831,19 @@ already names it in a grouped list."
          (msg-and-checker
           (concat
            ;; Flag errors that carry an applicable machine fix (apply with
-           ;; `x'/`flycheck-error-list-apply-fix'), for discoverability.  Only
-           ;; badge errors whose fix can actually be applied here, not
-           ;; cross-file ones the apply command would refuse.  A fix that has
-           ;; to be fetched before we know it exists, as an LSP code action
+           ;; `x'/`flycheck-error-list-apply-fix'), for discoverability.  An
+           ;; error about another file is badged too, as long as that file is
+           ;; still there: its fix is applied in the file it names, which the
+           ;; command opens.  A fix that has to
+           ;; be fetched before we know it exists, as an LSP code action
            ;; does, is badged with a question mark rather than left bare: the
            ;; indicators cannot promise it, but there is room to mention it
            ;; here, and otherwise nothing would suggest trying.
            (when (and (flycheck-error-fix error)
-                      (flycheck--error-fix-buffer error))
+                      (or (flycheck--error-fix-buffer error)
+                          (when-let* ((filename (flycheck-error-filename
+                                                 error)))
+                            (file-regular-p filename))))
              (let ((known (flycheck-error-known-fix-p error)))
                (propertize (if known "[fix] " "[fix?] ")
                            'face 'flycheck-error-list-checker-name
@@ -7140,9 +7917,23 @@ read the project-wide diagnostics of that buffer's project."
             (dir (and (buffer-live-p flycheck-error-list-source-buffer)
                       (buffer-local-value 'default-directory
                                           flycheck-error-list-source-buffer))))
-      (if (string-prefix-p dir filename)
-          (file-relative-name filename dir)
-        (abbreviate-file-name filename))
+      (cond
+       ((string-prefix-p dir filename) (file-relative-name filename dir))
+       ;; The buffer's directory and the name a checker reports can be
+       ;; different spellings of the same place - a symlinked project, macOS
+       ;; mounting /tmp on /private/tmp - and without resolving them every
+       ;; row of such a project shows a whole absolute path.  Only for local
+       ;; absolute names: a remote true name costs a round trip per path and
+       ;; this runs on every refresh, and a relative one would be resolved
+       ;; against whichever buffer happens to be current.
+       ((and (file-name-absolute-p filename)
+             (not (file-remote-p filename))
+             (not (file-remote-p dir))
+             (let ((true-dir (flycheck--memoized-truename dir))
+                   (true-file (flycheck--memoized-truename filename)))
+               (and (string-prefix-p true-dir true-file)
+                    (file-relative-name true-file true-dir)))))
+       (t (abbreviate-file-name filename)))
     (or filename "<no file>")))
 
 (defun flycheck-error-list--group-key-function (dimension)
@@ -7219,6 +8010,45 @@ headers above a still-present error keep their collapse too."
                    (remhash path flycheck-error-list--collapsed)))
                flycheck-error-list--collapsed))))
 
+(defun flycheck-error-list--group-header-label (dimension key count collapsed
+                                                         depth)
+  "Return the text of the header of a group at DEPTH.
+
+DIMENSION and KEY name the group, COUNT is how many errors it holds and
+COLLAPSED whether it is collapsed."
+  (format "%s%s %s (%d)"
+          (make-string (* 2 depth) ?\s)
+          (if collapsed "▸" "▾")
+          (flycheck-error-list--group-name dimension key)
+          count))
+
+(defun flycheck-error-list--group-header-width (errors dimensions)
+  "Return the width the headers of ERRORS grouped by DIMENSIONS need.
+
+The headers share the first column with the file names, and are usually
+longer than the names under them, so without this the group a reader is
+looking for is the part that gets elided.  The counts are taken over the
+whole list, which is exact for the outermost dimension and an upper
+bound for the ones nested under it, where a group holds only part of
+what its key names."
+  (let ((width 0) (depth 0))
+    (dolist (dimension dimensions)
+      (let ((counts (make-hash-table :test 'equal))
+            (key-fn (flycheck-error-list--group-key-function dimension)))
+        (dolist (err errors)
+          (let ((key (funcall key-fn err)))
+            (puthash key (1+ (gethash key counts 0)) counts)))
+        (maphash
+         (lambda (key count)
+           (setq width
+                 (max width
+                      (string-width
+                       (flycheck-error-list--group-header-label
+                        dimension key count nil depth)))))
+         counts))
+      (setq depth (1+ depth)))
+    width))
+
 (defun flycheck-error-list--group-header (path dimension key count collapsed depth)
   "Return a header entry for the group at PATH.
 
@@ -7229,11 +8059,8 @@ list headed by `flycheck-group', not a `flycheck-error', so
 navigation and the fix/explain commands skip it."
   (list (list 'flycheck-group path)
         (vector (flycheck-error-list-make-cell
-                 (format "%s%s %s (%d)"
-                         (make-string (* 2 depth) ?\s)
-                         (if collapsed "▸" "▾")
-                         (flycheck-error-list--group-name dimension key)
-                         count)
+                 (flycheck-error-list--group-header-label
+                  dimension key count collapsed depth)
                  'flycheck-error-list-group-header nil
                  'flycheck-error-list-group)
                 "" "" "" "" "")))
@@ -7619,38 +8446,70 @@ related location; see `flycheck-visit-related-location'."
 (defun flycheck-error-list-apply-fix (&optional pos)
   "Apply the suggested fix of the error at POS in the error list.
 
-POS defaults to `point'.  Signal a `user-error' when the error
-has no fix."
+POS defaults to `point'.  The fix is applied in the buffer its line and
+column numbers belong to: the buffer that was checked, or, for an error
+a project checker reported about another file, that file, which is
+opened and left unsaved so the change can be reviewed and undone.
+
+Signal a `user-error' when the error has no fix, or when the file it
+belongs to has changed since the check that produced it."
   (interactive)
-  (let* ((error (tabulated-list-get-id pos))
-         (fixable (and (flycheck-error-p error) (flycheck-error-fix error)))
-         (buffer (and fixable (flycheck--error-fix-buffer error))))
-    (unless fixable
+  (let ((error (tabulated-list-get-id pos)))
+    (unless (and (flycheck-error-p error) (flycheck-error-fix error))
       (user-error "The error at point has no fix"))
-    (unless buffer
-      (user-error "This fix cannot be applied here (the error is in another \
-file, or its buffer is gone)"))
-    ;; Resolve a lazy fix provider in the error's own buffer.
-    (if-let* ((fix (with-current-buffer buffer
-                     (flycheck-error-resolve-fix error))))
-        (progn
-          (flycheck-apply-fix fix buffer)
+    (if-let* ((result (flycheck--apply-error-fix error 'visit)))
+        (pcase-let ((`(,fix . ,buffer) result))
           (flycheck-error-list-refresh)
-          (message "Applied fix%s"
+          (message "Applied fix%s%s"
                    (if-let* ((description (flycheck-fix-description fix)))
-                       (concat ": " description) "")))
+                       (concat ": " description) "")
+                   (if (eq buffer flycheck-error-list-source-buffer)
+                       ""
+                     (format " in %s" (buffer-name buffer)))))
       (user-error "The fix for this error is not available"))))
 
 (defun flycheck-error-list-fix-all ()
-  "Apply every fixable error's fix in the error list's source buffer."
+  "Apply every fix the error list shows.
+
+In the buffer scope that is every fix of the source buffer.  In the
+project scope (see `flycheck-error-list-scope') it is every fix in the
+project, including those for files no buffer visits: such a file is
+opened, fixed as a single undoable change and left unsaved, so the
+change can be reviewed and undone.  A file that changed since the check
+is skipped rather than fixed at stale positions.  Errors a filter hides
+are left alone."
   (interactive)
-  (if-let* ((buffer flycheck-error-list-source-buffer)
-            ((buffer-live-p buffer)))
-      (progn
-        (with-current-buffer buffer
-          (call-interactively #'flycheck-fix-all-errors))
-        (flycheck-error-list-refresh))
-    (user-error "The error list has no live source buffer")))
+  (if (eq flycheck-error-list-scope 'project)
+      (let* ((errors (flycheck-error-list-apply-filter
+                      (flycheck-error-list-current-errors)))
+             (opening (flycheck--fix-files-to-open errors)))
+        (when (and opening
+                   (not (y-or-n-p
+                         (format "Fixing this opens %d file%s; proceed? "
+                                 (length opening)
+                                 (if (= (length opening) 1) "" "s")))))
+          (user-error "Not fixing"))
+        (pcase-let ((`(,applied ,files ,skipped)
+                     (flycheck--fix-errors-across-files errors)))
+          (flycheck-error-list-refresh)
+          (cond
+           ((> applied 0)
+            (message "Applied %d fix%s in %d file%s%s"
+                     applied (if (= applied 1) "" "es")
+                     files (if (= files 1) "" "s")
+                     (if (> skipped 0)
+                         (format " (%d skipped)" skipped)
+                       "")))
+           ((> skipped 0)
+            (user-error "No fix could be applied (%d skipped)" skipped))
+           (t (user-error "No applicable fixes in this project")))))
+    (if-let* ((buffer flycheck-error-list-source-buffer)
+              ((buffer-live-p buffer)))
+        (progn
+          (with-current-buffer buffer
+            (call-interactively #'flycheck-fix-all-errors))
+          (flycheck-error-list-refresh))
+      (user-error "The error list has no live source buffer"))))
 
 (defun flycheck-error-list-next-error-pos (pos &optional n)
   "Starting from POS get the N'th next error in the error list.
@@ -8558,33 +9417,49 @@ clamped to the line so a checker column past the end still lands on it."
   "Create a tracked overlay rendering BLOCK on its own lines below ANCHOR.
 
 BACKGROUND, when given, is a face put under the whole block so the tinted
-line and its messages read as one region.  The block hangs off the *next*
-line, outside the range the line tint covers, so it has to carry the tint
-itself rather than inherit it.
+line and its messages read as one region; the block carries the tint
+itself, newlines included, so it reaches the window edge.
 
-BLOCK is the annotation text without surrounding newlines.  It is hung off
-the beginning of the following line as a `before-string' ending in a
-newline, so its extra screen rows belong to that line's buffer position
-rather than to ANCHOR's line.  That keeps visual-line motion working:
-`next-line' (with the variable `line-move-visual') and
-`evil-next-visual-line' move point onto the next line of code, instead of
-stalling on the annotation or, under Evil, getting stuck before it.  On
-the last line of the buffer, where there is no following line, the block
-is hung off ANCHOR with a leading newline and a `cursor'-anchored space
-instead.  Return the overlay."
-  (let ((string (if (< anchor (point-max))
-                    (concat block "\n")
-                  (concat (propertize " " 'cursor t) "\n" block))))
+BLOCK is the annotation text without surrounding newlines.  The overlay
+spans ANCHOR's newline and replaces it, through a `display' string, with
+a newline, the block and a newline again.  That placement satisfies two
+parts of Emacs at once.  Line numbers (`display-line-numbers-mode') go
+by the buffer position a screen row starts at: the block's rows start
+at the newline, inside the annotated line, so they get no number and
+the line after keeps its own.  A block hung off the next line's start
+instead took that line's number (issue #2367).  Visual-line motion
+(`next-line' with the variable `line-move-visual', and
+`evil-next-visual-line') steps down over a display string as a unit,
+so point lands on the next line of code rather than stalling on the
+annotation, as it would with an `after-string' at the end of the line.
+Stepping up onto a line that has a block - only ever the case with
+`flycheck-annotate-other-lines-style' set to `below', since the
+focused line's block is rebuilt as point leaves it - lands at the end
+of that line rather than at the goal column, the one place the
+display string falls short of a plain buffer line.
+A `cursor'-anchored space leads the string so the cursor sits after the
+code when point is at ANCHOR.  On the last line of the buffer, where
+there is no newline to replace, the string hangs off ANCHOR as a
+`before-string' instead.  Return the overlay."
+  (let* ((last (>= anchor (point-max)))
+         (string (concat (propertize " " 'cursor t) "\n" block
+                         (if last "" "\n"))))
     ;; Appended, so the messages keep their own colours and only take the
     ;; background from the tint.  It has to cover the newlines too, or the
     ;; tint would stop at the text instead of reaching the window edge.
     (when background
       (add-face-text-property 0 (length string) background 'append string))
-    (let ((ov (if (< anchor (point-max))
-                  (make-overlay (1+ anchor) (1+ anchor) nil t nil)
-                (make-overlay anchor anchor nil t nil))))
+    ;; A display string takes its base face from the newline it replaces,
+    ;; overlays included, so the block would light up under `hl-line' or
+    ;; an active region; `default' underneath everything keeps it plain
+    (add-face-text-property 0 (length string) 'default 'append string)
+    (let ((ov (make-overlay anchor (if last anchor (1+ anchor)) nil t nil)))
       (overlay-put ov 'priority 100)
-      (overlay-put ov 'before-string string)
+      (cond
+       (last (overlay-put ov 'before-string string))
+       (t (overlay-put ov 'display string)
+          ;; Gone with the newline it stood in for, when lines are joined
+          (overlay-put ov 'evaporate t)))
       (flycheck-annotate--track ov))))
 
 (defun flycheck-annotate-below-style (errors anchor _focused)
@@ -9772,6 +10647,40 @@ symbols in the command."
   (seq-mapcat (lambda (arg) (flycheck-substitute-argument arg checker))
               (flycheck-checker-arguments checker)))
 
+(defun flycheck--process-input-coding-system (program)
+  "Return the coding system a process running PROGRAM would encode input with.
+
+`process-send-region' encodes the buffer with this on the way to a local
+checker, so the file written for a remote one has to use it too.  The
+buffer's own coding system is the wrong thing to write with: it would put
+the carriage returns of a DOS file back, or a byte order mark, neither of
+which the local path ever sends."
+  (let ((entry (and program
+                    (assoc-default program process-coding-system-alist
+                                   #'string-match))))
+    (or (if (consp entry) (cdr entry) entry)
+        (cdr default-process-coding-system)
+        'utf-8-unix)))
+
+(defun flycheck--redirect-command (command file)
+  "Return COMMAND with its standard input redirected from FILE.
+
+FILE is a name on the host the command runs on.  This is how a buffer
+reaches a checker running over TRAMP: the process Tramp hands back is
+the shell connection it multiplexes every remote command through, and
+an end of file cannot be expressed on it.  With a pipe connection type
+the end of file never arrives and a checker that reads to the end waits
+for it for ever; with a pty it does arrive, but the line discipline
+rewrites the buffer on the way, translating carriage returns and
+swallowing the end-of-file character where it appears in the text.  A
+redirect has neither problem."
+  (list "sh" "-c"
+        ;; `exec' so the checker replaces the shell rather than running
+        ;; under it: killing the process then reaches the checker itself,
+        ;; the way `flycheck-lsp--remote-command' does it.
+        (concat "exec " (mapconcat #'tramp-shell-quote-argument command " ")
+                " < " (tramp-shell-quote-argument file))))
+
 (defun flycheck-process-send-buffer (process)
   "Send all contents of current buffer to PROCESS.
 
@@ -9806,7 +10715,30 @@ PROCESS, and terminates standard input with EOF."
                ;; local name on the remote host.
                (program (file-local-name executable))
                (args (flycheck-checker-substituted-arguments checker))
-               (command (flycheck--wrap-command program args))
+               ;; A checker that reads standard input cannot be fed over
+               ;; TRAMP; see `flycheck--redirect-command'.  Put the buffer
+               ;; in a file on that host and let the remote shell redirect
+               ;; it.  The file joins `flycheck-temporaries', so it is
+               ;; deleted with the rest when the check finishes.
+               (stdin-file (when (and (flycheck-checker-get
+                                       checker 'standard-input)
+                                      (file-remote-p default-directory))
+                             ;; `flycheck-save-buffer-to-file' writes the
+                             ;; whole buffer, narrowing or not, which is
+                             ;; what `flycheck-process-send-buffer' sends;
+                             ;; the coding system is what it would have
+                             ;; been encoded with on the way.
+                             (let ((coding-system-for-write
+                                    (flycheck--process-input-coding-system
+                                     program)))
+                               (flycheck-save-buffer-to-temp
+                                (lambda (_)
+                                  (flycheck-temp-file-system nil))))))
+               (command (let ((command (flycheck--wrap-command program args)))
+                          (if stdin-file
+                              (flycheck--redirect-command
+                               command (file-local-name stdin-file))
+                            command)))
                (sentinel-events nil)
                ;; Use pipes to receive output from the syntax checker.  They are
                ;; more efficient and more robust than PTYs, which Emacs uses by
@@ -9859,8 +10791,10 @@ PROCESS, and terminates standard input with EOF."
           ;; process itself, to get rid of the global state ASAP.
           (process-put process 'flycheck-temporaries flycheck-temporaries)
           (setq flycheck-temporaries nil)
-          ;; Send the buffer to the process on standard input, if enabled.
-          (when (flycheck-checker-get checker 'standard-input)
+          ;; Send the buffer to the process on standard input, if enabled
+          ;; and not already redirected from a file on the remote host.
+          (when (and (flycheck-checker-get checker 'standard-input)
+                     (not stdin-file))
             (condition-case err
                 (flycheck-process-send-buffer process)
               ;; Some checkers exit before reading all input, causing errors
@@ -10673,7 +11607,12 @@ information about staticcheck."
           :id .code
           :checker checker
           :buffer buffer
-          :filename .location.file)
+          :filename .location.file
+          ;; A finding that spans nothing, such as an unused
+          ;; declaration, still carries an `end' object, with an empty
+          ;; file and zeroed position.  Report it as a point.
+          :end-line (and .end.line (/= .end.line 0) .end.line)
+          :end-column (and .end.column (/= .end.column 0) .end.column))
          errors)))
     (nreverse errors)))
 
@@ -10830,8 +11769,12 @@ https://github.com/rust-lang/rust/blob/master/src/librustc_errors/json.rs#L154"
             ;; Messages from `cargo clippy' may suggest replacement code.  In
             ;; these cases, the `message' field itself is an unhelpful `try' or
             ;; `change this to'.  We add the `suggested_replacement' field in
-            ;; these cases.
-            (if .suggested_replacement
+            ;; these cases.  A suggestion that deletes has an empty
+            ;; replacement, and its message already says what goes ("remove
+            ;; this `mut'"), so appending an empty pair of backquotes to it
+            ;; only makes it look broken.
+            (if (and .suggested_replacement
+                     (not (string-empty-p .suggested_replacement)))
                 (format "%s: `%s`" message .suggested_replacement)
               message)
             :id error-code
@@ -11303,21 +12246,36 @@ Built from the diagnostic's `code', carrying its `codeDescription' href
           (href (plist-get (plist-get lsp :codeDescription) :href)))
       (if href (propertize id 'explainer-url href) id))))
 
-(defun flycheck-lsp--uri-to-path (uri)
-  "Convert a `file:' URI to a local file path.
+(defun flycheck-lsp--uri-to-path (uri &optional remote)
+  "Convert a `file:' URI to a file name.
 
 Percent-decoding and authority stripping are shared with the SARIF parser
 via `flycheck--file-uri-to-path'; this additionally trims the leading
 slash of a Windows drive URI (file:///c:/...).  A non-`file:' URI is
-returned unchanged."
+returned unchanged.
+
+A server serving files on a remote host names them as that host sees
+them.  REMOTE, a prefix as `file-remote-p' returns, is put back in front
+of the result, so that it names the file for Emacs rather than for the
+server.  Pass it wherever the answer is used as a file name or compared
+against one; leave it out where the URI is known to be local, such as a
+key into a server's own documents."
   (if (string-prefix-p "file://" uri)
       (let ((path (flycheck--file-uri-to-path uri)))
-        (if (string-match-p "\\`/[a-zA-Z]:" path) (substring path 1) path))
+        (concat remote
+                ;; A drive letter is a local Windows spelling; a remote
+                ;; host's path keeps its leading slash.
+                (if (and (not remote) (string-match-p "\\`/[a-zA-Z]:" path))
+                    (substring path 1)
+                  path)))
     uri))
 
 (defun flycheck-lsp--path-to-uri (path)
-  "Return a `file:' URI for the local PATH."
-  (let ((enc (url-hexify-string (expand-file-name path)
+  "Return a `file:' URI naming PATH as the server's host sees it.
+
+A remote PATH is reduced with `file-local-name': the server runs on that
+host and knows nothing of Emacs\='s remote file names."
+  (let ((enc (url-hexify-string (file-local-name (expand-file-name path))
                                 (cons ?/ url-unreserved-chars))))
     (concat "file://" (if (string-prefix-p "/" enc) enc (concat "/" enc)))))
 
@@ -11334,7 +12292,8 @@ directly to Flycheck's right-open end column."
          (start (plist-get range :start))
          (end (plist-get range :end)))
     (flycheck-related-location-new
-     :filename (and uri (flycheck-lsp--uri-to-path uri))
+     :filename (and uri (flycheck-lsp--uri-to-path
+                         uri (file-remote-p default-directory)))
      :line (and start (1+ (plist-get start :line)))
      :column (and start (1+ (plist-get start :character)))
      :end-line (and end (1+ (plist-get end :line)))
@@ -11397,7 +12356,8 @@ fix is applied right after."
            (dchanges
             (mapcar (lambda (tde)
                       (cons (flycheck-lsp--uri-to-path
-                             (plist-get (plist-get tde :textDocument) :uri))
+                             (plist-get (plist-get tde :textDocument) :uri)
+                             (file-remote-p default-directory))
                             (plist-get tde :edits)))
                     dchanges))
            ;; `changes' (legacy): a JSON object of uri -> edits, which jsonrpc
@@ -11408,7 +12368,8 @@ fix is applied right after."
                      collect (cons (flycheck-lsp--uri-to-path
                                     (if (keywordp uri)
                                         (substring (symbol-name uri) 1)
-                                      uri))
+                                      uri)
+                                    (file-remote-p default-directory))
                                    edits))))))
     (when (and this
                (= (length targets) 1)
@@ -11472,8 +12433,10 @@ lint server both contribute, and then to the first command checker that
 supports the mode, so a command checker contributes too.
 
 Chaining to a bridge is safe whether or not that bridge is on in a given
-buffer: its predicate refuses the buffer, and Flycheck moves on to the
-next entry.  That matters because `next-checkers' is a property of the
+buffer: its predicate refuses the buffer, and Flycheck continues through
+it to the checkers behind it (see
+`flycheck-get-next-checker-for-buffer'), where a mode-matching entry is
+found.  That matters because `next-checkers' is a property of the
 checker, shared by every buffer, while the modes are buffer-local.
 
 Shared by the `flycheck-lsp' and `eglot-check' bridges."
@@ -11538,13 +12501,14 @@ Shared by the `flycheck-lsp' and `eglot-check' bridges."
     (css-mode "biome" "lsp-proxy")
     (css-ts-mode "biome" "lsp-proxy")
     (markdown-mode "harper-ls" "--stdio")
+    (markdown-ts-mode "harper-ls" "--stdio")
     (gfm-mode "harper-ls" "--stdio"))
   "Alist mapping a major mode to a diagnostics LSP server command.
 
 Each entry is (MAJOR-MODE PROGRAM ARG...): a buffer in MAJOR-MODE that
 enables `flycheck-lsp-mode' has PROGRAM started with the ARGs as an LSP
-server, is fed the buffer's text, and reports the diagnostics the server
-pushes back through the `flycheck-lsp' checker.
+server, is fed the buffer's text, and reports the server's diagnostics
+through the `flycheck-lsp' checker.
 
 The default entries are linters that ship a native LSP server and lint out
 of the box, with no project configuration: RuboCop (Ruby), Ruff (Python),
@@ -11589,11 +12553,69 @@ To run this server behind Eglot's rather than instead of it, turn
 Eglot leads and `flycheck-lsp' follows.
 
 Note that this takes effect globally when a buffer enables the mode: it is
-stored in `flycheck-lsp's chain, not per buffer."
+stored in `flycheck-lsp's chain, not per buffer.
+
+It has no effect on a buffer served through `flycheck-lsp-prefer-server'
+rather than this mode.  Such a buffer runs the server alone: the checker
+the server stood in for is not run after it, and neither is that
+checker's chain."
   :type 'boolean
   :safe #'booleanp
   :group 'flycheck
   :package-version '(flycheck . "38"))
+
+(defcustom flycheck-lsp-checker-servers
+  '((ruby-rubocop "rubocop" "--lsp")
+    (python-ruff "ruff" "server"))
+  "Alist mapping a command checker to the server that supersedes it.
+
+Each entry is (CHECKER PROGRAM ARG...): the resident server that lints
+what CHECKER lints.  Consulted only when `flycheck-lsp-prefer-server'
+asks for the substitution, and only where it agrees with what
+`flycheck-lsp-servers' configures for the buffer's major mode: a mode
+pointed at another linter's server is left alone, so the substitution
+never quietly swaps one linter for a different one."
+  :type '(alist :key-type (symbol :tag "Checker")
+                :value-type (repeat :tag "Server command" string))
+  :group 'flycheck
+  :package-version '(flycheck . "40"))
+
+(defcustom flycheck-lsp-prefer-server nil
+  "Whether to prefer a linter's resident server over its command checker.
+
+With nil, the default, nothing changes: automatic selection picks the
+first usable checker from `flycheck-checkers', and a language server is
+used only where `flycheck-lsp-mode' is on.
+
+With t, automatic selection uses `flycheck-lsp' in place of a command
+checker that `flycheck-lsp-checker-servers' names a resident equivalent
+for, when `flycheck-lsp-servers' points the buffer's major mode at that
+same program and it is installed.  A command checker spawns its linter
+afresh on every check; the server stays resident and lints
+incrementally, which is markedly faster for a linter slow to start.
+
+With a list of checker symbols only those are substituted, so the
+preference can be turned on for one language, or for one project
+through a directory-local value.
+
+A checker chosen with \\[flycheck-select-checker], or set as a
+file-local `flycheck-checker', is never substituted, and neither is a
+buffer on a remote host, which the native client declines.
+
+The server reads its own configuration file rather than Flycheck's
+options, so `flycheck-rubocop-except' and its like configure the
+command checker and not the server, and the diagnostics may differ.
+\\[flycheck-verify-setup] reports which server superseded which
+checker."
+  :type '(choice (const :tag "Never prefer a server" nil)
+                 (const :tag "Whenever a resident equivalent is available" t)
+                 (repeat :tag "Only for these checkers"
+                         (symbol :tag "Checker")))
+  :safe (lambda (value) (or (booleanp value) (flycheck-symbol-list-p value)))
+  :group 'flycheck
+  :package-version '(flycheck . "40"))
+
+
 
 (defcustom flycheck-lsp-initialize-timeout 5
   "Seconds to wait for a language server to answer `initialize'.
@@ -11627,9 +12649,21 @@ feature off."
 (cl-defstruct (flycheck-lsp--doc (:constructor flycheck-lsp--doc-create)
                                  (:copier nil))
   "The state of one document open on a server.
-VERSION is nil until the document has been opened."
-  buffer version tick
-  (diags nil))                          ; latest raw LSP diagnostics
+VERSION is nil until the document has been opened.  RESULT-ID is what
+the last pulled report of it carried, for the next pull to refer to."
+  buffer version tick result-id
+  ;; The version last pulled from the server; a check pulls again only
+  ;; when the document moved past it
+  pulled-version
+  ;; The latest raw LSP diagnostics, by channel: a server may push some
+  ;; and answer pulls with others (rust-analyzer pushes what cargo
+  ;; check says and hands out its own on request), and each channel
+  ;; replaces only its own
+  (diags nil) (pulled nil))
+
+(defun flycheck-lsp--doc-diagnostics (doc)
+  "Return every raw LSP diagnostic held for DOC, pushed and pulled."
+  (append (flycheck-lsp--doc-diags doc) (flycheck-lsp--doc-pulled doc)))
 
 (cl-defstruct (flycheck-lsp--server (:constructor flycheck-lsp--server-create)
                                     (:copier nil))
@@ -11640,6 +12674,9 @@ The `documents' table maps a document's canonical path (see
 server's advertised capability plist from its `initialize' reply, filled
 in once `initialized' turns non-nil (the handshake runs asynchronously)."
   connection root command stderr capabilities initialized
+  ;; Whether the workspace has been pulled here: a refresh request from
+  ;; the server is worth honoring only then
+  workspace-pulled
   (documents (make-hash-table :test 'equal)))
 
 (defvar flycheck-lsp--servers (make-hash-table :test 'equal)
@@ -11675,6 +12712,67 @@ and the `flycheck-lsp' checker's predicate calls this on every check."
       (setq-local flycheck-lsp--command-cache (cons mode result))
       result)))
 
+(defun flycheck-lsp--same-program-p (program command)
+  "Return non-nil when COMMAND runs PROGRAM.
+
+Compares base names, and looks at every word of COMMAND, so a server
+named by an absolute path or run through a wrapper, as `bundle exec
+rubocop --lsp' does, still counts as the program it runs."
+  (let ((want (file-name-nondirectory program)))
+    (seq-some (lambda (word) (equal (file-name-nondirectory word) want))
+              command)))
+
+(defun flycheck-lsp--superseding-server (checker)
+  "Return the server command that supersedes CHECKER here, or nil.
+
+Only when `flycheck-lsp-prefer-server' asks for CHECKER, and only when
+the server `flycheck-lsp-servers' configures for this buffer's major
+mode is the same program `flycheck-lsp-checker-servers' names for
+CHECKER.  A mode pointed at a different linter's server is left alone,
+so this never stands one linter in for another."
+  (and (pcase flycheck-lsp-prefer-server
+         ('nil nil)
+         ('t t)
+         ((pred listp) (memq checker flycheck-lsp-prefer-server))
+         ;; Anything else is a mistake; refuse rather than read it as t
+         ;; and turn the preference on for the whole catalog.
+         (_ nil))
+       (when-let* ((want (alist-get checker flycheck-lsp-checker-servers))
+                   (have (flycheck-lsp--available-command major-mode))
+                   ((flycheck-lsp--same-program-p (car want) have)))
+         have)))
+
+(defun flycheck-lsp--preferred-p ()
+  "Return non-nil when the preference would use a server in this buffer.
+
+Derived rather than remembered, so turning `flycheck-lsp-prefer-server'
+off takes effect at once and no buffer is left flagged."
+  (seq-some #'flycheck-lsp--superseding-server
+            (mapcar #'car flycheck-lsp-checker-servers)))
+
+(defun flycheck-lsp--substitute (checker)
+  "Return `flycheck-lsp' when it supersedes CHECKER here, else nil.
+
+Called on the checker automatic selection picked, never on one the user
+selected, so a deliberate choice is left alone."
+  (and (not (eq checker 'flycheck-lsp))
+       ;; Removing it from the registry is how a checker is dropped from
+       ;; automatic selection; that has to hold here too.
+       (memq 'flycheck-lsp flycheck-checkers)
+       (flycheck-lsp--superseding-server checker)
+       (progn
+         ;; Only the minor mode registers the mode otherwise.  Guarded:
+         ;; `flycheck-add-mode' is a bare push, and this runs on every
+         ;; check.
+         (unless (flycheck-checker-supports-major-mode-p 'flycheck-lsp
+                                                         major-mode)
+           (flycheck-add-mode 'flycheck-lsp major-mode))
+         ;; Ask the same question as any other candidate, so a disabled
+         ;; `flycheck-lsp' stays disabled and the buffer-file-name and
+         ;; remote guards live in one place.
+         (flycheck-may-use-checker 'flycheck-lsp))
+       'flycheck-lsp))
+
 (defun flycheck-lsp--language-id (mode)
   "Return a best-effort LSP languageId string for major MODE."
   (replace-regexp-in-string "\\(?:-ts\\)?-mode\\'" "" (symbol-name mode)))
@@ -11695,49 +12793,187 @@ the root does not change over a buffer's life."
                 (expand-file-name default-directory)))))
 
 (defun flycheck-lsp--buffer-uri ()
-  "Return the `file:' URI of the current buffer's file, or nil."
+  "Return the `file:' URI of the current buffer's file, or nil.
+
+The URI names the file as the server\='s host sees it; the host itself is
+carried by the document key, see `flycheck-lsp--doc-key'."
   (and buffer-file-name (flycheck-lsp--path-to-uri buffer-file-name)))
 
-(defun flycheck-lsp--doc-key (uri)
+(defun flycheck-lsp--server-remote (server)
+  "Return SERVER\='s remote prefix, or nil when it runs on this machine."
+  (when-let* ((root (flycheck-lsp--server-root server)))
+    (file-remote-p root)))
+
+(defun flycheck-lsp--doc-key (uri &optional remote)
   "Return the canonical key (an absolute path) for the document URI.
 
 The client and the server may spell the same file's URI differently (a
 re-encoded percent escape, an authority component, a Windows drive
 case).  Keying open documents and their diagnostics on the decoded,
-expanded path -- rather than the raw URI -- makes both sides agree."
-  (expand-file-name (flycheck-lsp--uri-to-path uri)))
+expanded path, rather than the raw URI, makes both sides agree.
+
+URI is always a server's, naming the file as its own host sees it.
+REMOTE, a prefix as `file-remote-p' returns, is that host, so the key
+names the file as Emacs does: two servers on different hosts holding the
+same path get different keys, and the key opens the right file."
+  (expand-file-name (flycheck-lsp--uri-to-path uri remote)))
 
 (defun flycheck-lsp--server-live-p (server)
   "Return non-nil when SERVER's connection is still running."
   (let ((conn (flycheck-lsp--server-connection server)))
     (and conn (jsonrpc-running-p conn))))
 
+(defun flycheck-lsp--accept-diagnostics (server uri diagnostics
+                                                &optional version result-id
+                                                pushed)
+  "Cache DIAGNOSTICS about the document at URI on SERVER.
+
+DIAGNOSTICS is a sequence of raw LSP diagnostics, from a push or a
+pull.  With VERSION, a report about a document a buffer has since
+synced at another version is stale and ignored.  RESULT-ID, from a
+pull, is kept for the next pull to refer to; a report with one
+replaces the pulled diagnostics, a push the pushed ones, and the
+document shows both (see `flycheck-lsp--doc-diagnostics').  If a
+live buffer owns
+the document, re-trigger its check so the fresh diagnostics are
+published (guarded against recursion); a report repeating what the
+cache holds changes nothing about the buffer, and servers republish
+freely while they index.  PUSHED says the report was a push, for the
+counts `flycheck-verify-setup' shows."
+  (let ((doc (flycheck-lsp--document
+              server (flycheck-lsp--doc-key
+                      uri (flycheck-lsp--server-remote server)))))
+    (unless (and version
+                 (flycheck-lsp--doc-version doc)
+                 (not (equal version (flycheck-lsp--doc-version doc))))
+      (when result-id
+        (setf (flycheck-lsp--doc-result-id doc) result-id))
+      (let* ((new (append diagnostics nil))
+             (changed (not (equal new (if pushed
+                                          (flycheck-lsp--doc-diags doc)
+                                        (flycheck-lsp--doc-pulled doc))))))
+        (when changed
+          (if pushed
+              (setf (flycheck-lsp--doc-diags doc) new)
+            (setf (flycheck-lsp--doc-pulled doc) new))
+          (flycheck--project-diagnostics-changed))
+        (when-let* ((buffer (flycheck-lsp--doc-buffer doc))
+                    ((buffer-live-p buffer)))
+          (with-current-buffer buffer
+            (let ((recheck (and changed
+                                flycheck-mode
+                                (not flycheck-lsp--suppress-recheck))))
+              (when pushed
+                (flycheck-lsp--count-push recheck))
+              (when recheck
+                (let ((flycheck-lsp--suppress-recheck t))
+                  (flycheck-buffer-automatically))))))))))
+
 (defun flycheck-lsp--handle-notification (server method params)
   "Handle an LSP notification METHOD with PARAMS from SERVER.
 
-Only `textDocument/publishDiagnostics' is used: cache the diagnostics on
-their document and, if a live buffer owns it, re-trigger its check so the
-fresh diagnostics are published (guarded against recursion)."
+Only `textDocument/publishDiagnostics' is used; see
+`flycheck-lsp--accept-diagnostics'."
   (when (eq method 'textDocument/publishDiagnostics)
-    (let* ((doc (flycheck-lsp--document
-                 server (flycheck-lsp--doc-key (plist-get params :uri))))
-           (new (append (plist-get params :diagnostics) nil))
-           ;; A push repeating what we already hold changes nothing about
-           ;; the buffer, and servers republish freely while they index
-           (changed (not (equal new (flycheck-lsp--doc-diags doc)))))
-      (when changed
-        (setf (flycheck-lsp--doc-diags doc) new)
-        (flycheck--project-diagnostics-changed))
-      (when-let* ((buffer (flycheck-lsp--doc-buffer doc))
-                  ((buffer-live-p buffer)))
-        (with-current-buffer buffer
-          (let ((recheck (and changed
-                              flycheck-mode
-                              (not flycheck-lsp--suppress-recheck))))
-            (flycheck-lsp--count-push recheck)
-            (when recheck
-              (let ((flycheck-lsp--suppress-recheck t))
-                (flycheck-buffer-automatically)))))))))
+    (flycheck-lsp--accept-diagnostics
+     server (plist-get params :uri) (plist-get params :diagnostics)
+     (plist-get params :version) nil 'pushed)))
+
+(defconst flycheck-lsp--pull-timeout 60
+  "Seconds to wait for a server's answer to a pull.
+A server still loading its workspace can take a while over the first
+document, and longer over the whole workspace.")
+
+(defun flycheck-lsp--pull-document (server doc uri)
+  "Ask SERVER for the diagnostics of the document DOC at URI.
+
+The reply lands in the cache like a push would (see
+`flycheck-lsp--accept-diagnostics'), re-triggering the buffer's check
+only when it changes something, so a pull cannot chase its own tail.
+A reply of `unchanged', keyed on the result id of the last one, is
+just that.  A reply about a document closed in the meantime is
+dropped rather than resurrecting it; a failed or timed-out pull
+leaves the document to be asked about again by the next check."
+  (let ((version (flycheck-lsp--doc-version doc))
+        (documents (flycheck-lsp--server-documents server)))
+    (setf (flycheck-lsp--doc-pulled-version doc) version)
+    (jsonrpc-async-request
+     (flycheck-lsp--server-connection server)
+     'textDocument/diagnostic
+     (append (list :textDocument (list :uri uri))
+             (when-let* ((id (flycheck-lsp--doc-result-id doc)))
+               (list :previousResultId id)))
+     :timeout flycheck-lsp--pull-timeout
+     :success-fn (lambda (result)
+                   (when (and (equal (plist-get result :kind) "full")
+                              (eq doc (gethash
+                                       (flycheck-lsp--doc-key
+                                        uri (flycheck-lsp--server-remote
+                                             server))
+                                       documents)))
+                     (flycheck-lsp--accept-diagnostics
+                      server uri (plist-get result :items) version
+                      (plist-get result :resultId))))
+     :error-fn (lambda (_err)
+                 (setf (flycheck-lsp--doc-pulled-version doc) nil))
+     :timeout-fn (lambda ()
+                   (setf (flycheck-lsp--doc-pulled-version doc) nil)))))
+
+(defun flycheck-lsp--pull-workspace (server)
+  "Ask SERVER for the diagnostics of its whole workspace.
+
+Each document's report lands in the cache like a push about it would:
+the buffers visiting them re-check, and the rest show in the project
+view (see `flycheck-lsp--project-extra-errors').  A document the
+server reports unchanged since the last pull, by result id, is left as
+it is."
+  (setf (flycheck-lsp--server-workspace-pulled server) t)
+  (let ((previous nil))
+    (maphash (lambda (path doc)
+               (when-let* ((id (flycheck-lsp--doc-result-id doc)))
+                 (push (list :uri (flycheck-lsp--path-to-uri path) :value id)
+                       previous)))
+             (flycheck-lsp--server-documents server))
+    (jsonrpc-async-request
+     (flycheck-lsp--server-connection server)
+     'workspace/diagnostic
+     (list :previousResultIds (vconcat previous))
+     :timeout flycheck-lsp--pull-timeout
+     :success-fn (lambda (result)
+                   (seq-doseq (item (plist-get result :items))
+                     (when (equal (plist-get item :kind) "full")
+                       (flycheck-lsp--accept-diagnostics
+                        server (plist-get item :uri) (plist-get item :items)
+                        (plist-get item :version)
+                        (plist-get item :resultId)))))
+     :error-fn (lambda (err)
+                 (message "Flycheck LSP: %s could not report on its workspace: %s"
+                          (car (flycheck-lsp--server-command server))
+                          (or (plist-get err :message) err)))
+     :timeout-fn (lambda ()
+                   (message "Flycheck LSP: %s took too long to report on its workspace"
+                            (car (flycheck-lsp--server-command server)))))))
+
+(defun flycheck-lsp--handle-request (server method _params)
+  "Answer the LSP request METHOD from SERVER.
+
+A `workspace/diagnostic/refresh' says the diagnostics pulled so far
+are outdated - a server that answered empty while it was still
+loading its workspace sends one when it is done - so every document
+a live buffer has open is pulled again, and the workspace too once a
+pull of it has happened here.  Everything else gets a null reply."
+  (when (and (eq method 'workspace/diagnostic/refresh)
+             (flycheck-lsp--server-live-p server))
+    (maphash (lambda (path doc)
+               (when-let* ((buffer (flycheck-lsp--doc-buffer doc))
+                           ((buffer-live-p buffer))
+                           ((flycheck-lsp--doc-version doc)))
+                 (flycheck-lsp--pull-document
+                  server doc (flycheck-lsp--path-to-uri path))))
+             (flycheck-lsp--server-documents server))
+    (when (flycheck-lsp--server-workspace-pulled server)
+      (flycheck-lsp--pull-workspace server)))
+  nil)
 
 (defun flycheck-lsp--list-only-error (path lsp)
   "Convert the raw LSP diagnostic plist LSP about the unvisited PATH.
@@ -11757,6 +12993,17 @@ with astral characters and no end position is attempted at all."
      :filename path
      :buffer nil)))
 
+(defun flycheck-lsp--serving-p ()
+  "Return non-nil when the native client serves the current buffer.
+
+Either because `flycheck-lsp-mode' is on, or because
+`flycheck-lsp-prefer-server' stood the checker in for a command
+checker: both put a document on a server, so both should show that
+server's findings for the project's other files."
+  (and (or (bound-and-true-p flycheck-lsp-mode)
+           (flycheck-lsp--preferred-p))
+       t))
+
 (defun flycheck-lsp--project-extra-errors (project-key buffers)
   "Return cached diagnostics for unvisited documents under PROJECT-KEY.
 
@@ -11770,9 +13017,9 @@ off, whose problems that buffer reports its own way; so is a server
 that died, whose cache is stale; and so is a document outside the
 project, which a server rooted inside it may still be told about (a
 dependency, a generated file elsewhere)."
-  (when (or (bound-and-true-p flycheck-lsp-mode)
+  (when (or (flycheck-lsp--serving-p)
             (seq-some (lambda (buffer)
-                        (buffer-local-value 'flycheck-lsp-mode buffer))
+                        (with-current-buffer buffer (flycheck-lsp--serving-p)))
                       buffers))
     (let ((prefixes (flycheck--project-key-prefixes project-key))
           (result nil))
@@ -11790,7 +13037,7 @@ dependency, a generated file elsewhere)."
                             (not (flycheck--path-under-prefixes-p
                                   path prefixes))
                             (get-file-buffer path))
-                  (dolist (lsp (flycheck-lsp--doc-diags doc))
+                  (dolist (lsp (flycheck-lsp--doc-diagnostics doc))
                     (push (flycheck-lsp--list-only-error path lsp) result)))))
             (flycheck-lsp--server-documents server))))
        flycheck-lsp--servers)
@@ -11798,6 +13045,64 @@ dependency, a generated file elsewhere)."
 
 (add-hook 'flycheck--project-extra-errors-functions
           #'flycheck-lsp--project-extra-errors)
+
+(defun flycheck-lsp--check-project (root)
+  "Pull workspace diagnostics from the servers under ROOT that offer them.
+
+For `flycheck--project-check-functions': every live server rooted in
+the project whose diagnosticProvider covers the workspace is asked,
+and the names of those asked are returned."
+  (let ((prefixes (flycheck--project-key-prefixes root))
+        (names nil))
+    (maphash
+     (lambda (_key server)
+       (when (and (flycheck-lsp--server-live-p server)
+                  (flycheck-lsp--server-initialized server)
+                  (flycheck-lsp--capable server :diagnosticProvider
+                                         :workspaceDiagnostics)
+                  (flycheck--path-under-prefixes-p
+                   (file-name-as-directory
+                    (expand-file-name (flycheck-lsp--server-root server)))
+                   prefixes)
+                  ;; Nothing shows what a server with no buffer left on
+                  ;; it would find (see `flycheck-lsp--project-extra-errors')
+                  (seq-some (lambda (doc)
+                              (buffer-live-p (flycheck-lsp--doc-buffer doc)))
+                            (hash-table-values
+                             (flycheck-lsp--server-documents server))))
+         (flycheck-lsp--pull-workspace server)
+         (push (format "%s (workspace diagnostics)"
+                       (car (flycheck-lsp--server-command server)))
+               names)))
+     flycheck-lsp--servers)
+    (nreverse names)))
+
+(add-hook 'flycheck--project-check-functions #'flycheck-lsp--check-project)
+
+(defun flycheck-lsp--clear-project (root)
+  "Drop what workspace pulls cached about unvisited files under ROOT.
+
+For `flycheck--project-clear-functions': the documents no live buffer
+holds are forgotten, result ids included, so the next pull starts
+afresh.  The servers stay."
+  (let ((prefixes (flycheck--project-key-prefixes root)))
+    (maphash
+     (lambda (_key server)
+       (when (flycheck--path-under-prefixes-p
+              (file-name-as-directory
+               (expand-file-name (flycheck-lsp--server-root server)))
+              prefixes)
+         (let ((documents (flycheck-lsp--server-documents server))
+               (unvisited nil))
+           (maphash (lambda (path doc)
+                      (unless (buffer-live-p (flycheck-lsp--doc-buffer doc))
+                        (push path unvisited)))
+                    documents)
+           (dolist (path unvisited)
+             (remhash path documents)))))
+     flycheck-lsp--servers)))
+
+(add-hook 'flycheck--project-clear-functions #'flycheck-lsp--clear-project)
 
 (defun flycheck-lsp--document (server key)
   "Return the `flycheck-lsp--doc' for KEY on SERVER, creating it if needed."
@@ -11807,17 +13112,26 @@ dependency, a generated file elsewhere)."
 
 (defun flycheck-lsp--initialize-params (root)
   "Return the LSP `initialize' params for a server rooted at ROOT."
-  (list :processId (emacs-pid)
+  (list :processId (unless (file-remote-p root) (emacs-pid))
+        ;; A server on another host cannot see our process, and some
+        ;; older ones want the path rather than the URI.
+        :rootPath (file-local-name (expand-file-name root))
         :rootUri (flycheck-lsp--path-to-uri root)
         :capabilities
         (list :textDocument
               (list :publishDiagnostics '(:relatedInformation t)
+                    ;; Pull-model diagnostics: a server advertising a
+                    ;; diagnosticProvider is asked per document (see
+                    ;; `flycheck-lsp--pull-document') and, on demand, for
+                    ;; its workspace (see `flycheck-lsp--pull-workspace')
+                    :diagnostic '(:relatedDocumentSupport :json-false)
                     ;; Advertise that we can apply a quickfix's edit, so a
                     ;; server that gates code actions on client support offers
                     ;; them (see `flycheck-lsp--code-action-fix').
                     :codeAction
                     '(:codeActionLiteralSupport
-                      (:codeActionKind (:valueSet ["quickfix"])))))))
+                      (:codeActionKind (:valueSet ["quickfix"]))))
+              :workspace '(:diagnostics (:refreshSupport t)))))
 
 (defun flycheck-lsp--server-key (server)
   "Return SERVER's key in `flycheck-lsp--servers'."
@@ -11851,6 +13165,52 @@ Remove it from the registry so a later check starts a fresh one."
   (flycheck-lsp--shutdown-server server)
   (remhash (flycheck-lsp--server-key server) flycheck-lsp--servers))
 
+(defvar tramp-use-ssh-controlmaster-options)
+(declare-function tramp-shell-quote-argument "tramp" (s))
+(defvar tramp-ssh-controlmaster-options)
+
+(defun flycheck-lsp--remote-command (command)
+  "Return COMMAND wrapped for a server started on a remote host.
+
+The shell TRAMP runs the command under translates a carriage return into
+a newline, which destroys the CRLF framing LSP headers use.  Turning the
+line discipline raw leaves the byte stream alone.  Eglot wraps remote
+servers the same way.
+
+Arguments are quoted the way a POSIX shell reads them rather than the
+way this machine\='s shell does, since that is what runs them."
+  (list "sh" "-c"
+        (concat "stty raw > /dev/null 2>&1; exec "
+                (mapconcat #'tramp-shell-quote-argument command " "))))
+
+(defun flycheck-lsp--spawn (name command stderr)
+  "Start COMMAND as process NAME with STDERR, on this host or the remote one.
+
+A remote `default-directory' needs `:file-handler', or the process runs
+here instead, against files it cannot see.  It also needs the wrapper
+`flycheck-lsp--remote-command' builds, which is what preserves the byte
+stream the LSP framing depends on."
+  (if (file-remote-p default-directory)
+      (progn
+        ;; Loaded before the bindings below: on Emacs 30 one of them is
+        ;; an obsolete alias, and `defvaralias' refuses to alias a symbol
+        ;; that is let-bound, so loading it inside would signal.
+        (require 'tramp-sh nil t)
+        (let (;; A connection carrying this much data is not what
+              ;; ControlMaster is for.  Eglot suppresses it for the same
+              ;; reason (Emacs bug#61350).  The string matters only on
+              ;; Emacs 28 and 29, where `suppress' reads as plain
+              ;; truthy.
+              (tramp-use-ssh-controlmaster-options 'suppress)
+              (tramp-ssh-controlmaster-options
+               "-o ControlMaster=no -o ControlPath=none"))
+          (make-process :name name
+                        :command (flycheck-lsp--remote-command command)
+                        :connection-type 'pipe :coding 'utf-8-emacs-unix
+                        :noquery t :stderr stderr :file-handler t)))
+    (make-process :name name :command command :connection-type 'pipe
+                  :coding 'utf-8-emacs-unix :noquery t :stderr stderr)))
+
 (defun flycheck-lsp--start-server (root command)
   "Start an LSP server running COMMAND under ROOT and initialize it.
 
@@ -11863,23 +13223,31 @@ the server down.  Return nil if the process could not be spawned at all."
   (add-hook 'kill-emacs-hook #'flycheck-lsp--shutdown-all)
   (let* ((default-directory root)
          (name (format "flycheck-lsp:%s" (car command)))
-         (stderr (get-buffer-create (format " *%s stderr*" name)))
+         ;; Named per server, not per program: two roots running the same
+         ;; program would otherwise share a buffer, and tearing one down
+         ;; would take the other's stderr pipe with it.
+         (stderr (get-buffer-create (format " *%s %s stderr*" name root)))
          (server (flycheck-lsp--server-create :root root :command command
                                               :stderr stderr))
-         (proc (make-process
-                :name name :command command :connection-type 'pipe
-                :coding 'utf-8-emacs-unix :noquery t :stderr stderr)))
+         (proc nil))
     (condition-case err
-        (let ((conn (make-instance
-                     'jsonrpc-process-connection
-                     :name name :process proc
-                     :notification-dispatcher
-                     (lambda (_conn method params)
-                       (flycheck-lsp--handle-notification server method params))
-                     :request-dispatcher (lambda (&rest _) nil))))
-          (setf (flycheck-lsp--server-connection server) conn)
+        (progn
+          ;; Spawned inside the handler below: a missing program signals
+          ;; here, and the stderr buffer would be left behind.
+          (setq proc (flycheck-lsp--spawn name command stderr))
+          (setf (flycheck-lsp--server-connection server)
+                (make-instance
+                 'jsonrpc-process-connection
+                 :name name :process proc
+                 :notification-dispatcher
+                 (lambda (_conn method params)
+                   (flycheck-lsp--handle-notification server method params))
+                 :request-dispatcher
+                 (lambda (_conn method params)
+                   (flycheck-lsp--handle-request server method params))))
           (jsonrpc-async-request
-           conn 'initialize (flycheck-lsp--initialize-params root)
+           (flycheck-lsp--server-connection server)
+           'initialize (flycheck-lsp--initialize-params root)
            :timeout flycheck-lsp-initialize-timeout
            :success-fn (lambda (result)
                          (flycheck-lsp--on-initialized server result))
@@ -11889,7 +13257,11 @@ the server down.  Return nil if the process could not be spawned at all."
            :timeout-fn (lambda () (flycheck-lsp--init-failed server "timeout")))
           server)
       (error
-       (ignore-errors (delete-process proc))
+       ;; `delete-process' reads nil as the current buffer's process, so
+       ;; a spawn that never happened must not reach it.
+       (when-let* ((conn (flycheck-lsp--server-connection server)))
+         (ignore-errors (jsonrpc-shutdown conn 'cleanup-buffers)))
+       (when proc (ignore-errors (delete-process proc)))
        (ignore-errors (kill-buffer stderr))
        (message "Flycheck LSP: %s failed to start: %s"
                 (car command) (error-message-string err))
@@ -12002,7 +13374,9 @@ as unavailable."
     ;; command (or a `flycheck-fix-all-errors' batch).
     (ignore-errors
       (flycheck-lsp--sync-document
-       server (flycheck-lsp--document server (flycheck-lsp--doc-key uri))
+       server (flycheck-lsp--document
+               server (flycheck-lsp--doc-key
+                       uri (flycheck-lsp--server-remote server)))
        uri (flycheck-lsp--language-id major-mode))
       (when-let* ((actions (append
                             (flycheck-lsp--request
@@ -12092,6 +13466,13 @@ While the server is still finishing its asynchronous `initialize'
 handshake, report nothing and leave the document registered: the
 handshake's completion re-triggers the check (see
 `flycheck-lsp--on-initialized')."
+  ;; `flycheck-lsp-mode' is not the only way a buffer gets a document
+  ;; now: `flycheck-lsp-prefer-server' brings one here without the mode.
+  ;; Both of these are the mode's doing otherwise, and a buffer that skips
+  ;; them leaks its document and writes the recheck guard globally.
+  (add-hook 'kill-buffer-hook #'flycheck-lsp--close-buffer nil 'local)
+  (unless (local-variable-p 'flycheck-lsp--suppress-recheck)
+    (setq-local flycheck-lsp--suppress-recheck flycheck-lsp--suppress-recheck))
   (condition-case err
       (let* ((command (flycheck-lsp--command major-mode))
              (uri (flycheck-lsp--buffer-uri))
@@ -12102,38 +13483,74 @@ handshake's completion re-triggers the check (see
             (funcall callback 'finished nil)
           (let* ((buffer (current-buffer))
                  (doc (flycheck-lsp--document
-                       server (flycheck-lsp--doc-key uri))))
+                       server (flycheck-lsp--doc-key
+                               uri (flycheck-lsp--server-remote server)))))
             (setf (flycheck-lsp--doc-buffer doc) buffer)
             (if (not (flycheck-lsp--server-initialized server))
                 (funcall callback 'finished nil)
               (flycheck-lsp--sync-document
                server doc uri (flycheck-lsp--language-id major-mode))
+              ;; A server on the pull model is asked about each version
+              ;; of the document once; a re-check of the same text - a
+              ;; push's, a pull reply's own - does not ask again
+              (when (and (flycheck-lsp--capable server :diagnosticProvider)
+                         (not (equal (flycheck-lsp--doc-version doc)
+                                     (flycheck-lsp--doc-pulled-version doc))))
+                (flycheck-lsp--pull-document server doc uri))
               (funcall callback 'finished
                        (mapcar (lambda (d)
                                  (flycheck-lsp--diagnostic->error d buffer server uri))
-                               (flycheck-lsp--doc-diags doc)))))))
+                               (flycheck-lsp--doc-diagnostics doc)))))))
     (error (funcall callback 'errored (error-message-string err)))))
 
 (defun flycheck-lsp--enabled-p ()
   "Return non-nil when the `flycheck-lsp' checker may run in the current buffer.
 
-That is, `flycheck-lsp-mode' is on, the buffer visits a file, and its
-major mode has a server in `flycheck-lsp-servers' whose program is
-installed.  Used as the checker's predicate so `flycheck-lsp' is never selected
-unless the mode opted in and the server is actually available."
-  (and (bound-and-true-p flycheck-lsp-mode)
+That is, `flycheck-lsp-mode' is on or `flycheck-lsp-prefer-server' stands
+this checker in for a command checker, the buffer visits a file, and
+its major mode has a server in `flycheck-lsp-servers' whose program
+is installed.  Used as the checker's predicate, so `flycheck-lsp' is
+never selected unless something opted in and the server is available.
+
+A file on a remote host is served by a server started there, over TRAMP;
+`flycheck-lsp--spawn' runs it on that host and the document keys name
+files as Emacs does, so the server needs to be installed there rather
+than here."
+  (and (or (bound-and-true-p flycheck-lsp-mode)
+           (flycheck-lsp--preferred-p))
        buffer-file-name
        (flycheck-lsp--available-command major-mode)
        t))
+
+(defun flycheck-lsp--verify (_checker)
+  "Report how `flycheck-lsp' came to be used in this buffer."
+  (let ((command (flycheck-lsp--available-command major-mode)))
+    (cons (flycheck-verification-result-new
+           :label "server"
+           :message (if command
+                        (mapconcat #'identity command " ")
+                      "none configured for this mode")
+           :face (if command 'success '(bold warning)))
+          (when-let* ((superseded (seq-find #'flycheck-lsp--superseding-server
+                                            flycheck-checkers)))
+            ;; Say why the command checker stopped running, or the
+            ;; substitution looks like the linter broke.
+            (list (flycheck-verification-result-new
+                   :label "supersedes"
+                   :message (format "%s, see `flycheck-lsp-prefer-server'"
+                                    superseded)
+                   :face 'success))))))
 
 (flycheck-define-generic-checker 'flycheck-lsp
   "Report the diagnostics of a Language Server Protocol server.
 
 Talks to the server configured for the buffer's major mode in
 `flycheck-lsp-servers' directly, over the built-in `jsonrpc' library, with
-no Eglot involved.  Enabled by `flycheck-lsp-mode'."
+no Eglot involved.  Enabled by `flycheck-lsp-mode', or used in place of
+a command checker by `flycheck-lsp-prefer-server'."
   :start #'flycheck-lsp--start
   :predicate #'flycheck-lsp--enabled-p
+  :verify #'flycheck-lsp--verify
   :modes '(prog-mode text-mode))
 
 (defun flycheck--lsp-server-gone ()
@@ -12158,25 +13575,154 @@ The server itself is left running -- like Eglot, it is kept for the rest
 of the session and torn down only when Emacs exits (see
 `flycheck-lsp--shutdown-all') -- so reopening or checking another of its
 files does not pay to restart it."
-  (when-let* ((uri (flycheck-lsp--buffer-uri))
-              (key (flycheck-lsp--doc-key uri)))
-    (maphash
+  (when-let* ((uri (flycheck-lsp--buffer-uri)))
+    ;; A local buffer's host is nil, which is a value, not an absence.
+    (let* ((remote (file-remote-p buffer-file-name))
+           (key (flycheck-lsp--doc-key uri remote)))
+      (maphash
      (lambda (_server-key server)
-       (when (gethash key (flycheck-lsp--server-documents server))
-         (remhash key (flycheck-lsp--server-documents server))
-         (when (flycheck-lsp--server-live-p server)
-           (ignore-errors
-             (flycheck-lsp--notify server 'textDocument/didClose
-                                   (list :textDocument (list :uri uri)))))))
-     flycheck-lsp--servers)))
+       ;; The key carries this buffer's host, so a server elsewhere
+       ;; holding the same path for another buffer does not match and
+       ;; keeps its document.
+       (progn
+         (when (gethash key (flycheck-lsp--server-documents server))
+           (remhash key (flycheck-lsp--server-documents server))
+           (when (flycheck-lsp--server-live-p server)
+             (ignore-errors
+               (flycheck-lsp--notify server 'textDocument/didClose
+                                       (list :textDocument
+                                             (list :uri uri))))))))
+       flycheck-lsp--servers))))
+
+(defun flycheck-lsp--forget-server (key server)
+  "Drop SERVER, registered under KEY, and shut it down.
+
+Dropped first: shutting down pumps process output, and a diagnostics
+push arriving then can re-trigger a check that registers a fresh server
+under the same key.  Removing afterwards would delete that one instead,
+leaving its process running and unreachable."
+  (remhash key flycheck-lsp--servers)
+  (flycheck-lsp--shutdown-server server))
+
+(defun flycheck-lsp--server-buffer-count (server)
+  "Return how many of SERVER's documents a live buffer still owns.
+
+Not the size of the table: a workspace pull registers a document for
+every file it reports on, including files no buffer visits."
+  (let ((count 0))
+    (maphash (lambda (_key doc)
+               (when (buffer-live-p (flycheck-lsp--doc-buffer doc))
+                 (setq count (1+ count))))
+             (flycheck-lsp--server-documents server))
+    count))
+
+(defun flycheck-lsp--server-for-buffer ()
+  "Return the registry key of the server serving the current buffer.
+
+The key `flycheck-lsp--start' would build, so this names the server that
+actually checks this buffer.  Project roots nest, and a workspace pull
+registers a document for every file it reports on, so several servers
+can hold the same document and the one holding it is not necessarily the
+one serving it."
+  (when-let* ((command (flycheck-lsp--command major-mode))
+              (key (cons (flycheck-lsp--root) command))
+              ((gethash key flycheck-lsp--servers)))
+    key))
+
+(defun flycheck-lsp-restart-server ()
+  "Shut down the language server serving this buffer and forget it.
+
+The next check starts a fresh one.  Without this a server that has wedged
+can only be cleared by restarting Emacs, since a server outlives the
+buffers it serves and even `flycheck-lsp-mode' being turned off."
+  (interactive)
+  (let* ((key (or (flycheck-lsp--server-for-buffer)
+                  (user-error "No language server is serving this buffer")))
+         (server (gethash key flycheck-lsp--servers)))
+    (flycheck-lsp--forget-server key server)
+    (if flycheck-mode
+        (progn (message "Shut %s down; the next check starts it again"
+                        (car (flycheck-lsp--server-command server)))
+               (flycheck-buffer-deferred))
+      (message "Shut %s down" (car (flycheck-lsp--server-command server))))))
+
+(defun flycheck-lsp-shutdown-servers (&optional all)
+  "Shut down the language servers of this buffer's project.
+
+With prefix argument ALL, shut down every running server instead."
+  (interactive "P")
+  (let ((root (and (not all)
+                   (file-name-as-directory
+                    (expand-file-name (flycheck-lsp--root)))))
+        (count 0))
+    ;; Over a snapshot: shutting a server down pumps process output, and
+    ;; a check triggered by that can register a server mid-iteration.
+    (dolist (key (hash-table-keys flycheck-lsp--servers))
+      (when-let* ((server (gethash key flycheck-lsp--servers)))
+        (when (or all
+                  (and root
+                       (string-prefix-p
+                        root (file-name-as-directory
+                              (expand-file-name
+                               (flycheck-lsp--server-root server))))))
+          (flycheck-lsp--forget-server key server)
+          (setq count (1+ count)))))
+    (message "Shut down %d language server%s" count
+             (if (= count 1) "" "s"))))
+
+(defun flycheck-lsp--server-list-entries ()
+  "Return `tabulated-list-entries' for the running servers."
+  (let (entries)
+    (maphash
+     (lambda (key server)
+       (push (list key
+                   (vector (abbreviate-file-name
+                            (flycheck-lsp--server-root server))
+                           (string-join (flycheck-lsp--server-command server)
+                                        " ")
+                           (if (flycheck-lsp--server-live-p server)
+                               "live" "dead")
+                           (number-to-string
+                            (hash-table-count
+                             (flycheck-lsp--server-documents server)))
+                           (number-to-string
+                            (flycheck-lsp--server-buffer-count server))))
+             entries))
+     flycheck-lsp--servers)
+    (nreverse entries)))
+
+(define-derived-mode flycheck-lsp-server-list-mode tabulated-list-mode
+  "Flycheck LSP servers"
+  "Major mode listing the language servers Flycheck is running."
+  (setq tabulated-list-format [("Project" 30 t)
+                               ("Command" 28 t)
+                               ("State" 6 t)
+                               ("Docs" 5 t)
+                               ("Buffers" 7 t)]
+        tabulated-list-sort-key '("Project" . nil)
+        tabulated-list-entries #'flycheck-lsp--server-list-entries)
+  (tabulated-list-init-header))
+
+(defun flycheck-lsp-list-servers ()
+  "List the language servers Flycheck is running.
+
+A server is kept for the rest of the session, so this is the way to see
+what is running, how many documents each holds, and how many of those a
+live buffer still owns."
+  (interactive)
+  (with-current-buffer (get-buffer-create "*Flycheck LSP servers*")
+    ;; Entering the mode again would discard the sort column and point.
+    (unless (derived-mode-p 'flycheck-lsp-server-list-mode)
+      (flycheck-lsp-server-list-mode))
+    (tabulated-list-print)
+    (pop-to-buffer (current-buffer))))
 
 (defun flycheck-lsp--shutdown-all ()
   "Shut down every running LSP server.
 Added to `kill-emacs-hook' the first time a server starts."
-  (maphash (lambda (key server)
-             (flycheck-lsp--shutdown-server server)
-             (remhash key flycheck-lsp--servers))
-           flycheck-lsp--servers))
+  (dolist (key (hash-table-keys flycheck-lsp--servers))
+    (when-let* ((server (gethash key flycheck-lsp--servers)))
+      (flycheck-lsp--forget-server key server))))
 
 (defun flycheck-lsp--enable ()
   "Set up the current buffer to report its LSP server's diagnostics.
@@ -13196,7 +14742,8 @@ See URL `https://clang.llvm.org/'."
                                         ; location
             "-fno-diagnostics-show-option" ; Do not show the corresponding
                                         ; warning group
-            "-iquote" (eval (flycheck-c/c++-quoted-include-directory))
+            "-iquote" (eval (file-local-name
+                             (flycheck-c/c++-quoted-include-directory)))
             (option "-std=" flycheck-clang-language-standard concat)
             (option-flag "-pedantic" flycheck-clang-pedantic)
             (option-flag "-pedantic-errors" flycheck-clang-pedantic-errors)
@@ -13434,7 +14981,8 @@ See URL `https://gcc.gnu.org/'."
   :command ("gcc"
             "-fshow-column"
             (eval (flycheck--gcc-sarif-flag))
-            "-iquote" (eval (flycheck-c/c++-quoted-include-directory))
+            "-iquote" (eval (file-local-name
+                             (flycheck-c/c++-quoted-include-directory)))
             (option "-std=" flycheck-gcc-language-standard concat)
             (option-flag "-pedantic" flycheck-gcc-pedantic)
             (option-flag "-pedantic-errors" flycheck-gcc-pedantic-errors)
@@ -13934,7 +15482,7 @@ Requires DMD 2.066 or newer.  See URL `https://dlang.org/'."
             "-o-"                       ; Don't generate an object file
             "-vcolumns"                 ; Add columns in output
             "-wi" ; Compilation will continue even if there are warnings
-            (eval (concat "-I" (flycheck-d-base-directory)))
+            (eval (concat "-I" (file-local-name (flycheck-d-base-directory))))
             (option-list "-I" flycheck-dmd-include-path concat)
             (eval flycheck-dmd-args)
             (source ".d"))
@@ -14054,9 +15602,10 @@ See `https://credo-ci.org/'."
    `(progn
       (require 'bytecomp)
       (setq byte-compile-root-dir
-            ,(if buffer-file-name
-                 (file-name-directory buffer-file-name)
-               default-directory)))))
+            ,(file-local-name
+              (if buffer-file-name
+                  (file-name-directory buffer-file-name)
+                default-directory))))))
 
 (defconst flycheck-emacs-lisp-check-form
   (flycheck-prepare-emacs-lisp-form
@@ -14241,7 +15790,11 @@ See Info Node `(elisp)Byte Compilation'."
              (let ((path (pcase flycheck-emacs-lisp-load-path
                            (`inherit load-path)
                            (p (mapcar #'expand-file-name p)))))
-               (flycheck-prepend-with-option "--directory" path)))
+               ;; The remote Emacs cannot resolve a TRAMP name.
+               (flycheck-prepend-with-option
+                "--directory"
+                (mapcar (lambda (d) (file-local-name (or d default-directory)))
+                        path))))
             (option "--eval" flycheck-emacs-lisp-package-user-dir nil
                     flycheck-option-emacs-lisp-package-user-dir)
             (option "--eval" flycheck-emacs-lisp-initialize-packages nil
@@ -14762,7 +16315,8 @@ Uses GCC's Fortran compiler gfortran.  See URL
             ;; Do not show the corresponding warning group
             "-fno-diagnostics-show-option"
             ;; Fortran has similar include processing as C/C++
-            "-iquote" (eval (flycheck-c/c++-quoted-include-directory))
+            "-iquote" (eval (file-local-name
+                             (flycheck-c/c++-quoted-include-directory)))
             (option "-std=" flycheck-gfortran-language-standard concat)
             (option "-f" flycheck-gfortran-layout concat
                     flycheck-option-gfortran-layout)
@@ -14901,16 +16455,35 @@ checker's pattern."
     (nconc (nreverse errors)
            (flycheck-parse-with-patterns output checker buffer))))
 
+(defun flycheck--go-vet-handle-suspicious (_checker _exit-status output)
+  "Disable `go-vet' when OUTPUT says there was no package to vet.
+
+Vetting the buffer's package needs a module around it, and one package
+in its directory; outside a module, or in a directory mixing packages,
+`go vet' explains itself instead of reporting, which is the buffer's
+setup rather than a parsing gap.  Anything else stays `suspicious'."
+  (if (string-match-p (rx bol "go: " (or "go.mod file not found"
+                                         "cannot find main module")
+                          (* nonl)
+                          (or eol ";"))
+                      (or output ""))
+      (cons 'disable (flycheck--fatal-exit-reason output))
+    (if (string-match-p (rx bol "found packages " (+ nonl) " and ") (or output ""))
+        (cons 'disable (flycheck--fatal-exit-reason output))
+      'suspicious)))
+
 (flycheck-define-checker go-vet
   "A Go syntax checker using the `go vet' command.
+
+Vets the buffer's whole package as saved on disk, since vet needs
+the package to resolve references between its files.
 
 See URL `https://go.dev/cmd/go/' and URL
 `https://pkg.go.dev/cmd/vet/'."
   :command ("go" "vet" "-json"
             (option "-tags=" flycheck-go-build-tags concat
                     flycheck-option-comma-separated-list)
-            (eval flycheck-go-vet-args)
-            (source ".go"))
+            (eval flycheck-go-vet-args))
   :error-parser flycheck-parse-go-vet
   :error-patterns
   ;; A compile error that stops the analyzers prints as text beside the
@@ -14918,6 +16491,11 @@ See URL `https://go.dev/cmd/go/' and URL
   ((error line-start "vet: " (file-name) ":" line ":" column ": "
           (message) line-end))
   :modes (go-mode go-ts-mode)
+  ;; The whole package is vetted, from the files on disk: vet given a
+  ;; single file treats it as a package of its own and reports every
+  ;; reference into a sibling file as undefined
+  :predicate flycheck-buffer-saved-p
+  :handle-suspicious flycheck--go-vet-handle-suspicious
   :next-checkers (go-build
                   go-test
                   ;; Fall back if `go build' or `go test' can be used
@@ -15290,8 +16868,9 @@ See URL `https://github.com/commercialhaskell/stack'."
             (option-list "-i" flycheck-ghc-search-path concat)
             (eval (concat
                    "-i"
-                   (flycheck-module-root-directory
-                    (flycheck-find-in-buffer flycheck-haskell-module-re))))
+                   (file-local-name
+                    (flycheck-module-root-directory
+                     (flycheck-find-in-buffer flycheck-haskell-module-re)))))
             (eval flycheck-ghc-args)
             "-x" (eval
                   (pcase major-mode
@@ -15409,8 +16988,9 @@ See URL `https://www.haskell.org/ghc/'."
             ;; properly resolve local imports
             (eval (concat
                    "-i"
-                   (flycheck-module-root-directory
-                    (flycheck-find-in-buffer flycheck-haskell-module-re))))
+                   (file-local-name
+                    (flycheck-module-root-directory
+                     (flycheck-find-in-buffer flycheck-haskell-module-re)))))
             (option-list "-X" flycheck-ghc-language-extensions concat)
             (eval flycheck-ghc-args)
             "-x" (eval
@@ -16633,7 +18213,13 @@ See URL `https://proselint.com/'."
             (eval (flycheck--proselint-args)))
   :standard-input t
   :error-parser flycheck-proselint-parse-errors
-  :modes (text-mode markdown-mode gfm-mode message-mode org-mode rst-mode))
+  :modes (text-mode
+          markdown-mode
+          markdown-ts-mode
+          gfm-mode
+          message-mode
+          org-mode
+          rst-mode))
 
 (flycheck-def-option-var flycheck-protoc-import-path nil protobuf-protoc
   "A list of directories to resolve import directives.
@@ -17406,6 +18992,52 @@ See URL `https://mypy-lang.org/'."
   ;; https://github.com/python/mypy/issues/4746.
   :predicate flycheck-buffer-saved-p)
 
+(defun flycheck--file-contains-p (file regexp)
+  "Whether FILE is a readable file with a line matching REGEXP."
+  (when (and (file-regular-p file) (file-readable-p file))
+    (with-temp-buffer
+      (insert-file-contents file)
+      (goto-char (point-min))
+      (re-search-forward regexp nil t))))
+
+(defun flycheck--mypy-project-configured-p (directory)
+  "Whether DIRECTORY is configured for a project-wide mypy run.
+
+Running mypy over an arbitrary tree drowns it in noise, so the
+project has to say it wants mypy: a mypy.ini or .mypy.ini, a
+`[tool.mypy]' section in pyproject.toml, or a `[mypy]' section in
+setup.cfg."
+  (or (file-exists-p (expand-file-name "mypy.ini" directory))
+      (file-exists-p (expand-file-name ".mypy.ini" directory))
+      (flycheck--file-contains-p
+       (expand-file-name "pyproject.toml" directory)
+       "^[ \t]*\\[tool\\.mypy[].]")
+      (flycheck--file-contains-p
+       (expand-file-name "setup.cfg" directory) "^\\[mypy\\]")))
+
+(defun flycheck-parse-mypy-project (output _checker directory)
+  "Parse project-wide mypy OUTPUT for the project at DIRECTORY.
+
+The diagnostics carry the `python-mypy' checker, whose buffer
+checks read the same mypy output: identical findings collapse in
+the project-wide view, and mypy's error explanations apply."
+  (flycheck--project-expand-error-files
+   (flycheck-parse-mypy output 'python-mypy nil)
+   directory))
+
+(flycheck-define-project-checker 'mypy-project
+  "A Python project checker running mypy over the whole project.
+
+Type-checks everything under the project root at once - mypy's
+`exclude' setting still applies - so diagnostics of files no
+buffer visits turn up too, including the cross-module errors a
+single buffer's check has no view of.
+
+See URL `https://mypy-lang.org/'."
+  :command '("mypy" "--output" "json" ".")
+  :parser #'flycheck-parse-mypy-project
+  :enabled #'flycheck--mypy-project-configured-p)
+
 (flycheck-def-option-var flycheck-lintr-caching t r-lintr
   "Whether to enable caching in lintr.
 
@@ -17725,7 +19357,7 @@ See URL `https://github.com/igorshubovych/markdownlint-cli'."
             source)
   :error-parser flycheck-parse-markdownlint
   :error-filter flycheck-markdownlint-error-filter
-  :modes (markdown-mode gfm-mode)
+  :modes (markdown-mode markdown-ts-mode gfm-mode)
   :error-explainer flycheck-markdownlint-error-explainer
   :next-checkers ((warning . proselint)))
 
@@ -17761,7 +19393,7 @@ See URL `https://github.com/DavidAnson/markdownlint-cli2'."
           (? ":" column) " " (id (one-or-more (not (any space))))
           " " (message) line-end))
   :error-filter flycheck-markdownlint-error-filter
-  :modes (markdown-mode gfm-mode)
+  :modes (markdown-mode markdown-ts-mode gfm-mode)
   :error-explainer flycheck-markdownlint-error-explainer
   :next-checkers ((warning . proselint)))
 
@@ -17815,7 +19447,7 @@ See URL `https://github.com/markdownlint/markdownlint'."
   (lambda (errors)
     (flycheck-sanitize-errors
      (flycheck-remove-error-file-names "(stdin)" errors)))
-  :modes (markdown-mode gfm-mode)
+  :modes (markdown-mode markdown-ts-mode gfm-mode)
   :next-checkers ((warning . proselint)))
 
 (flycheck-def-config-file-var flycheck-markdown-pymarkdown-config
@@ -17839,7 +19471,7 @@ See URL `https://pypi.org/project/pymarkdownlnt/'."
   (lambda (errors)
     (flycheck-sanitize-errors
      (flycheck-remove-error-file-names "(string)" errors)))
-  :modes (markdown-mode gfm-mode)
+  :modes (markdown-mode markdown-ts-mode gfm-mode)
   :next-checkers ((warning . proselint))
   :error-explainer
   (flycheck-error-explainer-from-url
@@ -17960,7 +19592,8 @@ Requires Sphinx 1.2 or newer.  See URL `https://sphinx-doc.org'."
   :command ("sphinx-build" "-b" "pseudoxml"
             "-q" "-N"                   ; Reduced output and no colors
             (option-flag "-n" flycheck-sphinx-warn-on-missing-references)
-            (eval (flycheck-locate-sphinx-source-directory))
+            (eval (when-let* ((dir (flycheck-locate-sphinx-source-directory)))
+                    (file-local-name dir)))
             temporary-directory         ; Redirect the output to a temporary
                                         ; directory
             source-original)            ; Sphinx needs the original document
@@ -18448,6 +20081,31 @@ When non-nil, `cargo clippy' is passed `--all-features'."
                  (one-or-more alnum) "`.")))
          msg))))
    errors))
+
+(defun flycheck-parse-cargo-check-project (output _checker directory)
+  "Parse project-wide `cargo check' OUTPUT for the project at DIRECTORY.
+
+The diagnostics carry the `rust-cargo' checker, whose buffer checks
+read the same cargo output: identical findings collapse in the
+project-wide view, and rust-cargo's error explanations apply.  The
+same filter as the buffer checks' drops rustc's non-diagnostics."
+  (flycheck--project-expand-error-files
+   (flycheck-rust-error-filter
+    (flycheck-parse-cargo-rustc output 'rust-cargo nil))
+   directory))
+
+(flycheck-define-project-checker 'cargo-check
+  "A Rust project checker using `cargo check'.
+
+Checks every crate of the workspace at once, so diagnostics of
+files no buffer visits turn up too.
+
+See URL `https://doc.rust-lang.org/cargo/commands/cargo-check.html'."
+  :command '("cargo" "check" "--workspace" "--quiet"
+             "--message-format=json")
+  :parser #'flycheck-parse-cargo-check-project
+  :enabled (lambda (directory)
+             (file-exists-p (expand-file-name "Cargo.toml" directory))))
 
 (defun flycheck-rust-manifest-directory ()
   "Return the nearest directory holding the Cargo manifest.
@@ -19453,6 +21111,57 @@ See URL `https://github.com/terraform-linters/tflint'."
    "https://github.com/terraform-linters/tflint-ruleset-terraform/blob/main/docs/rules/%s.md"
    (lambda (id) (and (string-prefix-p "terraform_" id) id))))
 
+(defun flycheck-parse-terraform-validate (output _checker directory)
+  "Parse `terraform validate -json' OUTPUT for the project at DIRECTORY.
+
+Terraform's one-based columns and right-open end columns are used as
+they are.  A diagnostic about the configuration as a whole carries no
+source location to jump to, so when only those turn up - an
+uninitialized project, mostly - the first one becomes the run's
+failure message instead.
+
+See URL `https://developer.hashicorp.com/terraform/cli/commands/validate'."
+  (let-alist (car (flycheck-parse-json output))
+    (let ((ranged (seq-filter (lambda (diag)
+                                (let-alist diag
+                                  (and .range .range.filename)))
+                              .diagnostics)))
+      (when (and .diagnostics (null ranged))
+        (let-alist (car .diagnostics)
+          (error "%s" .summary)))
+      (mapcar
+       (lambda (diag)
+         (let-alist diag
+           (flycheck-error-new-at
+            .range.start.line .range.start.column
+            (pcase .severity
+              ("warning" 'warning)
+              (_ 'error))
+            (if (and .detail (not (string-empty-p .detail)))
+                (concat .summary ": " .detail)
+              .summary)
+            :end-line .range.end.line
+            :end-column .range.end.column
+            :checker 'terraform-validate
+            :filename (flycheck--expand-file-name .range.filename directory)
+            :buffer nil)))
+       ranged))))
+
+(flycheck-define-project-checker 'terraform-validate
+  "A Terraform project checker using `terraform validate'.
+
+Validates the root module in the project directory as a whole,
+catching the cross-file problems a single buffer's check cannot
+see, like references to undeclared variables.  A configuration
+using providers or modules needs `terraform init' run in the
+project first.
+
+See URL `https://developer.hashicorp.com/terraform/cli/commands/validate'."
+  :command '("terraform" "validate" "-json")
+  :parser #'flycheck-parse-terraform-validate
+  :enabled (lambda (directory)
+             (directory-files directory nil "\\.tf\\'" t 1)))
+
 (flycheck-def-option-var flycheck-chktex-extra-flags nil tex-chktex
   "A list of extra arguments to give to chktex.
 This variable works the same way as `tex-chktex-extra-flags': its value
@@ -19520,6 +21229,7 @@ See URL `https://www.gnu.org/software/texinfo/'."
 ;; prints a backtrace.
 (flycheck-def-option-var flycheck-textlint-plugin-alist
     '((markdown-mode . "@textlint/markdown")
+      (markdown-ts-mode . "@textlint/markdown")
       (gfm-mode . "@textlint/markdown")
       (t . "@textlint/text"))
     textlint
@@ -19566,9 +21276,18 @@ See URL `https://textlint.github.io/'."
   ;; only text and markdown formats are installed by default. Ask the
   ;; user to add mode->plugin mappings manually in
   ;; `flycheck-textlint-plugin-alist'.
-  :modes
-  (text-mode markdown-mode gfm-mode message-mode adoc-mode asciidoc-mode
-             mhtml-mode latex-mode LaTeX-mode org-mode rst-mode)
+  :modes (text-mode
+          markdown-mode
+          markdown-ts-mode
+          gfm-mode
+          message-mode
+          adoc-mode
+          asciidoc-mode
+          mhtml-mode
+          latex-mode
+          LaTeX-mode
+          org-mode
+          rst-mode)
   :enabled
   (lambda () (flycheck--textlint-get-plugin))
   :verify
