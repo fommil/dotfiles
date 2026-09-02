@@ -629,6 +629,15 @@ file path and checked by suffix."
     (apply orig-fn args)))
 (advice-add 'gptel-send :around #'gptel-fommil--inhibit-read-only)
 
+(defun gptel-fommil-unlock-history ()
+  "Make the read-only chat history editable again.
+Useful for manually fixing formatting errors. Note that the history is
+re-locked after the next `gptel-send' response."
+  (interactive)
+  (let ((inhibit-read-only t))
+    (remove-list-of-text-properties
+     (point-min) (point-max) '(read-only rear-nonsticky))))
+
 (use-package gptel
   ;;:ensure t
   :ensure nil
