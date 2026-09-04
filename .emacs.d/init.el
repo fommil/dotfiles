@@ -441,7 +441,9 @@ Inspired by `org-combine-plists'."
   (projectile-mode 1)
   :bind
   (("s-f" . projectile-find-file)
-   ("s-F" . projectile-ag)))
+   ("s-F" . projectile-ag)
+   ;;("s-F" . projectile-search)
+   ))
 
 (setq default-tags-table-function
       (lambda ()
@@ -1072,6 +1074,10 @@ converted to PDF at the same location."
   (set-face-attribute 'spice-title-face nil :inherit 'default
                       :weight 'bold :foreground 'unspecified
                       :background 'unspecified :underline nil))
+
+;; WORKAROUND https://github.com/Wilfred/ag.el/issues/175
+(with-eval-after-load 'verilog-mode
+  (remove-hook 'compilation-mode-hook #'verilog-error-regexp-add-emacs))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; OS specific

@@ -21,9 +21,9 @@
 ;; used in a variety of contexts, but can be lazily loaded based on
 ;; context or when explicitly called by the user.
 
-(setq
- ;; allows projectile to see .log files, even though git ignores them
- projectile-git-command "cat <(git ls-files -zco --exclude-standard) <(find . -name '*.log' -maxdepth 4 -print0)")
+;; (setq
+;;  ;; allows projectile to see .log files, even though git ignores them
+;;  projectile-git-command "cat <(git ls-files -zco --exclude-standard) <(find . -name '*.log' -maxdepth 4 -print0)")
 
 (when (display-graphic-p)
   (setq
