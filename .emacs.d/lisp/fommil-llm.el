@@ -639,9 +639,9 @@ re-locked after the next `gptel-send' response."
      (point-min) (point-max) '(read-only rear-nonsticky))))
 
 (use-package gptel
-  ;;:ensure t
-  :ensure nil
-  :load-path "~/Projects/gptel"
+  :ensure t
+  ;;:ensure nil
+  ;;:load-path "~/Projects/gptel"
   :config
   (require 'gptel-context)
 
