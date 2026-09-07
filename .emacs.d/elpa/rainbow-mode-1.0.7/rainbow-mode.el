@@ -1,10 +1,10 @@
-;;; rainbow-mode.el --- Colorize color names in buffers
+;;; rainbow-mode.el --- Colorize color names in buffers  -*- lexical-binding: nil -*-
 
 ;; Copyright (C) 2010-2020 Free Software Foundation, Inc
 
 ;; Author: Julien Danjou <julien@danjou.info>
 ;; Keywords: faces
-;; Version: 1.0.6
+;; Version: 1.0.7
 
 ;; This file is part of GNU Emacs.
 
@@ -19,7 +19,7 @@
 ;; GNU General Public License for more details.
 
 ;; You should have received a copy of the GNU General Public License
-;; along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.
+;; along with GNU Emacs.  If not, see <https://www.gnu.org/licenses/>.
 
 ;;; Commentary:
 ;;
@@ -250,7 +250,7 @@ will be enabled if a major mode has been detected from the
 ;;; X colors
 
 (defvar rainbow-x-colors-font-lock-keywords
-  `((,(regexp-opt (x-defined-colors) 'words)
+  `((,(regexp-opt (defined-colors) 'words)
      (0 (rainbow-colorize-itself))))
   "Font-lock keywords to add for X colors.")
 
@@ -1121,7 +1121,7 @@ Return a value between 0 and 1."
 (defun rainbow-x-color-luminance (color)
   "Calculate the relative luminance of a color string (e.g. \"#ffaa00\", \"blue\").
 Return a value between 0 and 1."
-  (let* ((values (x-color-values color))
+  (let* ((values (color-values color))
          (r (/ (car values) 256.0))
          (g (/ (cadr values) 256.0))
          (b (/ (caddr values) 256.0)))
