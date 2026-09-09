@@ -613,17 +613,14 @@ file path and checked by suffix."
                    (format "The proposal is available as a diff-mode window. Use `C-c C-a` to apply each hunk.")))))))))))
 
 ;; https://github.com/karthink/gptel/issues/1418
-(defun gptel-fommil--mark-history-read-only (_beg _end)
-  (when gptel-mode
+(defun gptel-fommil--mark-history-read-only (_beg end)
+  ;; END is the tracking marker, i.e. the end of the response.  Anything
+  ;; after it (response separator, prompt prefix) stays editable so that
+  ;; the next question can be typed.
+  (when (and gptel-mode (> end (point-min)))
     (let ((inhibit-read-only t))
-      (save-excursion
-        (goto-char (point-max))
-        (when (search-backward (gptel-prompt-prefix-string) nil t)
-          (let ((end (point)))
-            (when (> end (point-min))
-              (put-text-property (point-min) end 'read-only t)
-              (put-text-property (1- end) end
-                                 'rear-nonsticky '(read-only)))))))))
+      (put-text-property (point-min) end 'read-only t)
+      (put-text-property (1- end) end 'rear-nonsticky '(read-only)))))
 (defun gptel-fommil--inhibit-read-only (orig-fn &rest args)
   (let ((inhibit-read-only t))
     (apply orig-fn args)))
@@ -648,7 +645,10 @@ re-locked after the next `gptel-send' response."
   ;;(add-hook 'gptel-post-response-functions #'gptel-end-of-response)
   (add-hook 'gptel-post-response-functions #'gptel-fommil--mark-history-read-only)
 
-  (push '(markdown-mode . "> ") gptel-prompt-prefix-alist)
+  ;;(push '(markdown-mode . "> ") gptel-prompt-prefix-alist)
+  (setf (alist-get 'markdown-mode gptel-prompt-prefix-alist) "## Human\n\n")
+  (setf (alist-get 'markdown-mode gptel-response-prefix-alist) "## Machine\n\n")
+
   (setq
    ;; org-mode integration is not great, and there are keybinding collisions
    ;;gptel-default-mode 'org-mode
