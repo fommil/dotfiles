@@ -4,9 +4,7 @@
 
 ;; Author: Sam Halliday <Sam.Halliday@gmail.com>
 ;; Keywords: faces
-;; Package-Version: 2.0
-;; Package-Commit: 2ecd466ffa7a3157b9ddcd7545b6fb8ad308c976
-;; URL: https://github.com/fommil/darcula-theme-emacs
+;; URL: https://gitlab.com/fommil/emacs-darcula-theme
 
 ;; This program is free software; you can redistribute it and/or modify
 ;; it under the terms of the GNU General Public License as published by
@@ -43,7 +41,7 @@
               (face-spec-set-2 face frame (cadr spec)))
           (face-spec-set-2 face frame (face-default-spec face))))
       (face-spec-set-2 face frame (get face 'face-override-spec)))
-    (defadvice face-spec-recalc (around new-recalc (face frame) activate)
+    (define-advice face-spec-recalc (:override (face frame) new-recalc)
       "Use `face-spec-recalc-new' instead."
       (face-spec-recalc-new face frame))))
 
