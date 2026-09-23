@@ -391,7 +391,7 @@ Inspired by `org-combine-plists'."
   (setq
    clean-buffer-list-kill-regexps '("^[*].*")
    clean-buffer-list-kill-never-regexps
-   '("^\\([#]\\|[*]\\(scratch\\|Messages\\|Mickey\\)\\).*")))
+   '("^\\([#]\\|[*]\\(scratch\\|Messages\\|LLM\\)\\).*")))
 
 (use-package persistent-scratch
   :config

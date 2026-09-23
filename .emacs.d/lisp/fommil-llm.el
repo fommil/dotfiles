@@ -91,7 +91,9 @@
                    :model-region 'us))
   )
 
-;; TODO would be good to have the > continue automatically when writing prompts (double return going back to bare)
+(defun gptel-fommil--terse-reminder ()
+  (insert "\n\n(Automated reminder: keep your response short and terse)"))
+(add-hook 'gptel-prompt-transform-functions #'gptel-fommil--terse-reminder 90)
 
 (defvar gptel-fommil-session-directory
   (expand-file-name "gptel" user-emacs-directory))
@@ -156,7 +158,7 @@
   '(".el" ".scala" ".sbt" ".java" ".rs" ".py" ".hs" ".cabal"
     ".c" ".h" ".cpp" ".hpp"
     ".go"
-    ".v"
+    ".v" ".sv"
     ".md" ".txt" ".org"
     ".diff" ".patch"
     ".sql"
