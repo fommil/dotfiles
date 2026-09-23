@@ -637,6 +637,15 @@ re-locked after the next `gptel-send' response."
     (remove-list-of-text-properties
      (point-min) (point-max) '(read-only rear-nonsticky))))
 
+(defun fommil-gptel--right-align-human ()
+  ;; compliments using a specific gptel-prompt-prefix-alist
+  (font-lock-add-keywords
+   nil
+   '(("^## Human$" 0 '(face nil line-prefix (space :align-to (- right 9))) append)))
+  (add-to-list (make-local-variable 'font-lock-extra-managed-props) 'line-prefix)
+  (font-lock-flush))
+(add-hook 'gptel-mode-hook #'fommil-gptel--right-align-human)
+
 (use-package gptel
   :ensure t
   ;;:ensure nil
@@ -648,7 +657,7 @@ re-locked after the next `gptel-send' response."
   (add-hook 'gptel-post-response-functions #'gptel-fommil--mark-history-read-only)
 
   ;;(push '(markdown-mode . "> ") gptel-prompt-prefix-alist)
-  (setf (alist-get 'markdown-mode gptel-prompt-prefix-alist) "## Human\n\n")
+  (setf (alist-get 'markdown-mode gptel-prompt-prefix-alist) "## Human\n\n") ;; see above
   (setf (alist-get 'markdown-mode gptel-response-prefix-alist) "## Machine\n\n")
 
   (setq
