@@ -425,6 +425,7 @@ Inspired by `org-combine-plists'."
   :init
   (put 'ag-ignore-list 'safe-local-variable #'listp)
   (setq
+   projectile-completion-system #'ido-completing-read
    projectile-use-git-grep t
    projectile-globally-ignored-directories '(".git")
    projectile-indexing-method 'hybrid

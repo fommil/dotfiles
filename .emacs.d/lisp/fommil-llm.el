@@ -163,6 +163,7 @@
     ".diff" ".patch"
     ".sql"
     "Makefile" "README" "NEWS"
+    ;;".log" ;; not sure about this, possibly dangerous
     ".json" ".yaml" ".yml" ".xml" ".proto"
     ".sh"
     ".toml" ".conf" ".cfg" ".ini" ".properties"
