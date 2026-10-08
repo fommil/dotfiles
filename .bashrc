@@ -81,13 +81,10 @@ if [ -z "$INSIDE_EMACS" ] && [ "$(type -t __git_ps1)" = "function" ] ; then
     fommil_ps1
 fi
 
-# complicated aliases
 function docker-nuke {
-    # https://www.digitalocean.com/community/tutorials/how-to-remove-docker-images-containers-and-volumes
-    docker rm $(docker ps -a -f status=exited -q)
-    docker rmi $(docker images -f dangling=true -q)
-    docker volume rm $(docker volume ls -f dangling=true -q)
-    # sudo sh -c 'btrfs subvolume delete /var/lib/docker/btrfs/subvolumes/*'
+    docker container prune -f
+    docker image prune -f
+    docker volume prune -f
     echo "consider using 'docker system prune --all'"
 }
 
